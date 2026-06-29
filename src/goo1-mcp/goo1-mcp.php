@@ -141,7 +141,7 @@ if (!class_exists("Puc_v4_Factory")) {
 	require_once(__DIR__."/plugin-update-checker/plugin-update-checker.php");
 }
 $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-    "https://raw.githubusercontent.com/andreaskasper/wordpress_omni/master/distmeta/updater/goo1-mcp.json",
+    "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/goo1-mcp.json",
     __FILE__, //Full path to the main plugin file or functions.php.
     'goo1-mcp'
 );
