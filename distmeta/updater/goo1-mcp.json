@@ -1,0 +1,31 @@
+{
+    "name": "goo1 Claude MCP Bridge",
+    "version": "0.1.48",
+    "download_url": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins/main\/distmeta\/updater\/goo1-omni.zip",
+    "homepage": "https:\/\/github.com\/andreaskasper\/",
+    "requires": "4.5",
+    "tested": "5.5.3",
+    "last_updated": "2026-01-21 18:24:50",
+    "upgrade_notice": "Dies ist das erste Upgrade. Es kommen erste Funktionen hinzu.",
+    "author": "Andreas Kasper",
+    "author_homepage": "https:\/\/goo1.de\/",
+    "sections": {
+        "description": "<p>Das Wordpress Plugin f\u00fcr alle goo1 Projekte<\/p><p>Es soll f\u00fcr Sicherheit und Stabilit\u00e4t sorgen und weitere Funktionen Implementieren.<\/p>",
+        "installation": "Bitte kontaktieren Sie Andreas Kasper f\u00fcr die Installation. Dieses Plugin ist eine personalisierte Anpassung und nicht im offiziellen Wordpress-Pluginstore verf\u00fcgbar.",
+        "changelog": "<h2>Changelog<\/h2><p>Erster Checkin, alle Funktioner werden initial eingebaut.<\/p>",
+        "Kontakt_Andreas": ""
+    },
+    "icons": {
+        "1x": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/logo_128.png",
+        "2x": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/logo_256.png"
+    },
+    "banners": {
+        "low": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/banner_250.jpg",
+        "high": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/banner_500.jpg"
+    },
+    "translations": [],
+    "rating": 90,
+    "num_ratings": 123,
+    "downloaded": 1234,
+    "active_installs": 12345
+}
