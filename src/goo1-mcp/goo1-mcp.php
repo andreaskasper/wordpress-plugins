@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.2.260629
+ * Version:     1.3.260629
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_MCP_VERSION', '1.2.260629' );
+define( 'GOO1_MCP_VERSION', '1.3.260629' );
 define( 'GOO1_MCP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );

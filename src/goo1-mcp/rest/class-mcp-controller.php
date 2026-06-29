@@ -142,10 +142,31 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 			$tools[] = array(
 				'name'        => $tool['name'],
 				'description' => isset( $tool['description'] ) ? $tool['description'] : '',
-				'inputSchema' => isset( $tool['inputSchema'] ) ? $tool['inputSchema'] : array( 'type' => 'object' ),
+				'inputSchema' => $this->normalize_schema( isset( $tool['inputSchema'] ) ? $tool['inputSchema'] : array() ),
 			);
 		}
 		return $tools;
+	}
+
+	/**
+	 * Normalize a tool input schema so it always serializes as a JSON object.
+	 * mcp-server.json is decoded to associative arrays, so an empty
+	 * `properties` ({} in the file) becomes an empty PHP array and would
+	 * json_encode back to "[]" — but MCP requires both `inputSchema` and
+	 * `inputSchema.properties` to be objects ("{}"), and Claude rejects the
+	 * tool list with "Input should be a valid dictionary" otherwise.
+	 */
+	private function normalize_schema( $schema ) {
+		if ( ! is_array( $schema ) ) {
+			$schema = array();
+		}
+		if ( empty( $schema['type'] ) ) {
+			$schema['type'] = 'object';
+		}
+		if ( ! isset( $schema['properties'] ) || ! is_array( $schema['properties'] ) || empty( $schema['properties'] ) ) {
+			$schema['properties'] = new stdClass();
+		}
+		return $schema;
 	}
 
 	private function call_tool( $id, $params, WP_REST_Request $request ) {

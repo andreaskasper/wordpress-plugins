@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.2.260629
+Stable tag: 1.3.260629
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,9 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.3.260629 =
+* Fixed MCP tools/list rejecting tools whose input schema has no parameters: an empty `properties` now serializes as a JSON object `{}` instead of `[]`, so Claude no longer fails with "Input should be a valid dictionary".
 
 = 1.2.260629 =
 * Discovery now also served from /goo1-mcp-oauth/.well-known/* with a path-based issuer, so the OAuth/MCP connector keeps working when server hardening 403-blocks the root /.well-known/ directory (also a hint that ACME/Let's Encrypt is likely blocked the same way). The canonical root /.well-known/ endpoints still work once hardening allows them.
