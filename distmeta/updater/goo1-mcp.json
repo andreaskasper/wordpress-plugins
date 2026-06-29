@@ -1,27 +1,29 @@
 {
     "name": "goo1 Claude MCP Bridge",
-    "version": "0.1.48",
-    "download_url": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins/main\/distmeta\/updater\/goo1-omni.zip",
-    "homepage": "https:\/\/github.com\/andreaskasper\/",
-    "requires": "4.5",
-    "tested": "5.5.3",
-    "last_updated": "2026-01-21 18:24:50",
-    "upgrade_notice": "Dies ist das erste Upgrade. Es kommen erste Funktionen hinzu.",
+    "slug": "goo1-mcp",
+    "version": "1.3.260629",
+    "download_url": "https://github.com/andreaskasper/wordpress-plugins/releases/download/v1.3.260629/goo1-mcp.zip",
+    "homepage": "https://github.com/andreaskasper/",
+    "requires": "6.0",
+    "requires_php": "7.4",
+    "tested": "6.7",
+    "last_updated": "2026-06-29 21:04:44",
+    "upgrade_notice": "Version 1.3.260629: Fixed MCP tools/list rejecting tools whose input schema has no parameters: an empty `properties` now serializes as a JSON object `{}` instead of `[]`, so Claude no longer fails with \"Input should be a valid dictionary\".",
     "author": "Andreas Kasper",
-    "author_homepage": "https:\/\/goo1.de\/",
+    "author_homepage": "https://goo1.de/",
     "sections": {
-        "description": "<p>Das Wordpress Plugin f\u00fcr alle goo1 Projekte<\/p><p>Es soll f\u00fcr Sicherheit und Stabilit\u00e4t sorgen und weitere Funktionen Implementieren.<\/p>",
-        "installation": "Bitte kontaktieren Sie Andreas Kasper f\u00fcr die Installation. Dieses Plugin ist eine personalisierte Anpassung und nicht im offiziellen Wordpress-Pluginstore verf\u00fcgbar.",
-        "changelog": "<h2>Changelog<\/h2><p>Erster Checkin, alle Funktioner werden initial eingebaut.<\/p>",
+        "description": "<p>Das Wordpress Plugin für alle goo1 Projekte</p><p>Es soll für Sicherheit und Stabilität sorgen und weitere Funktionen Implementieren.</p>",
+        "installation": "Bitte kontaktieren Sie Andreas Kasper für die Installation. Dieses Plugin ist eine personalisierte Anpassung und nicht im offiziellen Wordpress-Pluginstore verfügbar.",
+        "changelog": "<h2>Changelog</h2><h4>1.3.260629</h4><ul><li>Fixed MCP tools/list rejecting tools whose input schema has no parameters: an empty `properties` now serializes as a JSON object `{}` instead of `[]`, so Claude no longer fails with &quot;Input should be a valid dictionary&quot;.</li></ul><h4>1.2.260629</h4><ul><li>Discovery now also served from /goo1-mcp-oauth/.well-known/* with a path-based issuer, so the OAuth/MCP connector keeps working when server hardening 403-blocks the root /.well-known/ directory (also a hint that ACME/Let&#x27;s Encrypt is likely blocked the same way). The canonical root /.well-known/ endpoints still work once hardening allows them.</li><li>WWW-Authenticate resource_metadata pointer now targets the non-blocked discovery path.</li></ul><h4>1.1.260629</h4><ul><li>Added OAuth 2.1 authorization server (discovery metadata, authorization code + PKCE, token + refresh, Dynamic Client Registration) so Claude Desktop / claude.ai can connect as a remote MCP connector</li><li>Added native MCP JSON-RPC transport endpoint that bridges tools/list and tools/call to the existing REST controllers</li><li>OAuth access tokens are accepted alongside API keys on all endpoints; permission level is chosen at consent time</li><li>Added Connector (OAuth) admin page and OAuth settings</li><li>Fixed GOO1_MCP_VERSION constant not matching the plugin header version</li></ul><h4>1.0.0</h4><ul><li>Initial release</li></ul>",
         "Kontakt_Andreas": ""
     },
     "icons": {
-        "1x": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/logo_128.png",
-        "2x": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/logo_256.png"
+        "1x": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/logo_128.png",
+        "2x": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/logo_256.png"
     },
     "banners": {
-        "low": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/banner_250.jpg",
-        "high": "https:\/\/raw.githubusercontent.com\/andreaskasper\/wordpress-plugins\/main\/distmeta\/updater\/banner_500.jpg"
+        "low": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/banner_250.jpg",
+        "high": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/banner_500.jpg"
     },
     "translations": [],
     "rating": 90,
