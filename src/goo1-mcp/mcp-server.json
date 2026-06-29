@@ -1,0 +1,630 @@
+{
+  "name": "goo1-wp-claude-bridge",
+  "version": "1.0.0",
+  "description": "WordPress site management via REST API for Claude AI",
+  "auth": {
+    "type": "bearer",
+    "header": "Authorization",
+    "prefix": "Bearer"
+  },
+  "base_url": "{site_url}/wp-json/goo1-mcp/v1",
+  "tools": [
+    {
+      "name": "wp_list_posts",
+      "description": "List WordPress posts, pages, or custom post types with filtering and pagination.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_type": { "type": "string", "default": "post", "description": "Post type: post, page, or any custom post type slug" },
+          "status": { "type": "string", "default": "any", "description": "Post status: publish, draft, pending, private, trash, any" },
+          "search": { "type": "string", "description": "Search keyword" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 },
+          "orderby": { "type": "string", "default": "date" },
+          "order": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" },
+          "author": { "type": "integer" },
+          "category": { "type": "string" },
+          "tag": { "type": "string" }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/posts" }
+    },
+    {
+      "name": "wp_get_post",
+      "description": "Get a single post/page with full content, meta, and taxonomy data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Post ID" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/posts/{id}" }
+    },
+    {
+      "name": "wp_create_post",
+      "description": "Create a new post, page, or custom post type entry.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "status": { "type": "string", "default": "draft" },
+          "post_type": { "type": "string", "default": "post" },
+          "excerpt": { "type": "string" },
+          "slug": { "type": "string" },
+          "author": { "type": "integer" },
+          "categories": { "type": "array", "items": { "type": "integer" } },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "meta": { "type": "object" },
+          "featured_image": { "type": "integer" }
+        },
+        "required": ["title"]
+      },
+      "endpoint": { "method": "POST", "path": "/posts" }
+    },
+    {
+      "name": "wp_update_post",
+      "description": "Update an existing post/page. Only send fields you want to change.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "content": { "type": "string" },
+          "status": { "type": "string" },
+          "excerpt": { "type": "string" },
+          "slug": { "type": "string" },
+          "meta": { "type": "object" },
+          "categories": { "type": "array", "items": { "type": "integer" } },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "PUT", "path": "/posts/{id}" }
+    },
+    {
+      "name": "wp_delete_post",
+      "description": "Trash or permanently delete a post. Set force=true to skip trash.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "force": { "type": "boolean", "default": false }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "DELETE", "path": "/posts/{id}" }
+    },
+    {
+      "name": "wp_list_post_types",
+      "description": "List all registered post types with their properties and taxonomy associations.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/post-types" }
+    },
+    {
+      "name": "wp_list_taxonomies",
+      "description": "List all registered taxonomies.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/taxonomies" }
+    },
+    {
+      "name": "wp_list_terms",
+      "description": "List terms for a taxonomy (categories, tags, custom).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taxonomy": { "type": "string", "description": "Taxonomy slug (category, post_tag, etc.)" },
+          "search": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 },
+          "parent": { "type": "integer" },
+          "hide_empty": { "type": "boolean", "default": false }
+        },
+        "required": ["taxonomy"]
+      },
+      "endpoint": { "method": "GET", "path": "/terms" }
+    },
+    {
+      "name": "wp_create_term",
+      "description": "Create a new taxonomy term.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "taxonomy": { "type": "string" },
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" },
+          "parent": { "type": "integer" }
+        },
+        "required": ["taxonomy", "name"]
+      },
+      "endpoint": { "method": "POST", "path": "/terms" }
+    },
+    {
+      "name": "wp_list_media",
+      "description": "List media library attachments.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": { "type": "string" },
+          "mime_type": { "type": "string", "description": "e.g. image, image/jpeg, video" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/media" }
+    },
+    {
+      "name": "wp_upload_media",
+      "description": "Upload a file to the media library via base64 data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "base64": { "type": "string", "description": "Base64-encoded file content" },
+          "filename": { "type": "string" },
+          "title": { "type": "string" },
+          "alt": { "type": "string" },
+          "caption": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["base64", "filename"]
+      },
+      "endpoint": { "method": "POST", "path": "/media" }
+    },
+    {
+      "name": "wp_list_comments",
+      "description": "List comments with filtering by post, status, and type.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_id": { "type": "integer" },
+          "status": { "type": "string", "default": "all" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/comments" }
+    },
+    {
+      "name": "wp_create_comment",
+      "description": "Create a new comment on a post.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "post_id": { "type": "integer" },
+          "content": { "type": "string" },
+          "author_name": { "type": "string" },
+          "author_email": { "type": "string" },
+          "status": { "type": "string", "default": "1" },
+          "parent": { "type": "integer" }
+        },
+        "required": ["post_id", "content"]
+      },
+      "endpoint": { "method": "POST", "path": "/comments" }
+    },
+    {
+      "name": "wp_list_users",
+      "description": "List WordPress users with role and search filtering.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string" },
+          "search": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/users" }
+    },
+    {
+      "name": "wp_get_user",
+      "description": "Get detailed user info including capabilities and meta.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/users/{id}" }
+    },
+    {
+      "name": "wp_create_user",
+      "description": "Create a new WordPress user.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "password": { "type": "string" },
+          "display_name": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "role": { "type": "string", "default": "subscriber" }
+        },
+        "required": ["username", "email"]
+      },
+      "endpoint": { "method": "POST", "path": "/users" }
+    },
+    {
+      "name": "wp_list_roles",
+      "description": "List all WordPress roles with capabilities and user counts.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/roles" }
+    },
+    {
+      "name": "wp_get_options",
+      "description": "Read WordPress options by name. Sensitive options are filtered.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "keys": { "type": "string", "description": "Comma-separated option names, e.g. 'blogname,blogdescription,permalink_structure'" }
+        },
+        "required": ["keys"]
+      },
+      "endpoint": { "method": "GET", "path": "/options" }
+    },
+    {
+      "name": "wp_update_options",
+      "description": "Update one or more WordPress options.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "options": { "type": "object", "description": "Key-value pairs of options to set" }
+        },
+        "required": ["options"]
+      },
+      "endpoint": { "method": "PUT", "path": "/options" }
+    },
+    {
+      "name": "wp_list_all_options",
+      "description": "List all autoloaded options, or search options by name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": { "type": "string", "description": "Filter options by name pattern" }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/options/all" }
+    },
+    {
+      "name": "wp_list_plugins",
+      "description": "List all installed plugins with their activation status.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/plugins" }
+    },
+    {
+      "name": "wp_activate_plugin",
+      "description": "Activate a plugin by slug or file path.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string", "description": "Plugin directory name or full file path" }
+        },
+        "required": ["slug"]
+      },
+      "endpoint": { "method": "PUT", "path": "/plugins/{slug}/activate" }
+    },
+    {
+      "name": "wp_deactivate_plugin",
+      "description": "Deactivate a plugin.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string" }
+        },
+        "required": ["slug"]
+      },
+      "endpoint": { "method": "PUT", "path": "/plugins/{slug}/deactivate" }
+    },
+    {
+      "name": "wp_list_themes",
+      "description": "List all installed themes with their status.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/themes" }
+    },
+    {
+      "name": "wp_activate_theme",
+      "description": "Switch the active theme.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slug": { "type": "string" }
+        },
+        "required": ["slug"]
+      },
+      "endpoint": { "method": "PUT", "path": "/themes/{slug}/activate" }
+    },
+    {
+      "name": "wp_list_menus",
+      "description": "List all navigation menus.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/menus" }
+    },
+    {
+      "name": "wp_get_menu",
+      "description": "Get a menu with all its items.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/menus/{id}" }
+    },
+    {
+      "name": "wp_db_query",
+      "description": "Execute a SQL query against the WordPress database. SELECT queries work with read scope. INSERT/UPDATE/DELETE require db_write permission. DROP/ALTER are always blocked.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sql": { "type": "string", "description": "SQL query. Use %s, %d, %f placeholders for parameters." },
+          "params": { "type": "array", "items": {}, "description": "Parameters for prepared statement placeholders" },
+          "max_rows": { "type": "integer", "default": 1000, "description": "Maximum rows to return (up to 10000)" }
+        },
+        "required": ["sql"]
+      },
+      "endpoint": { "method": "POST", "path": "/db/query" }
+    },
+    {
+      "name": "wp_db_tables",
+      "description": "List all database tables with size, engine, and row count info.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/db/tables" }
+    },
+    {
+      "name": "wp_db_table_schema",
+      "description": "Describe a table's columns, types, keys, and indexes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Table name" }
+        },
+        "required": ["name"]
+      },
+      "endpoint": { "method": "GET", "path": "/db/tables/{name}/schema" }
+    },
+    {
+      "name": "wp_db_table_sample",
+      "description": "Get sample rows from a table.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "limit": { "type": "integer", "default": 10, "maximum": 100 }
+        },
+        "required": ["name"]
+      },
+      "endpoint": { "method": "GET", "path": "/db/tables/{name}/sample" }
+    },
+    {
+      "name": "wp_site_health",
+      "description": "Get comprehensive site health info: WP/PHP/MySQL versions, debug state, memory, upload limits, active plugins count, constants, and more.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/health" }
+    },
+    {
+      "name": "wp_error_log",
+      "description": "Read the last N lines of the WordPress debug log.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lines": { "type": "integer", "default": 100, "maximum": 500 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/errors" }
+    },
+    {
+      "name": "wp_list_cron",
+      "description": "List all scheduled WordPress cron events.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/cron" }
+    },
+    {
+      "name": "wp_run_cron",
+      "description": "Manually trigger a WordPress cron hook.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hook": { "type": "string" }
+        },
+        "required": ["hook"]
+      },
+      "endpoint": { "method": "POST", "path": "/cron/{hook}/run" }
+    },
+    {
+      "name": "wp_list_hooks",
+      "description": "List registered WordPress actions and filters with callback counts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": { "type": "string", "description": "Filter hooks by name" }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/hooks" }
+    },
+    {
+      "name": "wp_get_hook",
+      "description": "Get detailed info about a specific hook including all registered callbacks.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" }
+        },
+        "required": ["name"]
+      },
+      "endpoint": { "method": "GET", "path": "/hooks/{name}" }
+    },
+    {
+      "name": "wp_list_transients",
+      "description": "List WordPress transients with expiration info.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": { "type": "string" }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/transients" }
+    },
+    {
+      "name": "wp_list_widgets",
+      "description": "List all widget areas (sidebars) and their active widgets.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/widgets" }
+    },
+    {
+      "name": "wp_rewrite_rules",
+      "description": "List all rewrite rules and the current permalink structure.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/rewrite-rules" }
+    },
+    {
+      "name": "woo_list_products",
+      "description": "List WooCommerce products. Only available when WooCommerce is active.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "default": "any" },
+          "type": { "type": "string", "description": "simple, variable, grouped, external" },
+          "category": { "type": "string" },
+          "sku": { "type": "string" },
+          "search": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/woo/products" }
+    },
+    {
+      "name": "woo_get_product",
+      "description": "Get full WooCommerce product details.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/woo/products/{id}" }
+    },
+    {
+      "name": "woo_update_product",
+      "description": "Update product name, price, stock, status, etc.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "regular_price": { "type": "string" },
+          "sale_price": { "type": "string" },
+          "sku": { "type": "string" },
+          "status": { "type": "string" },
+          "stock_quantity": { "type": "integer" },
+          "manage_stock": { "type": "boolean" },
+          "stock_status": { "type": "string" },
+          "description": { "type": "string" },
+          "short_description": { "type": "string" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "PUT", "path": "/woo/products/{id}" }
+    },
+    {
+      "name": "woo_list_orders",
+      "description": "List WooCommerce orders with filtering.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "default": "any" },
+          "customer": { "type": "integer" },
+          "date_after": { "type": "string" },
+          "date_before": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/woo/orders" }
+    },
+    {
+      "name": "woo_get_order",
+      "description": "Get full order details including line items, billing, shipping, and notes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/woo/orders/{id}" }
+    },
+    {
+      "name": "woo_update_order",
+      "description": "Update order status or customer note.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "status": { "type": "string", "description": "e.g. processing, completed, cancelled" },
+          "note": { "type": "string" },
+          "customer_note": { "type": "string" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "PUT", "path": "/woo/orders/{id}" }
+    },
+    {
+      "name": "woo_adjust_stock",
+      "description": "Adjust product stock quantity (set, increase, decrease).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "description": "Product ID" },
+          "quantity": { "type": "integer" },
+          "action": { "type": "string", "enum": ["set", "increase", "decrease"], "default": "set" }
+        },
+        "required": ["id", "quantity"]
+      },
+      "endpoint": { "method": "POST", "path": "/woo/inventory/{id}" }
+    },
+    {
+      "name": "woo_sales_report",
+      "description": "Get sales summary for a period (orders, revenue, shipping, tax, refunds).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "period": { "type": "string", "enum": ["week", "month", "year", "custom"], "default": "month" },
+          "date_min": { "type": "string", "description": "Start date (YYYY-MM-DD) for custom period" },
+          "date_max": { "type": "string", "description": "End date (YYYY-MM-DD) for custom period" }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/woo/reports/sales" }
+    },
+    {
+      "name": "woo_list_customers",
+      "description": "List WooCommerce customers with order count and total spent.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "search": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/woo/customers" }
+    },
+    {
+      "name": "woo_get_customer",
+      "description": "Get full customer details including billing and shipping addresses.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/woo/customers/{id}" }
+    }
+  ]
+}
