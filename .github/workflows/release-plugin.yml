@@ -1,0 +1,126 @@
+name: Build & Release goo1-mcp plugin
+
+# Builds a distributable ZIP of the goo1-mcp WordPress plugin (with the
+# Plugin Update Checker library bundled), publishes it as a GitHub Release
+# asset, and syncs the updater metadata JSON that the plugin polls.
+#
+# Trigger: any push to main that touches the plugin source, plus manual runs.
+# The metadata JSON lives under distmeta/** which is intentionally NOT in the
+# path filter, so the workflow's own metadata commit never re-triggers it.
+# (Pushes made with GITHUB_TOKEN also don't trigger workflows, belt + braces.)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/goo1-mcp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-goo1-mcp
+  cancel-in-progress: false
+
+env:
+  PLUGIN_SLUG: goo1-mcp
+  PLUGIN_DIR: src/goo1-mcp
+  META_FILE: distmeta/updater/goo1-mcp.json
+  PUC_VERSION: v4.13   # last v4.x release that ships the Puc_v4_Factory class
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read plugin version from header
+        id: ver
+        run: |
+          set -euo pipefail
+          FILE="${PLUGIN_DIR}/${PLUGIN_SLUG}.php"
+          VERSION=$(grep -iE '^[[:space:]/*#]*Version:' "$FILE" | head -1 \
+                    | sed -E 's/.*[Vv]ersion:[[:space:]]*//' | tr -d '[:space:]')
+          if [ -z "$VERSION" ]; then
+            echo "::error file=$FILE::Could not read 'Version:' header"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"   >> "$GITHUB_OUTPUT"
+          echo "Detected plugin version: $VERSION"
+
+      - name: Build plugin ZIP (bundling Plugin Update Checker)
+        run: |
+          set -euo pipefail
+          BUILD="build/${PLUGIN_SLUG}"
+          rm -rf build *.zip puc.zip puc-src
+          mkdir -p build
+          cp -a "${PLUGIN_DIR}" "$BUILD"
+
+          # Strip dev-only files from the distributed copy.
+          rm -f "$BUILD/CLAUDE.md"
+          find "$BUILD" -name '.DS_Store' -delete
+
+          # Vendor the Plugin Update Checker library into the plugin.
+          curl -fsSL \
+            "https://github.com/YahnisElsts/plugin-update-checker/archive/refs/tags/${PUC_VERSION}.zip" \
+            -o puc.zip
+          unzip -q puc.zip -d puc-src
+          PUC_EXTRACT="$(find puc-src -maxdepth 1 -mindepth 1 -type d | head -1)"
+          mkdir -p "$BUILD/plugin-update-checker"
+          cp -a "$PUC_EXTRACT"/. "$BUILD/plugin-update-checker/"
+
+          # Fail loudly if the entry file the plugin require()s is missing.
+          if [ ! -f "$BUILD/plugin-update-checker/plugin-update-checker.php" ]; then
+            echo "::error::Plugin Update Checker entry file missing after vendoring (check PUC_VERSION)"
+            exit 1
+          fi
+
+          # Build the ZIP with a single top-level folder == plugin slug.
+          ( cd build && zip -qr "../${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}" )
+          echo "Built ${PLUGIN_SLUG}.zip ($(stat -c%s "${PLUGIN_SLUG}.zip") bytes)"
+
+      - name: Sync updater metadata JSON
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/update_meta.py \
+            --plugin-file "${PLUGIN_DIR}/${PLUGIN_SLUG}.php" \
+            --readme "${PLUGIN_DIR}/readme.txt" \
+            --meta "${META_FILE}" \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --tag "${{ steps.ver.outputs.tag }}" \
+            --slug "${PLUGIN_SLUG}"
+
+      - name: Commit metadata changes
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "${META_FILE}"; then
+            echo "Metadata already up to date; nothing to commit."
+          else
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "${META_FILE}"
+            git commit -m "chore(release): sync updater metadata for ${{ steps.ver.outputs.version }} [skip ci]"
+            git push
+          fi
+
+      - name: Publish GitHub Release and upload asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.ver.outputs.tag }}"
+          TARGET="$(git rev-parse HEAD)"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; refreshing the asset."
+          else
+            gh release create "$TAG" \
+              --target "$TARGET" \
+              --title "$TAG" \
+              --notes "Automated release of ${PLUGIN_SLUG} ${{ steps.ver.outputs.version }}."
+          fi
+          gh release upload "$TAG" "${PLUGIN_SLUG}.zip" --clobber
+          echo "Asset URL: https://github.com/${{ github.repository }}/releases/download/$TAG/${PLUGIN_SLUG}.zip"
