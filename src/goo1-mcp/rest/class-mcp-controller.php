@@ -157,16 +157,76 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 	 * tool list with "Input should be a valid dictionary" otherwise.
 	 */
 	private function normalize_schema( $schema ) {
-		if ( ! is_array( $schema ) ) {
-			$schema = array();
+		return $this->fix_schema_node( $schema, true );
+	}
+
+	/**
+	 * Recursively repair a JSON Schema that was decoded with json_decode($x, true).
+	 * PHP turns an empty object {} into an empty array [], which json_encode then
+	 * re-emits as "[]" — invalid for any schema keyword that must be an object
+	 * (properties, items, …) and rejected by the API ("JSON schema is invalid …
+	 * draft 2020-12"). We walk the tree, restore objects for those keywords, and
+	 * guarantee the top level is an object schema with an object `properties`.
+	 *
+	 * @param mixed $node    A (sub-)schema, as decoded to an associative array.
+	 * @param bool  $is_root Whether $node is the tool's top-level inputSchema.
+	 * @return mixed
+	 */
+	private function fix_schema_node( $node, $is_root = false ) {
+		if ( ! is_array( $node ) ) {
+			return $node; // booleans (e.g. additionalProperties: false), scalars.
 		}
-		if ( empty( $schema['type'] ) ) {
-			$schema['type'] = 'object';
+
+		// Keywords whose value is a single nested schema.
+		$single = array( 'items', 'additionalProperties', 'contains', 'not', 'if', 'then', 'else', 'propertyNames' );
+		// Keywords whose value is a map of name => schema.
+		$maps   = array( 'properties', 'patternProperties', '$defs', 'definitions' );
+		// Keywords whose value is a list of schemas.
+		$lists  = array( 'allOf', 'anyOf', 'oneOf', 'prefixItems' );
+
+		foreach ( $maps as $k ) {
+			if ( array_key_exists( $k, $node ) ) {
+				if ( ! is_array( $node[ $k ] ) || empty( $node[ $k ] ) ) {
+					$node[ $k ] = new stdClass(); // {} must stay an object.
+				} else {
+					$fixed = array();
+					foreach ( $node[ $k ] as $name => $sub ) {
+						$fixed[ $name ] = $this->fix_schema_node( $sub );
+					}
+					$node[ $k ] = $fixed;
+				}
+			}
 		}
-		if ( ! isset( $schema['properties'] ) || ! is_array( $schema['properties'] ) || empty( $schema['properties'] ) ) {
-			$schema['properties'] = new stdClass();
+
+		foreach ( $single as $k ) {
+			if ( array_key_exists( $k, $node ) ) {
+				if ( is_array( $node[ $k ] ) && empty( $node[ $k ] ) ) {
+					$node[ $k ] = new stdClass();
+				} else {
+					$node[ $k ] = $this->fix_schema_node( $node[ $k ] );
+				}
+			}
 		}
-		return $schema;
+
+		foreach ( $lists as $k ) {
+			if ( array_key_exists( $k, $node ) && is_array( $node[ $k ] ) ) {
+				$node[ $k ] = array_map(
+					function ( $sub ) { return $this->fix_schema_node( $sub ); },
+					array_values( $node[ $k ] )
+				);
+			}
+		}
+
+		if ( $is_root ) {
+			if ( empty( $node['type'] ) ) {
+				$node['type'] = 'object';
+			}
+			if ( ! array_key_exists( 'properties', $node ) ) {
+				$node['properties'] = new stdClass();
+			}
+		}
+
+		return $node;
 	}
 
 	private function call_tool( $id, $params, WP_REST_Request $request ) {
