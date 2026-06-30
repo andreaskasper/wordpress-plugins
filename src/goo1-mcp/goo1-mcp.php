@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.3.260629
+ * Version:     1.4.260629
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -136,12 +136,19 @@ add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 }, 10, 3 );
 
 
-//Auto UPDATER
-if (!class_exists("Puc_v4_Factory")) {
-	require_once(__DIR__."/plugin-update-checker/plugin-update-checker.php");
+// Auto-updater (GitHub-hosted, via Plugin Update Checker).
+// The PUC library is vendored into the distributable ZIP by the release
+// workflow and is intentionally NOT part of the source tree. Guard every
+// step so a missing library can never fatally crash the plugin (and with it
+// every REST/MCP endpoint) when the plugin runs from source.
+$goo1_mcp_puc = __DIR__ . '/plugin-update-checker/plugin-update-checker.php';
+if ( ! class_exists( 'Puc_v4_Factory' ) && is_readable( $goo1_mcp_puc ) ) {
+	require_once $goo1_mcp_puc;
 }
-$myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
-    "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/goo1-mcp.json",
-    __FILE__, //Full path to the main plugin file or functions.php.
-    'goo1-mcp'
-);
+if ( class_exists( 'Puc_v4_Factory' ) ) {
+	Puc_v4_Factory::buildUpdateChecker(
+		'https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/goo1-mcp.json',
+		__FILE__, // Full path to the main plugin file.
+		'goo1-mcp'
+	);
+}
