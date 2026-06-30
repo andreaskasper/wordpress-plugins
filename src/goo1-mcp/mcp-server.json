@@ -361,7 +361,7 @@
         "type": "object",
         "properties": {
           "sql": { "type": "string", "description": "SQL query. Use %s, %d, %f placeholders for parameters." },
-          "params": { "type": "array", "items": {}, "description": "Parameters for prepared statement placeholders" },
+          "params": { "type": "array", "items": { "type": ["string", "number", "boolean", "null"] }, "description": "Parameters for prepared statement placeholders" },
           "max_rows": { "type": "integer", "default": 1000, "description": "Maximum rows to return (up to 10000)" }
         },
         "required": ["sql"]
