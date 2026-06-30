@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.260629
+Stable tag: 1.3.260630
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,10 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.3.260630 =
+* Fixed the MCP connector failing to load with "400 tools.N.custom.input_schema: JSON schema is invalid (draft 2020-12)". The wp_db_query tool's `params.items` was an empty `{}` which PHP re-serialized as `[]` (invalid: `items` must be an object). `items` now has an explicit type, and normalize_schema() recursively keeps every empty object as a JSON object, so nested schema keywords (items, properties, ...) can never serialize as arrays again.
+* Hardened the auto-updater bootstrap: the Plugin Update Checker is now loaded and wired up only when the library is actually present, so a missing library can no longer fatally crash the plugin (and with it every REST/MCP endpoint).
 
 = 1.3.260629 =
 * Fixed MCP tools/list rejecting tools whose input schema has no parameters: an empty `properties` now serializes as a JSON object `{}` instead of `[]`, so Claude no longer fails with "Input should be a valid dictionary".
