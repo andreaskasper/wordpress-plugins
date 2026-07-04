@@ -1,6 +1,6 @@
 {
   "name": "goo1-wp-claude-bridge",
-  "version": "1.0.0",
+  "version": "1.5.260705",
   "description": "WordPress site management via REST API for Claude AI",
   "auth": {
     "type": "bearer",
@@ -157,20 +157,75 @@
     },
     {
       "name": "wp_upload_media",
-      "description": "Upload a file to the media library via base64 data.",
+      "description": "Upload a file to the WordPress media library. PREFERRED: pass `url` (a single http/https URL or an array of URLs) and WordPress downloads the file(s) server-side — no large base64 payload travels through the conversation, which saves a lot of tokens. Alternatively pass `base64` + `filename` as a fallback (a leading data:*;base64, prefix is stripped automatically). Optional: attach to a post, set as featured image, title/alt/caption/description, author, date, custom meta, dedupe, overwrite, MIME allow-list and subsize control.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "base64": { "type": "string", "description": "Base64-encoded file content" },
-          "filename": { "type": "string" },
+          "url": { "type": ["string", "array"], "items": { "type": "string" }, "description": "Remote http/https URL, or array of URLs, that WordPress downloads itself. Preferred over base64. A single URL returns one media object; an array returns { items, count }." },
+          "base64": { "type": "string", "description": "Base64-encoded file content (fallback; large files cost many tokens). A data:*;base64, prefix is stripped automatically." },
+          "filename": { "type": "string", "description": "Filename incl. extension. Required for base64. For URLs it is derived from the URL (and the extension sniffed) when omitted." },
+          "mime_type": { "type": "string", "description": "Force the MIME type — useful for extensionless URLs." },
           "title": { "type": "string" },
           "alt": { "type": "string" },
           "caption": { "type": "string" },
-          "description": { "type": "string" }
-        },
-        "required": ["base64", "filename"]
+          "description": { "type": "string" },
+          "attach_to_post": { "type": "integer", "description": "Parent post/page ID to attach the media to." },
+          "set_as_featured": { "type": "boolean", "default": false, "description": "Set the uploaded image as the featured image of attach_to_post." },
+          "author": { "type": "integer", "description": "User ID to record as the attachment author." },
+          "date": { "type": "string", "description": "Attachment date, 'YYYY-MM-DD HH:MM:SS'." },
+          "meta": { "type": "object", "description": "Additional attachment post-meta as key/value pairs." },
+          "dedupe": { "type": "boolean", "default": false, "description": "Reuse an existing attachment instead of creating a duplicate." },
+          "dedupe_by": { "type": "string", "enum": ["source_url", "filename"], "default": "source_url", "description": "How to detect a duplicate: by the original source URL (default) or by filename." },
+          "overwrite_existing": { "type": "boolean", "default": false, "description": "Delete a prior attachment with the same filename before uploading." },
+          "generate_subsizes": { "type": "boolean", "default": true, "description": "Generate intermediate image sizes. Automatically skipped for very large images (~>25 MP or >40 MB) unless force_subsizes is set." },
+          "force_subsizes": { "type": "boolean", "default": false, "description": "Force subsize generation even for very large images." },
+          "allowed_mime_types": { "type": "array", "items": { "type": "string" }, "description": "Restrict accepted MIME types (allow-list)." },
+          "max_filesize": { "type": "integer", "description": "Reject files larger than this many bytes." },
+          "timeout": { "type": "integer", "default": 30, "description": "URL download timeout in seconds." }
+        }
       },
       "endpoint": { "method": "POST", "path": "/media" }
+    },
+    {
+      "name": "wp_get_media",
+      "description": "Get a single media attachment including its metadata and available image sizes.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/media/{id}" }
+    },
+    {
+      "name": "wp_update_media",
+      "description": "Update a media attachment's fields (title, caption, description, alt text).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "caption": { "type": "string" },
+          "description": { "type": "string" },
+          "alt": { "type": "string" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "PUT", "path": "/media/{id}" }
+    },
+    {
+      "name": "wp_delete_media",
+      "description": "Delete a media attachment. force defaults to true (skips trash and removes the files).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "force": { "type": "boolean", "default": true }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "DELETE", "path": "/media/{id}" }
     },
     {
       "name": "wp_list_comments",
@@ -625,6 +680,84 @@
         "required": ["id"]
       },
       "endpoint": { "method": "GET", "path": "/woo/customers/{id}" }
+    },
+    {
+      "name": "elementor_get_data",
+      "description": "Get a post/page's parsed Elementor data (_elementor_data) plus edit mode, Elementor version, template type and page settings. Only available when Elementor is active.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/elementor/{id}" }
+    },
+    {
+      "name": "elementor_update_data",
+      "description": "Replace a post's Elementor data. Pass `data` as a JSON array of Elementor elements (or a JSON string). Handles wp_slash correctly (the classic Elementor save pitfall) and regenerates the post's CSS by default.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "data": { "type": ["array", "string"], "description": "Elementor elements tree as an array, or a JSON string of it." },
+          "page_settings": { "type": "object", "description": "Optional Elementor page settings to store." },
+          "regenerate_css": { "type": "boolean", "default": true, "description": "Regenerate this post's Elementor CSS after saving." }
+        },
+        "required": ["id", "data"]
+      },
+      "endpoint": { "method": "PUT", "path": "/elementor/{id}" }
+    },
+    {
+      "name": "elementor_find_widgets",
+      "description": "Return a compact list of all Elementor elements/widgets on a post (id, elType, widgetType, depth and a short text preview) instead of the full data blob — a token-saver for inspecting a page's structure. Optionally filter by widget_type.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "widget_type": { "type": "string", "description": "Only return widgets of this widgetType (e.g. 'heading', 'image')." }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "GET", "path": "/elementor/{id}/widgets" }
+    },
+    {
+      "name": "elementor_list_templates",
+      "description": "List Elementor library templates (page, section, container, widget, popup, header, footer, ...).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "description": "Filter by template type." },
+          "search": { "type": "string" },
+          "per_page": { "type": "integer", "default": 10 },
+          "page": { "type": "integer", "default": 1 }
+        }
+      },
+      "endpoint": { "method": "GET", "path": "/elementor/templates" }
+    },
+    {
+      "name": "elementor_get_kit",
+      "description": "Get the active Elementor kit id, title and global settings.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "GET", "path": "/elementor/kit" }
+    },
+    {
+      "name": "elementor_regenerate_css",
+      "description": "Regenerate the Elementor CSS file for a single post/page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" }
+        },
+        "required": ["id"]
+      },
+      "endpoint": { "method": "POST", "path": "/elementor/{id}/regenerate-css" }
+    },
+    {
+      "name": "elementor_regenerate_all_css",
+      "description": "Clear and regenerate all Elementor CSS site-wide.",
+      "inputSchema": { "type": "object", "properties": {} },
+      "endpoint": { "method": "POST", "path": "/elementor/regenerate-css" }
     }
   ]
 }

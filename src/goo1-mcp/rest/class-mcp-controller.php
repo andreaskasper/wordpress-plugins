@@ -277,7 +277,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		// trigger rest_post_dispatch, so the global audit hook would miss these.)
 		$key   = $request->get_param( '_goo1_mcp_key' );
 		$label = ( is_array( $key ) && isset( $key['label'] ) ) ? $key['label'] : 'oauth';
-		Goo1_MCP_Audit_Log::instance()->log( $label, self::NAMESPACE_PATH() . $path, $method, $args, $status );
+		Goo1_MCP_Audit_Log::instance()->log( $label, self::NAMESPACE_PATH() . $path, $method, $this->redact_args( $args ), $status );
 
 		$text = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$is_error = ( $status >= 400 ) || ( is_array( $data ) && isset( $data['success'] ) && false === $data['success'] );
@@ -310,6 +310,23 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 
 	private static function NAMESPACE_PATH() {
 		return '/' . self::NAMESPACE;
+	}
+
+	/**
+	 * Replace oversized string arguments (e.g. base64 uploads) with a short
+	 * placeholder before they are written to the audit log, so a single media
+	 * upload can't bloat the audit table by megabytes.
+	 */
+	private function redact_args( $args ) {
+		if ( ! is_array( $args ) ) {
+			return $args;
+		}
+		foreach ( $args as $k => $v ) {
+			if ( is_string( $v ) && strlen( $v ) > 2048 ) {
+				$args[ $k ] = '[' . $k . ': ' . strlen( $v ) . ' bytes omitted]';
+			}
+		}
+		return $args;
 	}
 
 	/* ---- JSON-RPC envelope helpers ---- */

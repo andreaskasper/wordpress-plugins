@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.3.260630
+Stable tag: 1.5.260705
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,7 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 **Features:**
 
 * Full CRUD for posts, pages, custom post types, taxonomies, media, comments, and users
+* Server-side media upload from a URL (or array of URLs) — WordPress downloads the file itself, so no large base64 payload has to travel through the connector
 * Navigation menu and widget management
 * Plugin and theme management (list, activate, deactivate)
 * WordPress options read/write with sensitive option filtering
@@ -28,6 +29,7 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 * Action/filter hook introspection
 * Transient management
 * WooCommerce support (products, orders, customers, inventory, sales reports)
+* Elementor support (read/write page data, template library, active kit, compact widget tree, CSS regeneration) — active only when Elementor is installed
 * Bearer token authentication with scoped API keys
 * OAuth 2.1 remote MCP connector (Claude Desktop / claude.ai) with PKCE and Dynamic Client Registration
 * Native MCP JSON-RPC transport endpoint (/wp-json/goo1-mcp/v1/mcp)
@@ -53,6 +55,16 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.5.260705 =
+* Media: new server-side URL upload. Pass `url` (a single URL or an array of URLs) to the upload tool and WordPress downloads the file(s) itself via download_url() + wp_handle_sideload(), so large images no longer have to travel through the MCP conversation as base64 (a major token saver). The MIME type is sniffed when the URL has no file extension.
+* Media: base64 uploads now strip a leading data:*;base64, prefix automatically and no longer fail on it.
+* Media: unified upload pipeline with many new options — attach_to_post, set_as_featured, author, date, meta, alt/title/caption/description, dedupe (+ dedupe_by source_url|filename), overwrite_existing, allowed_mime_types, max_filesize, timeout, and generate_subsizes with an automatic large-image guard (intermediate sizes are skipped above ~25 MP / 40 MB unless force_subsizes is set).
+* Media: added wp_get_media, wp_update_media and wp_delete_media MCP tools (previously only listing and uploading were exposed).
+* Media: fixed a PHP warning in the media formatter when the underlying file is not present locally (e.g. offloaded to S3) — filesize is now null instead of erroring.
+* Elementor: new integration controller, loaded only when Elementor is active. Tools: elementor_get_data, elementor_update_data (correct wp_slash handling plus CSS regeneration), elementor_find_widgets (compact widget tree instead of the full data blob), elementor_list_templates, elementor_get_kit, elementor_regenerate_css and elementor_regenerate_all_css.
+* Audit log: oversized string arguments (e.g. base64 payloads) are now replaced with a short placeholder instead of bloating the audit table.
+* Fixed the plugin version being out of sync across the header, the GOO1_MCP_VERSION constant and the readme Stable tag.
 
 = 1.3.260630 =
 * Fixed the MCP connector failing to load with "400 tools.N.custom.input_schema: JSON schema is invalid (draft 2020-12)". The wp_db_query tool's `params.items` was an empty `{}` which PHP re-serialized as `[]` (invalid: `items` must be an object). `items` now has an explicit type, and normalize_schema() recursively keeps every empty object as a JSON object, so nested schema keywords (items, properties, ...) can never serialize as arrays again.

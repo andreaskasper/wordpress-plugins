@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.4.260630
+ * Version:     1.5.260705
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_MCP_VERSION', '1.3.260630' );
+define( 'GOO1_MCP_VERSION', '1.5.260705' );
 define( 'GOO1_MCP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -48,10 +48,13 @@ require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-database-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-site-health-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-mcp-controller.php';
 
-// Conditionally load WooCommerce controller.
+// Conditionally load integration controllers only when their plugin is present.
 add_action( 'plugins_loaded', function () {
 	if ( class_exists( 'WooCommerce' ) ) {
 		require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-woocommerce-controller.php';
+	}
+	if ( defined( 'ELEMENTOR_VERSION' ) || class_exists( '\\Elementor\\Plugin' ) ) {
+		require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-elementor-controller.php';
 	}
 } );
 
@@ -97,6 +100,9 @@ add_action( 'rest_api_init', function () {
 
 	if ( class_exists( 'Goo1_MCP_WooCommerce_Controller' ) ) {
 		$controllers[] = 'Goo1_MCP_WooCommerce_Controller';
+	}
+	if ( class_exists( 'Goo1_MCP_Elementor_Controller' ) ) {
+		$controllers[] = 'Goo1_MCP_Elementor_Controller';
 	}
 
 	foreach ( $controllers as $class ) {
