@@ -7,6 +7,12 @@ $oauth    = Goo1_MCP_OAuth::instance();
 $settings = Goo1_MCP_OAuth::settings();
 $clients  = get_option( Goo1_MCP_OAuth::CLIENTS_OPTION, array() );
 $tokens   = $oauth->active_tokens();
+$conns    = $oauth->connections();
+$grants_enabled = Goo1_MCP_Permissions::grants_enabled();
+$grant_labels   = array(
+	'unredacted' => __( 'Secrets in clear text', 'goo1-mcp' ),
+	'sql_files'  => __( 'SQL file access', 'goo1-mcp' ),
+);
 ?>
 <div class="wrap">
 	<h1>goo1 Claude Bridge &mdash; Connector (OAuth)</h1>
@@ -24,7 +30,7 @@ $tokens   = $oauth->active_tokens();
 	<table class="form-table">
 		<tr>
 			<th><?php esc_html_e( 'MCP Connector URL', 'goo1-mcp' ); ?></th>
-			<td><code style="font-size:14px;user-select:all;"><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url() ); ?></code></td>
+			<td><code style="font-size:14px;user-select:all;"><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url() ); ?></code><?php Goo1_MCP_Admin::copy_button( Goo1_MCP_OAuth::mcp_resource_url() ); ?></td>
 		</tr>
 		<tr>
 			<th><?php esc_html_e( 'Authorization Server', 'goo1-mcp' ); ?></th>
@@ -69,13 +75,60 @@ $tokens   = $oauth->active_tokens();
 						<td><code><?php echo esc_html( $client['client_id'] ); ?></code></td>
 						<td><?php echo esc_html( $client['source'] ); ?></td>
 						<td><?php echo empty( $client['client_secret_hash'] ) ? esc_html__( 'public (PKCE)', 'goo1-mcp' ) : esc_html__( 'confidential', 'goo1-mcp' ); ?></td>
-						<td><?php echo $client['redirect_uris'] ? esc_html( implode( ', ', $client['redirect_uris'] ) ) : '<em>' . esc_html__( 'any https/loopback', 'goo1-mcp' ) . '</em>'; ?></td>
+						<td><?php echo $client['redirect_uris'] ? esc_html( implode( ', ', $client['redirect_uris'] ) ) : '<em>' . ( 'manual' === $client['source'] ? esc_html__( 'any https (manual client)', 'goo1-mcp' ) : esc_html__( 'none — cannot authorize', 'goo1-mcp' ) ) . '</em>'; ?></td>
 						<td><?php echo esc_html( $client['created_at'] ); ?></td>
 						<td>
 							<form method="post" style="display:inline;" onsubmit="return confirm('<?php echo esc_js( __( 'Revoke this client and all its tokens?', 'goo1-mcp' ) ); ?>');">
 								<?php wp_nonce_field( 'goo1_mcp_revoke_client' ); ?>
 								<input type="hidden" name="client_id" value="<?php echo esc_attr( $client['client_id'] ); ?>">
 								<input type="submit" name="goo1_mcp_revoke_client" class="button button-small button-link-delete" value="<?php esc_attr_e( 'Revoke', 'goo1-mcp' ); ?>">
+							</form>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+	<?php endif; ?>
+
+	<h2><?php esc_html_e( 'Connections', 'goo1-mcp' ); ?></h2>
+	<p class="description"><?php esc_html_e( 'One row per approved connection (refresh token). Extra rights changed here apply immediately to its access tokens.', 'goo1-mcp' ); ?></p>
+	<?php if ( empty( $conns ) ) : ?>
+		<p><?php esc_html_e( 'No connections yet.', 'goo1-mcp' ); ?></p>
+	<?php else : ?>
+		<table class="widefat striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Client', 'goo1-mcp' ); ?></th>
+					<th><?php esc_html_e( 'Runs as', 'goo1-mcp' ); ?></th>
+					<th><?php esc_html_e( 'Scope', 'goo1-mcp' ); ?></th>
+					<th><?php esc_html_e( 'Connected', 'goo1-mcp' ); ?></th>
+					<th><?php esc_html_e( 'Expires (if unused)', 'goo1-mcp' ); ?></th>
+					<th><?php esc_html_e( 'Extra rights', 'goo1-mcp' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $conns as $c ) :
+					$cu = get_userdata( (int) $c['user_id'] ); ?>
+					<tr>
+						<td><?php echo esc_html( $c['client_name'] ); ?></td>
+						<td><?php echo $cu ? esc_html( $cu->user_login ) : esc_html( $c['user_id'] ); ?></td>
+						<td><?php echo esc_html( $c['scope'] . ( $c['db_write'] ? ' + db_write' : '' ) ); ?></td>
+						<td><?php echo esc_html( $c['connected_at'] ); ?></td>
+						<td><?php echo $c['expires_at'] ? esc_html( gmdate( 'Y-m-d', $c['expires_at'] ) ) : '—'; ?></td>
+						<td>
+							<form method="post">
+								<?php wp_nonce_field( 'goo1_mcp_edit_connection' ); ?>
+								<input type="hidden" name="family" value="<?php echo esc_attr( $c['family'] ); ?>">
+								<?php if ( $grants_enabled ) : ?>
+									<?php foreach ( $grant_labels as $g => $glabel ) : ?>
+										<small><?php echo esc_html( $glabel ); ?>:</small>
+										<?php Goo1_MCP_Admin::grant_select( 'conn_grant[' . $g . ']', $c['grants'][ $g ] ); ?><br>
+									<?php endforeach; ?>
+									<input type="submit" name="goo1_mcp_edit_connection" class="button button-small" value="<?php esc_attr_e( 'Save', 'goo1-mcp' ); ?>">
+								<?php else : ?>
+									<small><?php esc_html_e( 'Off (Settings)', 'goo1-mcp' ); ?></small>
+								<?php endif; ?>
+								<input type="submit" name="goo1_mcp_revoke_connection" class="button button-small button-link-delete" value="<?php esc_attr_e( 'Disconnect', 'goo1-mcp' ); ?>" onclick="return confirm('<?php echo esc_js( __( 'Disconnect this connection?', 'goo1-mcp' ) ); ?>');">
 							</form>
 						</td>
 					</tr>

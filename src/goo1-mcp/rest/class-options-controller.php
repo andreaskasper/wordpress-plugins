@@ -5,15 +5,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 
-	/**
-	 * Option name patterns that should never be exposed.
-	 */
-	private $blocked_patterns = array(
-		'password', 'secret', 'token', 'auth_key', 'auth_salt',
-		'logged_in_key', 'logged_in_salt', 'nonce_key', 'nonce_salt',
-		'secure_auth_key', 'secure_auth_salt', 'goo1_mcp_api_keys',
-	);
-
 	public function register_routes() {
 		register_rest_route( self::NAMESPACE, '/options', array(
 			'methods'             => 'GET',
@@ -44,7 +35,7 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 			),
 		) );
 
-		register_rest_route( self::NAMESPACE, '/options/(?P<key>[a-zA-Z0-9_-]+)', array(
+		register_rest_route( self::NAMESPACE, '/options/(?P<key>[a-zA-Z0-9_.-]+)', array(
 			'methods'             => 'DELETE',
 			'callback'            => array( $this, 'delete_option' ),
 			'permission_callback' => $this->get_permission_callback( 'full' ),
@@ -57,20 +48,26 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 			return $this->error( 'missing_keys', 'Provide option names via the keys parameter (comma-separated).' );
 		}
 
-		$keys   = array_map( 'trim', explode( ',', $keys_param ) );
+		$unredacted = Goo1_MCP_Permissions::instance()->allow_unredacted( $request );
+		if ( $unredacted ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		}
+
+		$keys   = array_filter( array_map( 'trim', explode( ',', $keys_param ) ) );
 		$result = array();
 
 		foreach ( $keys as $key ) {
 			$key = sanitize_text_field( $key );
-			if ( $this->is_blocked( $key ) ) {
-				$result[ $key ] = '[blocked]';
+			// Reads accept any name; the hidden check runs on the stored name.
+			if ( $this->is_hidden( $key, $unredacted ) ) {
+				$result[ $key ] = Goo1_MCP_Redactor::MASK;
 				continue;
 			}
 			$value = get_option( $key );
 			if ( false === $value ) {
 				$result[ $key ] = null;
 			} else {
-				$result[ $key ] = $value;
+				$result[ $key ] = $unredacted ? $value : Goo1_MCP_Redactor::redact( $value );
 			}
 		}
 
@@ -82,31 +79,46 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 		$options = $params['options'] ?? $params;
 		$updated = array();
 		$blocked = array();
+		$kept    = array();
 
 		if ( ! is_array( $options ) ) {
 			return $this->error( 'invalid_body', 'Provide an object with option key/value pairs.' );
 		}
+		unset( $options['unredacted'] );
 
 		foreach ( $options as $key => $value ) {
-			$key = sanitize_text_field( $key );
-			if ( $this->is_blocked( $key ) ) {
+			$key = (string) $key;
+			// Plain ASCII names only (MySQL collation would map look-alikes such
+			// as "ｇoo1_mcp_settings" onto real options). Bridge settings and
+			// secret-bearing option names are never writable here.
+			if ( ! Goo1_MCP_Guard::is_valid_option_name( $key ) || Goo1_MCP_Guard::is_protected_option( $key ) || Goo1_MCP_Redactor::is_blocked_option( Goo1_MCP_Guard::stored_name( $key ) ) ) {
 				$blocked[] = $key;
 				continue;
+			}
+			// A value read back with "[redacted]" placeholders must not overwrite the real secrets.
+			if ( Goo1_MCP_Redactor::contains_mask( $value ) ) {
+				$value  = Goo1_MCP_Redactor::restore_masked( $value, get_option( $key ) );
+				$kept[] = $key;
 			}
 			update_option( $key, $value );
 			$updated[] = $key;
 		}
 
 		return $this->success( array(
-			'updated' => $updated,
-			'blocked' => $blocked,
+			'updated'          => $updated,
+			'blocked'          => $blocked,
+			'kept_secrets_for' => $kept,
 		) );
 	}
 
 	public function list_all_options( $request ) {
 		global $wpdb;
 
-		$search = sanitize_text_field( $request['search'] ?? '' );
+		$search     = sanitize_text_field( $request['search'] ?? '' );
+		$unredacted = Goo1_MCP_Permissions::instance()->allow_unredacted( $request );
+		if ( $unredacted ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		}
 
 		if ( $search ) {
 			$results = $wpdb->get_results(
@@ -117,19 +129,21 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 			);
 		} else {
 			$results = $wpdb->get_results(
-				"SELECT option_name, option_value, autoload FROM $wpdb->options WHERE autoload = 'yes' ORDER BY option_name LIMIT 500"
+				"SELECT option_name, option_value, autoload FROM $wpdb->options WHERE autoload IN ('yes','on','auto-on','auto') ORDER BY option_name LIMIT 500"
 			);
 		}
 
 		$output = array();
 		foreach ( $results as $row ) {
-			if ( $this->is_blocked( $row->option_name ) ) {
+			if ( $this->is_hidden( $row->option_name, $unredacted ) ) {
 				continue;
 			}
-			$value = maybe_unserialize( $row->option_value );
+			$value = is_serialized( $row->option_value )
+				? @unserialize( $row->option_value, array( 'allowed_classes' => false ) ) // phpcs:ignore
+				: $row->option_value;
 			$output[] = array(
 				'name'     => $row->option_name,
-				'value'    => $value,
+				'value'    => $unredacted ? $value : Goo1_MCP_Redactor::redact( $value ),
 				'autoload' => $row->autoload,
 			);
 		}
@@ -138,9 +152,9 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 	}
 
 	public function delete_option( $request ) {
-		$key = sanitize_text_field( $request['key'] );
+		$key = (string) $request['key'];
 
-		if ( $this->is_blocked( $key ) ) {
+		if ( ! Goo1_MCP_Guard::is_valid_option_name( $key ) || Goo1_MCP_Guard::is_protected_option( $key ) || Goo1_MCP_Redactor::is_blocked_option( Goo1_MCP_Guard::stored_name( $key ) ) ) {
 			return $this->error( 'blocked_option', 'This option cannot be deleted via the API.', 403 );
 		}
 
@@ -153,13 +167,18 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 		return $this->success( array( 'deleted' => true, 'key' => $key ) );
 	}
 
-	private function is_blocked( $name ) {
-		$name_lower = strtolower( $name );
-		foreach ( $this->blocked_patterns as $pattern ) {
-			if ( strpos( $name_lower, $pattern ) !== false ) {
+	/**
+	 * Hidden from reads: bridge credentials always; other secret-bearing
+	 * option names unless the call is allowed to see secrets.
+	 */
+	private function is_hidden( $name, $unredacted ) {
+		$name = Goo1_MCP_Guard::stored_name( $name );
+		$lc   = strtolower( (string) $name );
+		foreach ( array( 'goo1_mcp_api_keys', 'goo1_mcp_oauth', 'goo1_mcp_seal' ) as $always ) {
+			if ( 0 === strpos( $lc, $always ) ) {
 				return true;
 			}
 		}
-		return false;
+		return ! $unredacted && Goo1_MCP_Redactor::is_blocked_option( $name );
 	}
 }
