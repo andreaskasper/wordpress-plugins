@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.6.261027
+Stable tag: 1.7.261027
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -30,6 +30,11 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 * Action/filter hook introspection
 * Transient management
 * WooCommerce support (products, orders, customers, inventory, sales reports)
+* UpdraftPlus support: status, S3-Compatible (Generic) configuration with sealed credentials, connection test, remote rescan, backup now + progress, backup list, retention guard
+* ManageWP Worker helpers: connection status, clean reset, wp-admin page with the connection key (copy button) — the key is never returned to the AI
+* Sealed secret hand-over: secrets reach a site encrypted (from goo1-seal.mjs on the owner's computer — local file or Vaultwarden —, from another Claude Bridge site, or typed into a wp-admin inbox), never in clear text through the conversation
+* Elementor: automatic backup before every change, restore, single-element read/patch by id, saves through Elementor's document API (revisions)
+* Cache purge across common caching plugins, one-call site overview for audits
 * Elementor support (read/write page data, template library, active kit, compact widget tree, CSS regeneration) — active only when Elementor is installed
 * Bearer token authentication with scoped API keys
 * OAuth 2.1 remote MCP connector (Claude Desktop / claude.ai) with PKCE and Dynamic Client Registration
@@ -58,6 +63,13 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.7.261027 =
+* Secrets: sealed hand-over ("goo1seal1": X25519 + HKDF-SHA256 + ChaCha20-Poly1305). The request's private key is stored encrypted with a key derived from the wp-config salts (needs unique AUTH_KEY/SECURE_AUTH_KEY). Export targets are exact hosts (no wildcards, no redirects). New tools secrets_request, secrets_status, secrets_export_sealed. A target site creates a one-time request (30 min); the envelope comes from tools/goo1-seal.mjs on the owner's computer (reads goo1-vault.json or Vaultwarden via the bw CLI; fetches the public key from the target itself), from another Bridge site (only to hosts on its "Secret export targets" allowlist; it fetches the recipient's key itself), or from a hidden wp-admin "Secret inbox" page. The AI only ever sees the envelope.
+* UpdraftPlus: updraft_status, updraft_configure_s3 (S3-Compatible Generic; credentials only sealed; tests first; for a new target it rescans the bucket and refuses with 409 — nothing saved — if the retention would delete older sets unless confirm_retention=true), updraft_test_s3, updraft_rescan_remote, updraft_list_backups, updraft_backup_now (background via WP-Cron), updraft_backup_progress.
+* ManageWP: managewp_status, managewp_connection_link (refreshes the key, returns the wp-admin page where the owner copies it), managewp_reset (removes Worker keys incl. object cache). New admin page Claude Bridge → ManageWP with copy buttons for site URL and key.
+* Elementor: elementor_update_data backs up the current state first and saves through Elementor's document API (creates a revision, clears the element cache). New tools elementor_get_element, elementor_patch_element (change one element's settings without uploading the page), elementor_list_backups, elementor_restore_backup. Backups live in the new table {prefix}goo1_mcp_backups (last 10 per page).
+* New tools wp_cache_purge (LiteSpeed, WP Rocket, W3TC, WP Super Cache, WP Fastest Cache, SiteGround, Autoptimize, Breeze, Cache Enabler, Hummingbird, Nginx Helper, WP Engine, Elementor CSS, object cache) and wp_site_overview (versions, PHP EOL, debug flags, pending updates, risky/caching plugins, backup and ManageWP status, overdue cron, DB/disk, bridge keys).
 
 = 1.6.261027 =
 * Run-as user: every request now runs as a WordPress administrator — OAuth connections as the admin who approved them, API keys as the admin chosen under "Runs as" (default: the admin creating the key). Fixes Elementor HTML widgets losing <style>/<script>/SVG and `&` turning into `&amp;` (Elementor sanitises _elementor_data for users without unfiltered_html), new posts having author 0, and capability checks of other plugins failing. Keys created before 1.6 keep working without a user; an admin notice asks to assign one.
