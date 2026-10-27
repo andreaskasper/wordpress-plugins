@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.5.260705
+ * Version:     1.6.261027
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_MCP_VERSION', '1.5.260705' );
+define( 'GOO1_MCP_VERSION', '1.6.261027' );
 define( 'GOO1_MCP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -28,6 +28,8 @@ register_activation_hook( __FILE__, array( 'Goo1_MCP_Activator', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'Goo1_MCP_Deactivator', 'deactivate' ) );
 
 // Core includes.
+require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-redactor.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-guard.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-auth.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-permissions.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-rate-limiter.php';
@@ -46,7 +48,12 @@ require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-options-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-plugins-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-database-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-site-health-controller.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-rest-proxy-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-mcp-controller.php';
+
+// Schema/settings upgrade after plugin updates (activation hook does not fire on update).
+add_action( 'plugins_loaded', array( 'Goo1_MCP_Activator', 'maybe_upgrade' ), 5 );
+add_action( Goo1_MCP_Activator::CRON_HOOK, array( 'Goo1_MCP_Activator', 'daily_maintenance' ) );
 
 // Conditionally load integration controllers only when their plugin is present.
 add_action( 'plugins_loaded', function () {
@@ -95,6 +102,7 @@ add_action( 'rest_api_init', function () {
 		'Goo1_MCP_Plugins_Controller',
 		'Goo1_MCP_Database_Controller',
 		'Goo1_MCP_Site_Health_Controller',
+		'Goo1_MCP_Rest_Proxy_Controller',
 		'Goo1_MCP_MCP_Controller',
 	);
 
@@ -125,7 +133,7 @@ add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 			);
 		}
 
-		$key_data = $request->get_param( '_goo1_mcp_key' );
+		$key_data = Goo1_MCP_Auth::instance()->current();
 		// Skip the /mcp envelope itself — each tools/call is dispatched
 		// internally and audited under its real endpoint.
 		if ( $key_data && substr( $route, -4 ) !== '/mcp' ) {
@@ -134,7 +142,8 @@ add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 				$route,
 				$request->get_method(),
 				$request->get_params(),
-				$response->get_status()
+				$response->get_status(),
+				Goo1_MCP_Audit_Log::take_flags()
 			);
 		}
 	}

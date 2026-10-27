@@ -132,7 +132,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			return $this->error( 'not_found', 'Post not found.', 404 );
 		}
 
-		return $this->success( $this->format_post( $post, true ) );
+		return $this->success( $this->format_post( $post, true, $this->meta_options( $request ) ) );
 	}
 
 	public function create_post( $request ) {
@@ -143,10 +143,12 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 
 		$post_data = array(
 			'post_title'   => sanitize_text_field( $params['title'] ?? '' ),
-			'post_content' => wp_kses_post( $params['content'] ?? '' ),
+			// No forced wp_kses_post(): WordPress applies kses itself unless the
+			// run-as user has unfiltered_html (exactly like in the editor).
+			'post_content' => (string) ( $params['content'] ?? '' ),
 			'post_status'  => sanitize_text_field( $params['status'] ?? 'draft' ),
 			'post_type'    => sanitize_text_field( $params['post_type'] ?? 'post' ),
-			'post_excerpt' => wp_kses_post( $params['excerpt'] ?? '' ),
+			'post_excerpt' => (string) ( $params['excerpt'] ?? '' ),
 			'post_author'  => (int) ( $params['author'] ?? get_current_user_id() ),
 			'post_parent'  => (int) ( $params['parent'] ?? 0 ),
 		);
@@ -161,7 +163,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			$post_data['menu_order'] = (int) $params['menu_order'];
 		}
 
-		$post_id = wp_insert_post( $post_data, true );
+		$post_id = wp_insert_post( wp_slash( $post_data ), true );
 		if ( is_wp_error( $post_id ) ) {
 			return $this->error( 'create_failed', $post_id->get_error_message() );
 		}
@@ -182,7 +184,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 		// Set meta.
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_post_meta( $post_id, sanitize_text_field( $key ), $value );
+				update_post_meta( $post_id, sanitize_text_field( $key ), wp_slash( $value ) );
 			}
 		}
 
@@ -191,7 +193,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			set_post_thumbnail( $post_id, (int) $params['featured_image'] );
 		}
 
-		return $this->success( $this->format_post( get_post( $post_id ), true ), 201 );
+		return $this->success( $this->write_response( get_post( $post_id ), $params ), 201 );
 	}
 
 	public function update_post( $request ) {
@@ -218,7 +220,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 		foreach ( $fields as $param => $field ) {
 			if ( isset( $params[ $param ] ) ) {
 				if ( in_array( $field, array( 'post_content', 'post_excerpt' ), true ) ) {
-					$post_data[ $field ] = wp_kses_post( $params[ $param ] );
+					$post_data[ $field ] = (string) $params[ $param ];
 				} elseif ( in_array( $field, array( 'post_author', 'post_parent' ), true ) ) {
 					$post_data[ $field ] = (int) $params[ $param ];
 				} else {
@@ -237,7 +239,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			$post_data['menu_order'] = (int) $params['menu_order'];
 		}
 
-		$result = wp_update_post( $post_data, true );
+		$result = wp_update_post( wp_slash( $post_data ), true );
 		if ( is_wp_error( $result ) ) {
 			return $this->error( 'update_failed', $result->get_error_message() );
 		}
@@ -258,7 +260,12 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 		// Update meta.
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_post_meta( $post->ID, sanitize_text_field( $key ), $value );
+				$key = sanitize_text_field( $key );
+				// A value read back with "[redacted]" keeps the stored secrets.
+				if ( Goo1_MCP_Redactor::contains_mask( $value ) ) {
+					$value = Goo1_MCP_Redactor::restore_masked_value( $value, get_post_meta( $post->ID, $key, true ) );
+				}
+				update_post_meta( $post->ID, $key, wp_slash( $value ) ); // update_metadata() unslashes.
 			}
 		}
 
@@ -270,7 +277,7 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			}
 		}
 
-		return $this->success( $this->format_post( get_post( $post->ID ), true ) );
+		return $this->success( $this->write_response( get_post( $post->ID ), $params ) );
 	}
 
 	public function delete_post( $request ) {
@@ -317,7 +324,44 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 	/**
 	 * Format a post for API output.
 	 */
-	private function format_post( $post, $full = false ) {
+	/**
+	 * Which post meta to include: none by default (names only), all with
+	 * include_meta=true, or a selection via meta_keys="a,b".
+	 */
+	private function meta_options( $request ) {
+		$keys = $request->get_param( 'meta_keys' );
+		return array(
+			'include'    => $this->truthy( $request->get_param( 'include_meta' ) ) || ! empty( $keys ),
+			'keys'       => $keys ? array_filter( array_map( 'trim', is_array( $keys ) ? $keys : explode( ',', (string) $keys ) ) ) : array(),
+			'unredacted' => Goo1_MCP_Permissions::instance()->allow_unredacted( $request ),
+		);
+	}
+
+	/**
+	 * Slim response after create/update (the full post incl. meta can be
+	 * >100 KB with Elementor). return_full=true gives the old behaviour.
+	 */
+	private function write_response( $post, $params ) {
+		if ( ! empty( $params['return_full'] ) ) {
+			return $this->format_post( $post, true, array( 'include' => false, 'keys' => array(), 'unredacted' => false ) );
+		}
+		return array(
+			'id'       => $post->ID,
+			'title'    => $post->post_title,
+			'slug'     => $post->post_name,
+			'status'   => $post->post_status,
+			'type'     => $post->post_type,
+			'author'   => (int) $post->post_author,
+			'modified' => $post->post_modified,
+			'link'     => get_permalink( $post->ID ),
+		);
+	}
+
+	private function truthy( $v ) {
+		return true === $v || 1 === $v || in_array( strtolower( (string) $v ), array( '1', 'true', 'yes', 'on' ), true );
+	}
+
+	private function format_post( $post, $full = false, $meta = null ) {
 		$data = array(
 			'id'           => $post->ID,
 			'title'        => $post->post_title,
@@ -338,7 +382,34 @@ class Goo1_MCP_Posts_Controller extends Goo1_MCP_Base_Controller {
 			$data['comment_status'] = $post->comment_status;
 			$data['ping_status']    = $post->ping_status;
 			$data['featured_image'] = (int) get_post_thumbnail_id( $post->ID );
-			$data['meta']           = get_post_meta( $post->ID );
+			$all_meta = get_post_meta( $post->ID );
+			$meta     = $meta ? $meta : array( 'include' => false, 'keys' => array(), 'unredacted' => false );
+			if ( $meta['include'] ) {
+				$out = array();
+				foreach ( $all_meta as $mk => $vals ) {
+					if ( $meta['keys'] && ! in_array( $mk, $meta['keys'], true ) ) {
+						continue;
+					}
+					$vals = array_map( 'maybe_unserialize', $vals );
+					$out[ $mk ] = count( $vals ) === 1 ? $vals[0] : $vals;
+				}
+				if ( $meta['unredacted'] ) {
+					Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+				} else {
+					foreach ( $out as $mk => $mv ) {
+						if ( Goo1_MCP_Redactor::is_sensitive_key( $mk ) ) {
+							$out[ $mk ] = Goo1_MCP_Redactor::MASK;
+						} elseif ( is_string( $mv ) ) {
+							$out[ $mk ] = Goo1_MCP_Redactor::redact_string( $mv );
+						} else {
+							$out[ $mk ] = Goo1_MCP_Redactor::redact( $mv );
+						}
+					}
+				}
+				$data['meta'] = $out;
+			} else {
+				$data['meta_keys'] = array_keys( $all_meta );
+			}
 			$data['taxonomies']     = array();
 
 			$taxonomies = get_object_taxonomies( $post->post_type );

@@ -1,763 +1,93 @@
 {
   "name": "goo1-wp-claude-bridge",
-  "version": "1.5.260705",
+  "version": "1.6.261027",
   "description": "WordPress site management via REST API for Claude AI",
-  "auth": {
-    "type": "bearer",
-    "header": "Authorization",
-    "prefix": "Bearer"
-  },
+  "auth": {"type": "bearer", "header": "Authorization", "prefix": "Bearer"},
   "base_url": "{site_url}/wp-json/goo1-mcp/v1",
   "tools": [
-    {
-      "name": "wp_list_posts",
-      "description": "List WordPress posts, pages, or custom post types with filtering and pagination.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "post_type": { "type": "string", "default": "post", "description": "Post type: post, page, or any custom post type slug" },
-          "status": { "type": "string", "default": "any", "description": "Post status: publish, draft, pending, private, trash, any" },
-          "search": { "type": "string", "description": "Search keyword" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 },
-          "orderby": { "type": "string", "default": "date" },
-          "order": { "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" },
-          "author": { "type": "integer" },
-          "category": { "type": "string" },
-          "tag": { "type": "string" }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/posts" }
-    },
-    {
-      "name": "wp_get_post",
-      "description": "Get a single post/page with full content, meta, and taxonomy data.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "description": "Post ID" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/posts/{id}" }
-    },
-    {
-      "name": "wp_create_post",
-      "description": "Create a new post, page, or custom post type entry.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "title": { "type": "string" },
-          "content": { "type": "string" },
-          "status": { "type": "string", "default": "draft" },
-          "post_type": { "type": "string", "default": "post" },
-          "excerpt": { "type": "string" },
-          "slug": { "type": "string" },
-          "author": { "type": "integer" },
-          "categories": { "type": "array", "items": { "type": "integer" } },
-          "tags": { "type": "array", "items": { "type": "string" } },
-          "meta": { "type": "object" },
-          "featured_image": { "type": "integer" }
-        },
-        "required": ["title"]
-      },
-      "endpoint": { "method": "POST", "path": "/posts" }
-    },
-    {
-      "name": "wp_update_post",
-      "description": "Update an existing post/page. Only send fields you want to change.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "title": { "type": "string" },
-          "content": { "type": "string" },
-          "status": { "type": "string" },
-          "excerpt": { "type": "string" },
-          "slug": { "type": "string" },
-          "meta": { "type": "object" },
-          "categories": { "type": "array", "items": { "type": "integer" } },
-          "tags": { "type": "array", "items": { "type": "string" } }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "PUT", "path": "/posts/{id}" }
-    },
-    {
-      "name": "wp_delete_post",
-      "description": "Trash or permanently delete a post. Set force=true to skip trash.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "force": { "type": "boolean", "default": false }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "DELETE", "path": "/posts/{id}" }
-    },
-    {
-      "name": "wp_list_post_types",
-      "description": "List all registered post types with their properties and taxonomy associations.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/post-types" }
-    },
-    {
-      "name": "wp_list_taxonomies",
-      "description": "List all registered taxonomies.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/taxonomies" }
-    },
-    {
-      "name": "wp_list_terms",
-      "description": "List terms for a taxonomy (categories, tags, custom).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "taxonomy": { "type": "string", "description": "Taxonomy slug (category, post_tag, etc.)" },
-          "search": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 },
-          "parent": { "type": "integer" },
-          "hide_empty": { "type": "boolean", "default": false }
-        },
-        "required": ["taxonomy"]
-      },
-      "endpoint": { "method": "GET", "path": "/terms" }
-    },
-    {
-      "name": "wp_create_term",
-      "description": "Create a new taxonomy term.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "taxonomy": { "type": "string" },
-          "name": { "type": "string" },
-          "slug": { "type": "string" },
-          "description": { "type": "string" },
-          "parent": { "type": "integer" }
-        },
-        "required": ["taxonomy", "name"]
-      },
-      "endpoint": { "method": "POST", "path": "/terms" }
-    },
-    {
-      "name": "wp_list_media",
-      "description": "List media library attachments.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "search": { "type": "string" },
-          "mime_type": { "type": "string", "description": "e.g. image, image/jpeg, video" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/media" }
-    },
-    {
-      "name": "wp_upload_media",
-      "description": "Upload a file to the WordPress media library. PREFERRED: pass `url` (a single http/https URL or an array of URLs) and WordPress downloads the file(s) server-side — no large base64 payload travels through the conversation, which saves a lot of tokens. Alternatively pass `base64` + `filename` as a fallback (a leading data:*;base64, prefix is stripped automatically). Optional: attach to a post, set as featured image, title/alt/caption/description, author, date, custom meta, dedupe, overwrite, MIME allow-list and subsize control.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "url": { "type": ["string", "array"], "items": { "type": "string" }, "description": "Remote http/https URL, or array of URLs, that WordPress downloads itself. Preferred over base64. A single URL returns one media object; an array returns { items, count }." },
-          "base64": { "type": "string", "description": "Base64-encoded file content (fallback; large files cost many tokens). A data:*;base64, prefix is stripped automatically." },
-          "filename": { "type": "string", "description": "Filename incl. extension. Required for base64. For URLs it is derived from the URL (and the extension sniffed) when omitted." },
-          "mime_type": { "type": "string", "description": "Force the MIME type — useful for extensionless URLs." },
-          "title": { "type": "string" },
-          "alt": { "type": "string" },
-          "caption": { "type": "string" },
-          "description": { "type": "string" },
-          "attach_to_post": { "type": "integer", "description": "Parent post/page ID to attach the media to." },
-          "set_as_featured": { "type": "boolean", "default": false, "description": "Set the uploaded image as the featured image of attach_to_post." },
-          "author": { "type": "integer", "description": "User ID to record as the attachment author." },
-          "date": { "type": "string", "description": "Attachment date, 'YYYY-MM-DD HH:MM:SS'." },
-          "meta": { "type": "object", "description": "Additional attachment post-meta as key/value pairs." },
-          "dedupe": { "type": "boolean", "default": false, "description": "Reuse an existing attachment instead of creating a duplicate." },
-          "dedupe_by": { "type": "string", "enum": ["source_url", "filename"], "default": "source_url", "description": "How to detect a duplicate: by the original source URL (default) or by filename." },
-          "overwrite_existing": { "type": "boolean", "default": false, "description": "Delete a prior attachment with the same filename before uploading." },
-          "generate_subsizes": { "type": "boolean", "default": true, "description": "Generate intermediate image sizes. Automatically skipped for very large images (~>25 MP or >40 MB) unless force_subsizes is set." },
-          "force_subsizes": { "type": "boolean", "default": false, "description": "Force subsize generation even for very large images." },
-          "allowed_mime_types": { "type": "array", "items": { "type": "string" }, "description": "Restrict accepted MIME types (allow-list)." },
-          "max_filesize": { "type": "integer", "description": "Reject files larger than this many bytes." },
-          "timeout": { "type": "integer", "default": 30, "description": "URL download timeout in seconds." }
-        }
-      },
-      "endpoint": { "method": "POST", "path": "/media" }
-    },
-    {
-      "name": "wp_get_media",
-      "description": "Get a single media attachment including its metadata and available image sizes.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/media/{id}" }
-    },
-    {
-      "name": "wp_update_media",
-      "description": "Update a media attachment's fields (title, caption, description, alt text).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "title": { "type": "string" },
-          "caption": { "type": "string" },
-          "description": { "type": "string" },
-          "alt": { "type": "string" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "PUT", "path": "/media/{id}" }
-    },
-    {
-      "name": "wp_delete_media",
-      "description": "Delete a media attachment. force defaults to true (skips trash and removes the files).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "force": { "type": "boolean", "default": true }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "DELETE", "path": "/media/{id}" }
-    },
-    {
-      "name": "wp_list_comments",
-      "description": "List comments with filtering by post, status, and type.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "post_id": { "type": "integer" },
-          "status": { "type": "string", "default": "all" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/comments" }
-    },
-    {
-      "name": "wp_create_comment",
-      "description": "Create a new comment on a post.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "post_id": { "type": "integer" },
-          "content": { "type": "string" },
-          "author_name": { "type": "string" },
-          "author_email": { "type": "string" },
-          "status": { "type": "string", "default": "1" },
-          "parent": { "type": "integer" }
-        },
-        "required": ["post_id", "content"]
-      },
-      "endpoint": { "method": "POST", "path": "/comments" }
-    },
-    {
-      "name": "wp_list_users",
-      "description": "List WordPress users with role and search filtering.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "role": { "type": "string" },
-          "search": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/users" }
-    },
-    {
-      "name": "wp_get_user",
-      "description": "Get detailed user info including capabilities and meta.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/users/{id}" }
-    },
-    {
-      "name": "wp_create_user",
-      "description": "Create a new WordPress user.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "username": { "type": "string" },
-          "email": { "type": "string" },
-          "password": { "type": "string" },
-          "display_name": { "type": "string" },
-          "first_name": { "type": "string" },
-          "last_name": { "type": "string" },
-          "role": { "type": "string", "default": "subscriber" }
-        },
-        "required": ["username", "email"]
-      },
-      "endpoint": { "method": "POST", "path": "/users" }
-    },
-    {
-      "name": "wp_list_roles",
-      "description": "List all WordPress roles with capabilities and user counts.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/roles" }
-    },
-    {
-      "name": "wp_get_options",
-      "description": "Read WordPress options by name. Sensitive options are filtered.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "keys": { "type": "string", "description": "Comma-separated option names, e.g. 'blogname,blogdescription,permalink_structure'" }
-        },
-        "required": ["keys"]
-      },
-      "endpoint": { "method": "GET", "path": "/options" }
-    },
-    {
-      "name": "wp_update_options",
-      "description": "Update one or more WordPress options.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "options": { "type": "object", "description": "Key-value pairs of options to set" }
-        },
-        "required": ["options"]
-      },
-      "endpoint": { "method": "PUT", "path": "/options" }
-    },
-    {
-      "name": "wp_list_all_options",
-      "description": "List all autoloaded options, or search options by name.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "search": { "type": "string", "description": "Filter options by name pattern" }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/options/all" }
-    },
-    {
-      "name": "wp_list_plugins",
-      "description": "List all installed plugins with their activation status.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/plugins" }
-    },
-    {
-      "name": "wp_activate_plugin",
-      "description": "Activate a plugin by slug or file path.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "slug": { "type": "string", "description": "Plugin directory name or full file path" }
-        },
-        "required": ["slug"]
-      },
-      "endpoint": { "method": "PUT", "path": "/plugins/{slug}/activate" }
-    },
-    {
-      "name": "wp_deactivate_plugin",
-      "description": "Deactivate a plugin.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "slug": { "type": "string" }
-        },
-        "required": ["slug"]
-      },
-      "endpoint": { "method": "PUT", "path": "/plugins/{slug}/deactivate" }
-    },
-    {
-      "name": "wp_list_themes",
-      "description": "List all installed themes with their status.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/themes" }
-    },
-    {
-      "name": "wp_activate_theme",
-      "description": "Switch the active theme.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "slug": { "type": "string" }
-        },
-        "required": ["slug"]
-      },
-      "endpoint": { "method": "PUT", "path": "/themes/{slug}/activate" }
-    },
-    {
-      "name": "wp_list_menus",
-      "description": "List all navigation menus.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/menus" }
-    },
-    {
-      "name": "wp_get_menu",
-      "description": "Get a menu with all its items.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/menus/{id}" }
-    },
-    {
-      "name": "wp_db_query",
-      "description": "Execute a SQL query against the WordPress database. SELECT queries work with read scope. INSERT/UPDATE/DELETE require db_write permission. DROP/ALTER are always blocked.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "sql": { "type": "string", "description": "SQL query. Use %s, %d, %f placeholders for parameters." },
-          "params": { "type": "array", "items": { "type": ["string", "number", "boolean", "null"] }, "description": "Parameters for prepared statement placeholders" },
-          "max_rows": { "type": "integer", "default": 1000, "description": "Maximum rows to return (up to 10000)" }
-        },
-        "required": ["sql"]
-      },
-      "endpoint": { "method": "POST", "path": "/db/query" }
-    },
-    {
-      "name": "wp_db_tables",
-      "description": "List all database tables with size, engine, and row count info.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/db/tables" }
-    },
-    {
-      "name": "wp_db_table_schema",
-      "description": "Describe a table's columns, types, keys, and indexes.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string", "description": "Table name" }
-        },
-        "required": ["name"]
-      },
-      "endpoint": { "method": "GET", "path": "/db/tables/{name}/schema" }
-    },
-    {
-      "name": "wp_db_table_sample",
-      "description": "Get sample rows from a table.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" },
-          "limit": { "type": "integer", "default": 10, "maximum": 100 }
-        },
-        "required": ["name"]
-      },
-      "endpoint": { "method": "GET", "path": "/db/tables/{name}/sample" }
-    },
-    {
-      "name": "wp_site_health",
-      "description": "Get comprehensive site health info: WP/PHP/MySQL versions, debug state, memory, upload limits, active plugins count, constants, and more.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/health" }
-    },
-    {
-      "name": "wp_error_log",
-      "description": "Read the last N lines of the WordPress debug log.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "lines": { "type": "integer", "default": 100, "maximum": 500 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/errors" }
-    },
-    {
-      "name": "wp_list_cron",
-      "description": "List all scheduled WordPress cron events.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/cron" }
-    },
-    {
-      "name": "wp_run_cron",
-      "description": "Manually trigger a WordPress cron hook.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "hook": { "type": "string" }
-        },
-        "required": ["hook"]
-      },
-      "endpoint": { "method": "POST", "path": "/cron/{hook}/run" }
-    },
-    {
-      "name": "wp_list_hooks",
-      "description": "List registered WordPress actions and filters with callback counts.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "search": { "type": "string", "description": "Filter hooks by name" }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/hooks" }
-    },
-    {
-      "name": "wp_get_hook",
-      "description": "Get detailed info about a specific hook including all registered callbacks.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "name": { "type": "string" }
-        },
-        "required": ["name"]
-      },
-      "endpoint": { "method": "GET", "path": "/hooks/{name}" }
-    },
-    {
-      "name": "wp_list_transients",
-      "description": "List WordPress transients with expiration info.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "search": { "type": "string" }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/transients" }
-    },
-    {
-      "name": "wp_list_widgets",
-      "description": "List all widget areas (sidebars) and their active widgets.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/widgets" }
-    },
-    {
-      "name": "wp_rewrite_rules",
-      "description": "List all rewrite rules and the current permalink structure.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/rewrite-rules" }
-    },
-    {
-      "name": "woo_list_products",
-      "description": "List WooCommerce products. Only available when WooCommerce is active.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "status": { "type": "string", "default": "any" },
-          "type": { "type": "string", "description": "simple, variable, grouped, external" },
-          "category": { "type": "string" },
-          "sku": { "type": "string" },
-          "search": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/woo/products" }
-    },
-    {
-      "name": "woo_get_product",
-      "description": "Get full WooCommerce product details.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/woo/products/{id}" }
-    },
-    {
-      "name": "woo_update_product",
-      "description": "Update product name, price, stock, status, etc.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "name": { "type": "string" },
-          "regular_price": { "type": "string" },
-          "sale_price": { "type": "string" },
-          "sku": { "type": "string" },
-          "status": { "type": "string" },
-          "stock_quantity": { "type": "integer" },
-          "manage_stock": { "type": "boolean" },
-          "stock_status": { "type": "string" },
-          "description": { "type": "string" },
-          "short_description": { "type": "string" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "PUT", "path": "/woo/products/{id}" }
-    },
-    {
-      "name": "woo_list_orders",
-      "description": "List WooCommerce orders with filtering.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "status": { "type": "string", "default": "any" },
-          "customer": { "type": "integer" },
-          "date_after": { "type": "string" },
-          "date_before": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/woo/orders" }
-    },
-    {
-      "name": "woo_get_order",
-      "description": "Get full order details including line items, billing, shipping, and notes.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/woo/orders/{id}" }
-    },
-    {
-      "name": "woo_update_order",
-      "description": "Update order status or customer note.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "status": { "type": "string", "description": "e.g. processing, completed, cancelled" },
-          "note": { "type": "string" },
-          "customer_note": { "type": "string" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "PUT", "path": "/woo/orders/{id}" }
-    },
-    {
-      "name": "woo_adjust_stock",
-      "description": "Adjust product stock quantity (set, increase, decrease).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "description": "Product ID" },
-          "quantity": { "type": "integer" },
-          "action": { "type": "string", "enum": ["set", "increase", "decrease"], "default": "set" }
-        },
-        "required": ["id", "quantity"]
-      },
-      "endpoint": { "method": "POST", "path": "/woo/inventory/{id}" }
-    },
-    {
-      "name": "woo_sales_report",
-      "description": "Get sales summary for a period (orders, revenue, shipping, tax, refunds).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "period": { "type": "string", "enum": ["week", "month", "year", "custom"], "default": "month" },
-          "date_min": { "type": "string", "description": "Start date (YYYY-MM-DD) for custom period" },
-          "date_max": { "type": "string", "description": "End date (YYYY-MM-DD) for custom period" }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/woo/reports/sales" }
-    },
-    {
-      "name": "woo_list_customers",
-      "description": "List WooCommerce customers with order count and total spent.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "search": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/woo/customers" }
-    },
-    {
-      "name": "woo_get_customer",
-      "description": "Get full customer details including billing and shipping addresses.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/woo/customers/{id}" }
-    },
-    {
-      "name": "elementor_get_data",
-      "description": "Get a post/page's parsed Elementor data (_elementor_data) plus edit mode, Elementor version, template type and page settings. Only available when Elementor is active.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/elementor/{id}" }
-    },
-    {
-      "name": "elementor_update_data",
-      "description": "Replace a post's Elementor data. Pass `data` as a JSON array of Elementor elements (or a JSON string). Handles wp_slash correctly (the classic Elementor save pitfall) and regenerates the post's CSS by default.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "data": { "type": ["array", "string"], "description": "Elementor elements tree as an array, or a JSON string of it." },
-          "page_settings": { "type": "object", "description": "Optional Elementor page settings to store." },
-          "regenerate_css": { "type": "boolean", "default": true, "description": "Regenerate this post's Elementor CSS after saving." }
-        },
-        "required": ["id", "data"]
-      },
-      "endpoint": { "method": "PUT", "path": "/elementor/{id}" }
-    },
-    {
-      "name": "elementor_find_widgets",
-      "description": "Return a compact list of all Elementor elements/widgets on a post (id, elType, widgetType, depth and a short text preview) instead of the full data blob — a token-saver for inspecting a page's structure. Optionally filter by widget_type.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" },
-          "widget_type": { "type": "string", "description": "Only return widgets of this widgetType (e.g. 'heading', 'image')." }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "GET", "path": "/elementor/{id}/widgets" }
-    },
-    {
-      "name": "elementor_list_templates",
-      "description": "List Elementor library templates (page, section, container, widget, popup, header, footer, ...).",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "type": { "type": "string", "description": "Filter by template type." },
-          "search": { "type": "string" },
-          "per_page": { "type": "integer", "default": 10 },
-          "page": { "type": "integer", "default": 1 }
-        }
-      },
-      "endpoint": { "method": "GET", "path": "/elementor/templates" }
-    },
-    {
-      "name": "elementor_get_kit",
-      "description": "Get the active Elementor kit id, title and global settings.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "GET", "path": "/elementor/kit" }
-    },
-    {
-      "name": "elementor_regenerate_css",
-      "description": "Regenerate the Elementor CSS file for a single post/page.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer" }
-        },
-        "required": ["id"]
-      },
-      "endpoint": { "method": "POST", "path": "/elementor/{id}/regenerate-css" }
-    },
-    {
-      "name": "elementor_regenerate_all_css",
-      "description": "Clear and regenerate all Elementor CSS site-wide.",
-      "inputSchema": { "type": "object", "properties": {} },
-      "endpoint": { "method": "POST", "path": "/elementor/regenerate-css" }
-    }
+    {"name": "wp_list_posts", "description": "List WordPress posts, pages, or custom post types with filtering and pagination.", "inputSchema": {"type": "object", "properties": {"post_type": {"type": "string", "default": "post", "description": "Post type: post, page, or any custom post type slug"}, "status": {"type": "string", "default": "any", "description": "Post status: publish, draft, pending, private, trash, any"}, "search": {"type": "string", "description": "Search keyword"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}, "orderby": {"type": "string", "default": "date"}, "order": {"type": "string", "enum": ["ASC", "DESC"], "default": "DESC"}, "author": {"type": "integer"}, "category": {"type": "string"}, "tag": {"type": "string"}}}, "endpoint": {"method": "GET", "path": "/posts"}, "annotations": {"title": "wp list posts", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_post", "description": "Get a single post/page with full content and taxonomy data. Post meta is NOT included by default (only `meta_keys`, the list of meta names); pass include_meta=true or meta_keys to get values. Secret-looking meta is redacted.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer", "description": "Post ID"}, "include_meta": {"type": "boolean", "description": "Include all post meta values (can be large, e.g. _elementor_data)."}, "meta_keys": {"type": "string", "description": "Comma-separated meta keys to include (implies include_meta)."}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/posts/{id}"}, "annotations": {"title": "wp get post", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_create_post", "description": "Create a new post, page, or custom post type entry. Returns a slim summary (id, status, link …); pass return_full=true for the full post. Content is stored like in the editor: HTML is only filtered if the run-as user lacks unfiltered_html.", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}, "status": {"type": "string", "default": "draft"}, "post_type": {"type": "string", "default": "post"}, "excerpt": {"type": "string"}, "slug": {"type": "string"}, "author": {"type": "integer"}, "categories": {"type": "array", "items": {"type": "integer"}}, "tags": {"type": "array", "items": {"type": "string"}}, "meta": {"type": "object"}, "featured_image": {"type": "integer"}, "return_full": {"type": "boolean", "description": "Return the full post instead of a summary."}}, "required": ["title"]}, "endpoint": {"method": "POST", "path": "/posts"}, "annotations": {"title": "wp create post", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_update_post", "description": "Update an existing post/page. Only send fields you want to change. Returns a slim summary (id, status, link …); pass return_full=true for the full post. Content is stored like in the editor: HTML is only filtered if the run-as user lacks unfiltered_html.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "title": {"type": "string"}, "content": {"type": "string"}, "status": {"type": "string"}, "excerpt": {"type": "string"}, "slug": {"type": "string"}, "meta": {"type": "object"}, "categories": {"type": "array", "items": {"type": "integer"}}, "tags": {"type": "array", "items": {"type": "string"}}, "return_full": {"type": "boolean", "description": "Return the full post instead of a summary."}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/posts/{id}"}, "annotations": {"title": "wp update post", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_post", "description": "Trash or permanently delete a post. Set force=true to skip trash.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "force": {"type": "boolean", "default": false}}, "required": ["id"]}, "endpoint": {"method": "DELETE", "path": "/posts/{id}"}, "annotations": {"title": "wp delete post", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_post_types", "description": "List all registered post types with their properties and taxonomy associations.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/post-types"}, "annotations": {"title": "wp list post types", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_list_taxonomies", "description": "List all registered taxonomies.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/taxonomies"}, "annotations": {"title": "wp list taxonomies", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_list_terms", "description": "List terms for a taxonomy (categories, tags, custom).", "inputSchema": {"type": "object", "properties": {"taxonomy": {"type": "string", "description": "Taxonomy slug (category, post_tag, etc.)"}, "search": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}, "parent": {"type": "integer"}, "hide_empty": {"type": "boolean", "default": false}}, "required": ["taxonomy"]}, "endpoint": {"method": "GET", "path": "/terms"}, "annotations": {"title": "wp list terms", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_term", "description": "Get a single term.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "taxonomy": {"type": "string"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/terms/{id}"}, "annotations": {"title": "wp get term", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_create_term", "description": "Create a new taxonomy term.", "inputSchema": {"type": "object", "properties": {"taxonomy": {"type": "string"}, "name": {"type": "string"}, "slug": {"type": "string"}, "description": {"type": "string"}, "parent": {"type": "integer"}}, "required": ["taxonomy", "name"]}, "endpoint": {"method": "POST", "path": "/terms"}, "annotations": {"title": "wp create term", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_update_term", "description": "Update a term (name, slug, description, parent, meta).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "taxonomy": {"type": "string"}, "name": {"type": "string"}, "slug": {"type": "string"}, "description": {"type": "string"}, "parent": {"type": "integer"}, "meta": {"type": "object"}}, "required": ["id", "taxonomy"]}, "endpoint": {"method": "PUT", "path": "/terms/{id}"}, "annotations": {"title": "wp update term", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_term", "description": "Delete a term.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "taxonomy": {"type": "string"}}, "required": ["id", "taxonomy"]}, "endpoint": {"method": "DELETE", "path": "/terms/{id}"}, "annotations": {"title": "wp delete term", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_media", "description": "List media library attachments.", "inputSchema": {"type": "object", "properties": {"search": {"type": "string"}, "mime_type": {"type": "string", "description": "e.g. image, image/jpeg, video"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/media"}, "annotations": {"title": "wp list media", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_upload_media", "description": "Upload a file to the WordPress media library. PREFERRED: pass `url` (a single http/https URL or an array of URLs) and WordPress downloads the file(s) server-side — no large base64 payload travels through the conversation, which saves a lot of tokens. Alternatively pass `base64` + `filename` as a fallback (a leading data:*;base64, prefix is stripped automatically). Optional: attach to a post, set as featured image, title/alt/caption/description, author, date, custom meta, dedupe, overwrite, MIME allow-list and subsize control.", "inputSchema": {"type": "object", "properties": {"url": {"type": ["string", "array"], "items": {"type": "string"}, "description": "Remote http/https URL, or array of URLs, that WordPress downloads itself. Preferred over base64. A single URL returns one media object; an array returns { items, count }."}, "base64": {"type": "string", "description": "Base64-encoded file content (fallback; large files cost many tokens). A data:*;base64, prefix is stripped automatically."}, "filename": {"type": "string", "description": "Filename incl. extension. Required for base64. For URLs it is derived from the URL (and the extension sniffed) when omitted."}, "mime_type": {"type": "string", "description": "Force the MIME type — useful for extensionless URLs."}, "title": {"type": "string"}, "alt": {"type": "string"}, "caption": {"type": "string"}, "description": {"type": "string"}, "attach_to_post": {"type": "integer", "description": "Parent post/page ID to attach the media to."}, "set_as_featured": {"type": "boolean", "default": false, "description": "Set the uploaded image as the featured image of attach_to_post."}, "author": {"type": "integer", "description": "User ID to record as the attachment author."}, "date": {"type": "string", "description": "Attachment date, 'YYYY-MM-DD HH:MM:SS'."}, "meta": {"type": "object", "description": "Additional attachment post-meta as key/value pairs."}, "dedupe": {"type": "boolean", "default": false, "description": "Reuse an existing attachment instead of creating a duplicate."}, "dedupe_by": {"type": "string", "enum": ["source_url", "filename"], "default": "source_url", "description": "How to detect a duplicate: by the original source URL (default) or by filename."}, "overwrite_existing": {"type": "boolean", "default": false, "description": "Delete a prior attachment with the same filename before uploading."}, "generate_subsizes": {"type": "boolean", "default": true, "description": "Generate intermediate image sizes. Automatically skipped for very large images (~>25 MP or >40 MB) unless force_subsizes is set."}, "force_subsizes": {"type": "boolean", "default": false, "description": "Force subsize generation even for very large images."}, "allowed_mime_types": {"type": "array", "items": {"type": "string"}, "description": "Restrict accepted MIME types (allow-list)."}, "max_filesize": {"type": "integer", "description": "Reject files larger than this many bytes."}, "timeout": {"type": "integer", "default": 30, "description": "URL download timeout in seconds."}}}, "endpoint": {"method": "POST", "path": "/media"}, "annotations": {"title": "wp upload media", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true}},
+    {"name": "wp_get_media", "description": "Get a single media attachment including its metadata and available image sizes.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/media/{id}"}, "annotations": {"title": "wp get media", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_update_media", "description": "Update a media attachment's fields (title, caption, description, alt text).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "title": {"type": "string"}, "caption": {"type": "string"}, "description": {"type": "string"}, "alt": {"type": "string"}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/media/{id}"}, "annotations": {"title": "wp update media", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_media", "description": "Delete a media attachment. force defaults to true (skips trash and removes the files).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "force": {"type": "boolean", "default": true}}, "required": ["id"]}, "endpoint": {"method": "DELETE", "path": "/media/{id}"}, "annotations": {"title": "wp delete media", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_comments", "description": "List comments with filtering by post, status, and type.", "inputSchema": {"type": "object", "properties": {"post_id": {"type": "integer"}, "status": {"type": "string", "default": "all"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/comments"}, "annotations": {"title": "wp list comments", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_comment", "description": "Get a single comment.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/comments/{id}"}, "annotations": {"title": "wp get comment", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_create_comment", "description": "Create a new comment on a post.", "inputSchema": {"type": "object", "properties": {"post_id": {"type": "integer"}, "content": {"type": "string"}, "author_name": {"type": "string"}, "author_email": {"type": "string"}, "status": {"type": "string", "default": "1"}, "parent": {"type": "integer"}}, "required": ["post_id", "content"]}, "endpoint": {"method": "POST", "path": "/comments"}, "annotations": {"title": "wp create comment", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_update_comment", "description": "Update a comment (content, status: 0/1/spam/trash, author_name, author_email, meta).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "content": {"type": "string"}, "status": {"type": "string", "description": "1/approve, 0/hold, spam, trash"}, "author_name": {"type": "string"}, "author_email": {"type": "string"}, "meta": {"type": "object"}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/comments/{id}"}, "annotations": {"title": "wp update comment", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_comment", "description": "Delete a comment (trash, or permanently with force=true).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "force": {"type": "boolean"}}, "required": ["id"]}, "endpoint": {"method": "DELETE", "path": "/comments/{id}"}, "annotations": {"title": "wp delete comment", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_users", "description": "List WordPress users with role and search filtering.", "inputSchema": {"type": "object", "properties": {"role": {"type": "string"}, "search": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/users"}, "annotations": {"title": "wp list users", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_user", "description": "Get detailed user info including capabilities and meta.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/users/{id}"}, "annotations": {"title": "wp get user", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_create_user", "description": "Create a new WordPress user.", "inputSchema": {"type": "object", "properties": {"username": {"type": "string"}, "email": {"type": "string"}, "password": {"type": "string"}, "display_name": {"type": "string"}, "first_name": {"type": "string"}, "last_name": {"type": "string"}, "role": {"type": "string", "default": "subscriber"}}, "required": ["username", "email"]}, "endpoint": {"method": "POST", "path": "/users"}, "annotations": {"title": "wp create user", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_update_user", "description": "Update a user (email, display_name, first_name, last_name, url, description, password, role, meta).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "email": {"type": "string"}, "display_name": {"type": "string"}, "first_name": {"type": "string"}, "last_name": {"type": "string"}, "url": {"type": "string"}, "description": {"type": "string"}, "password": {"type": "string"}, "role": {"type": "string"}, "meta": {"type": "object"}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/users/{id}"}, "annotations": {"title": "wp update user", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_user", "description": "Delete a user. Pass reassign (user ID) to keep their content.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "reassign": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "DELETE", "path": "/users/{id}"}, "annotations": {"title": "wp delete user", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_roles", "description": "List all WordPress roles with capabilities and user counts.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/roles"}, "annotations": {"title": "wp list roles", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_options", "description": "Read options by name. Values of secret-bearing keys (passwords, API/S3 keys, tokens, licence keys) are returned as \"[redacted]\" unless unredacted is allowed. Bridge credentials are never returned.", "inputSchema": {"type": "object", "properties": {"keys": {"type": "string", "description": "Comma-separated option names, e.g. 'blogname,blogdescription,permalink_structure'"}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}, "required": ["keys"]}, "endpoint": {"method": "GET", "path": "/options"}, "annotations": {"title": "wp get options", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_update_options", "description": "Create/update options (object of name→value). \"[redacted]\" placeholders inside a value keep the stored secret, so a value read with wp_get_options can be written back safely. Claude Bridge's own settings (goo1_mcp_*) cannot be changed.", "inputSchema": {"type": "object", "properties": {"options": {"type": "object", "description": "Key-value pairs of options to set"}}, "required": ["options"]}, "endpoint": {"method": "PUT", "path": "/options"}, "annotations": {"title": "wp update options", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_all_options", "description": "List all autoloaded options, or search options by name.", "inputSchema": {"type": "object", "properties": {"search": {"type": "string", "description": "Filter options by name pattern"}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}}, "endpoint": {"method": "GET", "path": "/options/all"}, "annotations": {"title": "wp list all options", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_option", "description": "Delete an option (Claude Bridge settings and secret-bearing options are protected).", "inputSchema": {"type": "object", "properties": {"key": {"type": "string"}}, "required": ["key"]}, "endpoint": {"method": "DELETE", "path": "/options/{key}"}, "annotations": {"title": "wp delete option", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_plugins", "description": "List all installed plugins with their activation status.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/plugins"}, "annotations": {"title": "wp list plugins", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_activate_plugin", "description": "Activate an installed plugin by folder slug (e.g. 'worker') or plugin file (e.g. 'worker/init.php').", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string", "description": "Plugin directory name or full file path"}}, "required": ["slug"]}, "endpoint": {"method": "PUT", "path": "/plugins/{slug}/activate"}, "annotations": {"title": "wp activate plugin", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_deactivate_plugin", "description": "Deactivate a plugin.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]}, "endpoint": {"method": "PUT", "path": "/plugins/{slug}/deactivate"}, "annotations": {"title": "wp deactivate plugin", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_updates", "description": "Available WordPress core, plugin, theme and translation updates. refresh=true checks wordpress.org now.", "inputSchema": {"type": "object", "properties": {"refresh": {"type": "boolean"}}}, "endpoint": {"method": "GET", "path": "/updates"}, "annotations": {"title": "wp list updates", "readOnlyHint": true, "openWorldHint": true}},
+    {"name": "wp_install_plugin", "description": "Install a plugin from wordpress.org (slug, e.g. 'updraftplus', 'worker', 'wordfence') or from any ZIP URL. activate=true activates it. Already installed → error unless overwrite=true (reinstall/downgrade).", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}, "url": {"type": "string"}, "activate": {"type": "boolean"}, "overwrite": {"type": "boolean"}}}, "endpoint": {"method": "POST", "path": "/plugins/install"}, "annotations": {"title": "wp install plugin", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": true}},
+    {"name": "wp_update_plugin", "description": "Update an installed plugin to the latest available version (keeps it active). Tip: update Elementor before Hello Elementor.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string", "description": "Folder slug or plugin file"}}, "required": ["slug"]}, "endpoint": {"method": "POST", "path": "/plugins/{slug}/update"}, "annotations": {"title": "wp update plugin", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": true}},
+    {"name": "wp_delete_plugin", "description": "Delete an inactive plugin's files.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]}, "endpoint": {"method": "DELETE", "path": "/plugins/{slug}/delete"}, "annotations": {"title": "wp delete plugin", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_themes", "description": "List all installed themes with their status.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/themes"}, "annotations": {"title": "wp list themes", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_activate_theme", "description": "Switch the active theme.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]}, "endpoint": {"method": "PUT", "path": "/themes/{slug}/activate"}, "annotations": {"title": "wp activate theme", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_install_theme", "description": "Install a theme from wordpress.org (slug) or any ZIP URL (overwrite=true to reinstall).", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}, "url": {"type": "string"}, "overwrite": {"type": "boolean"}}}, "endpoint": {"method": "POST", "path": "/themes/install"}, "annotations": {"title": "wp install theme", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": true}},
+    {"name": "wp_update_theme", "description": "Update an installed theme to the latest available version.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]}, "endpoint": {"method": "POST", "path": "/themes/{slug}/update"}, "annotations": {"title": "wp update theme", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": true}},
+    {"name": "wp_delete_theme", "description": "Delete an installed, inactive theme.", "inputSchema": {"type": "object", "properties": {"slug": {"type": "string"}}, "required": ["slug"]}, "endpoint": {"method": "DELETE", "path": "/themes/{slug}/delete"}, "annotations": {"title": "wp delete theme", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_menus", "description": "List all navigation menus.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/menus"}, "annotations": {"title": "wp list menus", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_menu", "description": "Get a menu with all its items.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/menus/{id}"}, "annotations": {"title": "wp get menu", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_create_menu", "description": "Create a navigation menu, optionally assigned to a theme location.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}, "location": {"type": "string", "description": "Theme location slug (see wp_list_menu_locations)."}}, "required": ["name"]}, "endpoint": {"method": "POST", "path": "/menus"}, "annotations": {"title": "wp create menu", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_delete_menu", "description": "Delete a navigation menu.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "DELETE", "path": "/menus/{id}"}, "annotations": {"title": "wp delete menu", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_set_menu_items", "description": "REPLACE all items of a menu. Each item: title, type (custom|post_type|taxonomy), url (custom), object + object_id (post/page/term), parent_index (nest under the item at that position of this list), target, classes. For single items use wp_rest_request on /wp/v2/menu-items.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "items": {"type": "array", "items": {"type": "object"}}}, "required": ["id", "items"]}, "endpoint": {"method": "PUT", "path": "/menus/{id}/items"}, "annotations": {"title": "wp set menu items", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_menu_locations", "description": "List theme menu locations and the menu assigned to each.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/menu-locations"}, "annotations": {"title": "wp list menu locations", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_db_query", "description": "Execute a SQL query against the WordPress database (needs full scope). SELECT/SHOW/DESCRIBE/EXPLAIN return rows with best-effort redaction (user_pass, password hashes, session tokens, secret option values …) unless unredacted is allowed. INSERT/UPDATE/DELETE/REPLACE need db_write; writes run in a transaction and are rolled back if they touch Claude Bridge settings. DROP/ALTER/CREATE/TRUNCATE/RENAME/GRANT/REVOKE are always blocked; LOAD_FILE/INTO OUTFILE/DUMPFILE/LOAD DATA need the 'SQL file access' grant. Tip: use %s/%d placeholders.", "inputSchema": {"type": "object", "properties": {"sql": {"type": "string", "description": "SQL query. Use %s, %d, %f placeholders for parameters."}, "params": {"type": "array", "items": {"type": ["string", "number", "boolean", "null"]}, "description": "Parameters for prepared statement placeholders"}, "max_rows": {"type": "integer", "default": 1000, "description": "Maximum rows to return (up to 10000)"}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}, "required": ["sql"]}, "endpoint": {"method": "POST", "path": "/db/query"}, "annotations": {"title": "wp db query", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_db_tables", "description": "List all database tables with size, engine, and row count info.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/db/tables"}, "annotations": {"title": "wp db tables", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_db_table_schema", "description": "Describe a table's columns, types, keys, and indexes.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string", "description": "Table name"}}, "required": ["name"]}, "endpoint": {"method": "GET", "path": "/db/tables/{name}/schema"}, "annotations": {"title": "wp db table schema", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_db_table_sample", "description": "Get sample rows from a table.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}, "limit": {"type": "integer", "default": 10, "maximum": 100}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}}, "required": ["name"]}, "endpoint": {"method": "GET", "path": "/db/tables/{name}/sample"}, "annotations": {"title": "wp db table sample", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_site_health", "description": "Get comprehensive site health info: WP/PHP/MySQL versions, debug state, memory, upload limits, active plugins count, constants, and more.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/health"}, "annotations": {"title": "wp site health", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_error_log", "description": "Read the last N lines of the WordPress debug log.", "inputSchema": {"type": "object", "properties": {"lines": {"type": "integer", "default": 100, "maximum": 500}}}, "endpoint": {"method": "GET", "path": "/errors"}, "annotations": {"title": "wp error log", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_list_cron", "description": "List all scheduled WordPress cron events.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/cron"}, "annotations": {"title": "wp list cron", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_run_cron", "description": "Run a scheduled cron hook now, with the arguments it was scheduled with (each distinct scheduled event runs once). Optionally restrict to one event via `args`.", "inputSchema": {"type": "object", "properties": {"hook": {"type": "string"}, "args": {"type": "array", "items": {}, "description": "Only run the scheduled event whose args equal this array."}}, "required": ["hook"]}, "endpoint": {"method": "POST", "path": "/cron/{hook}/run"}, "annotations": {"title": "wp run cron", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_list_hooks", "description": "List registered WordPress actions and filters with callback counts.", "inputSchema": {"type": "object", "properties": {"search": {"type": "string", "description": "Filter hooks by name"}}}, "endpoint": {"method": "GET", "path": "/hooks"}, "annotations": {"title": "wp list hooks", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_get_hook", "description": "Get detailed info about a specific hook including all registered callbacks.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}, "endpoint": {"method": "GET", "path": "/hooks/{name}"}, "annotations": {"title": "wp get hook", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_list_transients", "description": "List WordPress transients with expiration info.", "inputSchema": {"type": "object", "properties": {"search": {"type": "string"}}}, "endpoint": {"method": "GET", "path": "/transients"}, "annotations": {"title": "wp list transients", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_delete_transient", "description": "Delete a transient by name.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}, "endpoint": {"method": "DELETE", "path": "/transients/{name}"}, "annotations": {"title": "wp delete transient", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "wp_list_widgets", "description": "List all widget areas (sidebars) and their active widgets.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/widgets"}, "annotations": {"title": "wp list widgets", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_rewrite_rules", "description": "List all rewrite rules and the current permalink structure.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/rewrite-rules"}, "annotations": {"title": "wp rewrite rules", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_rest_request", "description": "Call ANY other REST route of this site internally, as the run-as administrator (no nonce/cookie needed): e.g. /wp/v2/menu-items, /redirection/v1/redirect, /yoast/v1/…, /wc/v3/…. Needs full scope (also for GET, because it runs as an administrator). Response data is redacted and capped at max_bytes.", "inputSchema": {"type": "object", "properties": {"method": {"type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"], "default": "GET"}, "route": {"type": "string", "description": "Route incl. namespace, e.g. /wp/v2/pages?per_page=5"}, "query": {"type": "object", "description": "Query parameters"}, "body": {"type": "object", "description": "JSON body for POST/PUT/PATCH/DELETE"}, "headers": {"type": "object", "description": "Extra request headers"}, "embed": {"type": "boolean", "description": "Resolve _embed links"}, "max_bytes": {"type": "integer", "default": 200000}, "unredacted": {"type": "boolean", "description": "Return secrets unredacted. Only works if an administrator granted 'Secrets in clear text' to this key/connection; otherwise ignored. Flagged in the audit log."}, "include_links": {"type": "boolean", "description": "Keep HAL _links in the response (removed by default to save tokens)."}}, "required": ["route"]}, "endpoint": {"method": "POST", "path": "/rest"}, "annotations": {"title": "wp rest request", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "wp_rest_routes", "description": "List REST namespaces, or the routes and methods of one namespace (namespace=wp/v2) or matching a search string.", "inputSchema": {"type": "object", "properties": {"namespace": {"type": "string"}, "search": {"type": "string"}}}, "endpoint": {"method": "GET", "path": "/rest/routes"}, "annotations": {"title": "wp rest routes", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "wp_flush_rewrite_rules", "description": "Flush (regenerate) rewrite rules / permalinks.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "POST", "path": "/rewrite-rules/flush"}, "annotations": {"title": "wp flush rewrite rules", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "woo_list_products", "description": "List WooCommerce products. Only available when WooCommerce is active.", "inputSchema": {"type": "object", "properties": {"status": {"type": "string", "default": "any"}, "type": {"type": "string", "description": "simple, variable, grouped, external"}, "category": {"type": "string"}, "sku": {"type": "string"}, "search": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/woo/products"}, "requires": "woocommerce", "annotations": {"title": "woo list products", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_get_product", "description": "Get full WooCommerce product details.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/woo/products/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo get product", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_update_product", "description": "Update product name, price, stock, status, etc.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "name": {"type": "string"}, "regular_price": {"type": "string"}, "sale_price": {"type": "string"}, "sku": {"type": "string"}, "status": {"type": "string"}, "stock_quantity": {"type": "integer"}, "manage_stock": {"type": "boolean"}, "stock_status": {"type": "string"}, "description": {"type": "string"}, "short_description": {"type": "string"}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/woo/products/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo update product", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "woo_list_orders", "description": "List WooCommerce orders with filtering.", "inputSchema": {"type": "object", "properties": {"status": {"type": "string", "default": "any"}, "customer": {"type": "integer"}, "date_after": {"type": "string"}, "date_before": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/woo/orders"}, "requires": "woocommerce", "annotations": {"title": "woo list orders", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_get_order", "description": "Get full order details including line items, billing, shipping, and notes.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/woo/orders/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo get order", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_update_order", "description": "Update order status or customer note.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "status": {"type": "string", "description": "e.g. processing, completed, cancelled"}, "note": {"type": "string"}, "customer_note": {"type": "string"}}, "required": ["id"]}, "endpoint": {"method": "PUT", "path": "/woo/orders/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo update order", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "woo_adjust_stock", "description": "Adjust product stock quantity (set, increase, decrease).", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer", "description": "Product ID"}, "quantity": {"type": "integer"}, "action": {"type": "string", "enum": ["set", "increase", "decrease"], "default": "set"}}, "required": ["id", "quantity"]}, "endpoint": {"method": "POST", "path": "/woo/inventory/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo adjust stock", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "woo_sales_report", "description": "Get sales summary for a period (orders, revenue, shipping, tax, refunds).", "inputSchema": {"type": "object", "properties": {"period": {"type": "string", "enum": ["week", "month", "year", "custom"], "default": "month"}, "date_min": {"type": "string", "description": "Start date (YYYY-MM-DD) for custom period"}, "date_max": {"type": "string", "description": "End date (YYYY-MM-DD) for custom period"}}}, "endpoint": {"method": "GET", "path": "/woo/reports/sales"}, "requires": "woocommerce", "annotations": {"title": "woo sales report", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_list_customers", "description": "List WooCommerce customers with order count and total spent.", "inputSchema": {"type": "object", "properties": {"search": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/woo/customers"}, "requires": "woocommerce", "annotations": {"title": "woo list customers", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "woo_get_customer", "description": "Get full customer details including billing and shipping addresses.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/woo/customers/{id}"}, "requires": "woocommerce", "annotations": {"title": "woo get customer", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "elementor_get_data", "description": "Get a post/page's parsed Elementor data (_elementor_data) plus edit mode, Elementor version, template type and page settings. Only available when Elementor is active.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/elementor/{id}"}, "requires": "elementor", "annotations": {"title": "elementor get data", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "elementor_update_data", "description": "Replace a post's Elementor data. Pass `data` as a JSON array of Elementor elements (or a JSON string). Handles wp_slash correctly (the classic Elementor save pitfall) and regenerates the post's CSS by default.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "data": {"type": ["array", "string"], "description": "Elementor elements tree as an array, or a JSON string of it."}, "page_settings": {"type": "object", "description": "Optional Elementor page settings to store."}, "regenerate_css": {"type": "boolean", "default": true, "description": "Regenerate this post's Elementor CSS after saving."}}, "required": ["id", "data"]}, "endpoint": {"method": "PUT", "path": "/elementor/{id}"}, "requires": "elementor", "annotations": {"title": "elementor update data", "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": false}},
+    {"name": "elementor_find_widgets", "description": "Return a compact list of all Elementor elements/widgets on a post (id, elType, widgetType, depth and a short text preview) instead of the full data blob — a token-saver for inspecting a page's structure. Optionally filter by widget_type.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}, "widget_type": {"type": "string", "description": "Only return widgets of this widgetType (e.g. 'heading', 'image')."}}, "required": ["id"]}, "endpoint": {"method": "GET", "path": "/elementor/{id}/widgets"}, "requires": "elementor", "annotations": {"title": "elementor find widgets", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "elementor_list_templates", "description": "List Elementor library templates (page, section, container, widget, popup, header, footer, ...).", "inputSchema": {"type": "object", "properties": {"type": {"type": "string", "description": "Filter by template type."}, "search": {"type": "string"}, "per_page": {"type": "integer", "default": 10}, "page": {"type": "integer", "default": 1}}}, "endpoint": {"method": "GET", "path": "/elementor/templates"}, "requires": "elementor", "annotations": {"title": "elementor list templates", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "elementor_get_kit", "description": "Get the active Elementor kit id, title and global settings.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "GET", "path": "/elementor/kit"}, "requires": "elementor", "annotations": {"title": "elementor get kit", "readOnlyHint": true, "openWorldHint": false}},
+    {"name": "elementor_regenerate_css", "description": "Regenerate the Elementor CSS file for a single post/page.", "inputSchema": {"type": "object", "properties": {"id": {"type": "integer"}}, "required": ["id"]}, "endpoint": {"method": "POST", "path": "/elementor/{id}/regenerate-css"}, "requires": "elementor", "annotations": {"title": "elementor regenerate css", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}},
+    {"name": "elementor_regenerate_all_css", "description": "Clear and regenerate all Elementor CSS site-wide.", "inputSchema": {"type": "object", "properties": {}}, "endpoint": {"method": "POST", "path": "/elementor/regenerate-css"}, "requires": "elementor", "annotations": {"title": "elementor regenerate all css", "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": false}}
   ]
 }

@@ -166,7 +166,12 @@ class Goo1_MCP_Menus_Controller extends Goo1_MCP_Base_Controller {
 
 		// Add new items.
 		$created = array();
+		$by_index = array();
 		foreach ( $items as $index => $item ) {
+			// parent_index: nest under an item of THIS list (its position in `items`).
+			if ( isset( $item['parent_index'] ) && isset( $by_index[ (int) $item['parent_index'] ] ) ) {
+				$item['parent'] = $by_index[ (int) $item['parent_index'] ];
+			}
 			$item_data = array(
 				'menu-item-title'     => sanitize_text_field( $item['title'] ?? '' ),
 				'menu-item-url'       => esc_url_raw( $item['url'] ?? '' ),
@@ -182,13 +187,15 @@ class Goo1_MCP_Menus_Controller extends Goo1_MCP_Base_Controller {
 
 			$new_id = wp_update_nav_menu_item( $menu->term_id, 0, $item_data );
 			if ( ! is_wp_error( $new_id ) ) {
-				$created[] = $new_id;
+				$created[]          = $new_id;
+				$by_index[ $index ] = $new_id;
 			}
 		}
 
 		return $this->success( array(
 			'menu_id'      => $menu->term_id,
 			'items_added'  => count( $created ),
+			'item_ids'     => $created,
 		) );
 	}
 

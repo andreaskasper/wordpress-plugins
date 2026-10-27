@@ -16,6 +16,9 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 
 	const PROTOCOL_VERSION = '2025-06-18';
 
+	/** Protocol versions this server speaks (newest first). */
+	const SUPPORTED_VERSIONS = array( '2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05' );
+
 	private $tools_cache = null;
 
 	public function register_routes() {
@@ -101,8 +104,10 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		switch ( $method ) {
 			case 'initialize':
 				$client_proto = isset( $params['protocolVersion'] ) ? (string) $params['protocolVersion'] : self::PROTOCOL_VERSION;
+				// Echo the client's version if we speak it, otherwise offer ours.
+				$proto = in_array( $client_proto, self::SUPPORTED_VERSIONS, true ) ? $client_proto : self::PROTOCOL_VERSION;
 				return $this->rpc_result( $id, array(
-					'protocolVersion' => $client_proto,
+					'protocolVersion' => $proto,
 					'capabilities'    => array(
 						'tools' => array( 'listChanged' => false ),
 					),
@@ -110,7 +115,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 						'name'    => 'goo1 WP Claude Bridge',
 						'version' => defined( 'GOO1_MCP_VERSION' ) ? GOO1_MCP_VERSION : '1.0.0',
 					),
-					'instructions'    => 'WordPress site management tools. Each tool maps to a REST endpoint of this site.',
+					'instructions'    => $this->instructions(),
 				) );
 
 			case 'ping':
@@ -139,13 +144,58 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 	private function list_tools() {
 		$tools = array();
 		foreach ( $this->load_tools() as $tool ) {
-			$tools[] = array(
+			if ( ! $this->tool_available( $tool ) ) {
+				continue;
+			}
+			$entry = array(
 				'name'        => $tool['name'],
 				'description' => isset( $tool['description'] ) ? $tool['description'] : '',
 				'inputSchema' => $this->normalize_schema( isset( $tool['inputSchema'] ) ? $tool['inputSchema'] : array() ),
 			);
+			if ( ! empty( $tool['annotations'] ) && is_array( $tool['annotations'] ) ) {
+				$entry['annotations'] = $tool['annotations'];
+			}
+			$tools[] = $entry;
 		}
 		return $tools;
+	}
+
+	/**
+	 * Tools of optional integrations are only offered when the plugin is active.
+	 * mcp-server.json marks them with "requires": "<integration>".
+	 */
+	private function tool_available( $tool ) {
+		if ( empty( $tool['requires'] ) ) {
+			return true;
+		}
+		switch ( $tool['requires'] ) {
+			case 'woocommerce':
+				return class_exists( 'WooCommerce' );
+			case 'elementor':
+				return defined( 'ELEMENTOR_VERSION' ) || class_exists( '\\Elementor\\Plugin' );
+			case 'updraftplus':
+				return class_exists( 'UpdraftPlus' );
+			case 'managewp':
+				return function_exists( 'mwp_get_potential_key' ) || defined( 'MWP_WORKER_VERSION' );
+			default:
+				return (bool) apply_filters( 'goo1_mcp_tool_available', true, $tool );
+		}
+	}
+
+	/**
+	 * Server instructions sent on initialize: the few things a client must
+	 * know to use these tools well.
+	 */
+	private function instructions() {
+		$user = wp_get_current_user();
+		$lines = array(
+			'WordPress site management tools for ' . home_url() . '. Each tool maps to a REST endpoint of this site.',
+			$user && $user->ID ? 'Requests run as WordPress user "' . $user->user_login . '" (ID ' . $user->ID . ').' : 'Requests run without a WordPress user (legacy API key): kses filtering applies and authorless content is created.',
+			'Secrets (passwords, API/S3 keys, tokens) are returned as "[redacted]". Writing "[redacted]" back keeps the stored secret.',
+			'Use wp_rest_request for any other REST route of this site (Redirection, menu items, Yoast, Polylang …); wp_rest_routes lists them.',
+			'Responses are slim by default: pass include_meta=true or meta_keys to wp_get_post when you need post meta.',
+		);
+		return implode( "\n", $lines );
 	}
 
 	/**
@@ -240,7 +290,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 				break;
 			}
 		}
-		if ( ! $tool || empty( $tool['endpoint'] ) ) {
+		if ( ! $tool || empty( $tool['endpoint'] ) || ! $this->tool_available( $tool ) ) {
 			return $this->rpc_error( $id, -32602, 'Unknown tool: ' . $name );
 		}
 
@@ -250,8 +300,15 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		// Substitute {placeholder} path segments from the arguments.
 		if ( preg_match_all( '/\{(\w+)\}/', $path, $matches ) ) {
 			foreach ( $matches[1] as $key ) {
-				$value = isset( $args[ $key ] ) ? $args[ $key ] : '';
-				$path  = str_replace( '{' . $key . '}', rawurlencode( (string) $value ), $path );
+				if ( ! isset( $args[ $key ] ) || ! is_scalar( $args[ $key ] ) || '' === (string) $args[ $key ] ) {
+					return $this->rpc_result( $id, array(
+						'content' => array( array( 'type' => 'text', 'text' => 'Missing or invalid (must be a string/number) argument: ' . $key ) ),
+						'isError' => true,
+					) );
+				}
+				// Plugin files contain "/" (e.g. worker/init.php): keep slashes, encode the rest.
+				$value = str_replace( '%2F', '/', rawurlencode( (string) $args[ $key ] ) );
+				$path  = str_replace( '{' . $key . '}', $value, $path );
 				unset( $args[ $key ] );
 			}
 		}
@@ -275,9 +332,9 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 
 		// Audit each tool call under its real endpoint. (rest_do_request does not
 		// trigger rest_post_dispatch, so the global audit hook would miss these.)
-		$key   = $request->get_param( '_goo1_mcp_key' );
+		$key   = Goo1_MCP_Auth::instance()->current();
 		$label = ( is_array( $key ) && isset( $key['label'] ) ) ? $key['label'] : 'oauth';
-		Goo1_MCP_Audit_Log::instance()->log( $label, self::NAMESPACE_PATH() . $path, $method, $this->redact_args( $args ), $status );
+		Goo1_MCP_Audit_Log::instance()->log( $label, self::NAMESPACE_PATH() . $path, $method, $args, $status, Goo1_MCP_Audit_Log::take_flags() );
 
 		$text = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		$is_error = ( $status >= 400 ) || ( is_array( $data ) && isset( $data['success'] ) && false === $data['success'] );
@@ -310,23 +367,6 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 
 	private static function NAMESPACE_PATH() {
 		return '/' . self::NAMESPACE;
-	}
-
-	/**
-	 * Replace oversized string arguments (e.g. base64 uploads) with a short
-	 * placeholder before they are written to the audit log, so a single media
-	 * upload can't bloat the audit table by megabytes.
-	 */
-	private function redact_args( $args ) {
-		if ( ! is_array( $args ) ) {
-			return $args;
-		}
-		foreach ( $args as $k => $v ) {
-			if ( is_string( $v ) && strlen( $v ) > 2048 ) {
-				$args[ $k ] = '[' . $k . ': ' . strlen( $v ) . ' bytes omitted]';
-			}
-		}
-		return $args;
 	}
 
 	/* ---- JSON-RPC envelope helpers ---- */

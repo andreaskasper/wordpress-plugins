@@ -67,7 +67,16 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 			return $this->error( 'not_found', 'Post not found.', 404 );
 		}
 
-		$data = $this->read_elementor_data( $id );
+		$data          = $this->read_elementor_data( $id );
+		$page_settings = get_post_meta( $id, '_elementor_page_settings', true );
+		// Form widgets keep integration API keys (Mailchimp, ActiveCampaign …) in
+		// their settings: mask them like everything else the bridge returns.
+		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		} else {
+			$data          = Goo1_MCP_Redactor::redact( $data );
+			$page_settings = Goo1_MCP_Redactor::redact( $page_settings );
+		}
 
 		return $this->success( array(
 			'post_id'           => $id,
@@ -76,7 +85,7 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 			'edit_mode'         => get_post_meta( $id, '_elementor_edit_mode', true ),
 			'elementor_version' => get_post_meta( $id, '_elementor_version', true ),
 			'template_type'     => get_post_meta( $id, '_elementor_template_type', true ),
-			'page_settings'     => get_post_meta( $id, '_elementor_page_settings', true ),
+			'page_settings'     => $page_settings,
 			'has_data'          => ! empty( $data ),
 			'data'              => $data,
 		) );
@@ -106,6 +115,11 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 			return $this->error( 'invalid_data', '`data` must be a JSON array of Elementor elements (or a JSON string).' );
 		}
 
+		// Data read back with "[redacted]" placeholders keeps the stored secrets.
+		if ( Goo1_MCP_Redactor::contains_mask( $data ) ) {
+			$data = $this->restore_masked_elements( $data, $this->read_elementor_data( $id ) );
+		}
+
 		$json = wp_json_encode( $data );
 		if ( false === $json ) {
 			return $this->error( 'encode_failed', 'Could not encode the provided Elementor data.' );
@@ -125,6 +139,9 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 
 		$page_settings = $request->get_param( 'page_settings' );
 		if ( is_array( $page_settings ) ) {
+			if ( Goo1_MCP_Redactor::contains_mask( $page_settings ) ) {
+				$page_settings = Goo1_MCP_Redactor::restore_masked( $page_settings, get_post_meta( $id, '_elementor_page_settings', true ) );
+			}
 			update_post_meta( $id, '_elementor_page_settings', $page_settings );
 		}
 
@@ -158,6 +175,10 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 			$flat   = array_values( array_filter( $flat, function ( $el ) use ( $filter ) {
 				return isset( $el['widgetType'] ) && $el['widgetType'] === $filter;
 			} ) );
+		}
+
+		if ( ! Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
+			$flat = Goo1_MCP_Redactor::redact( $flat );
 		}
 
 		return $this->success( array(
@@ -218,7 +239,7 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 		return $this->success( array(
 			'kit_id'   => $kit_id,
 			'title'    => get_the_title( $kit_id ),
-			'settings' => get_post_meta( $kit_id, '_elementor_page_settings', true ),
+			'settings' => Goo1_MCP_Redactor::redact( get_post_meta( $kit_id, '_elementor_page_settings', true ) ),
 		) );
 	}
 
@@ -248,6 +269,41 @@ class Goo1_MCP_Elementor_Controller extends Goo1_MCP_Base_Controller {
 	/* -------------------------------------------------------------------- */
 	/* Helpers                                                              */
 	/* -------------------------------------------------------------------- */
+
+	/**
+	 * Put the stored secrets back where a client sent "[redacted]": matched by
+	 * element id, so reordering or adding elements is fine.
+	 */
+	private function restore_masked_elements( $new, $old ) {
+		$old_by_id = array();
+		$collect   = function ( $els ) use ( &$collect, &$old_by_id ) {
+			foreach ( (array) $els as $el ) {
+				if ( is_array( $el ) && isset( $el['id'] ) ) {
+					$old_by_id[ (string) $el['id'] ] = isset( $el['settings'] ) ? $el['settings'] : array();
+				}
+				if ( is_array( $el ) && ! empty( $el['elements'] ) ) {
+					$collect( $el['elements'] );
+				}
+			}
+		};
+		$collect( $old );
+		$apply = function ( $els ) use ( &$apply, $old_by_id ) {
+			foreach ( $els as $i => $el ) {
+				if ( ! is_array( $el ) ) {
+					continue;
+				}
+				if ( isset( $el['settings'] ) && Goo1_MCP_Redactor::contains_mask( $el['settings'] ) ) {
+					$old = isset( $el['id'] ) && isset( $old_by_id[ (string) $el['id'] ] ) ? $old_by_id[ (string) $el['id'] ] : null;
+					$els[ $i ]['settings'] = Goo1_MCP_Redactor::restore_masked( $el['settings'], $old );
+				}
+				if ( ! empty( $el['elements'] ) && is_array( $el['elements'] ) ) {
+					$els[ $i ]['elements'] = $apply( $el['elements'] );
+				}
+			}
+			return $els;
+		};
+		return $apply( $new );
+	}
 
 	/**
 	 * Read and decode a post's _elementor_data into an array (or null).

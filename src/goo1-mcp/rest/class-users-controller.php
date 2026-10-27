@@ -87,7 +87,19 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		$data                 = $this->format_user( $user );
 		$data['capabilities'] = $user->allcaps;
-		$data['meta']         = array_map( function ( $v ) { return $v[0] ?? ''; }, get_user_meta( $user->ID ) );
+		$meta = array_map( function ( $v ) { return $v[0] ?? ''; }, get_user_meta( $user->ID ) );
+		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		} else {
+			foreach ( $meta as $mk => $mv ) {
+				if ( 'session_tokens' === $mk || Goo1_MCP_Redactor::is_sensitive_key( $mk ) ) {
+					$meta[ $mk ] = '' === $mv ? '' : Goo1_MCP_Redactor::MASK;
+				} else {
+					$meta[ $mk ] = Goo1_MCP_Redactor::redact_string( $mv );
+				}
+			}
+		}
+		$data['meta'] = $meta;
 
 		return $this->success( $data );
 	}
@@ -114,7 +126,7 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_user_meta( $user_id, sanitize_text_field( $key ), $value );
+				update_user_meta( $user_id, sanitize_text_field( $key ), wp_slash( $value ) );
 			}
 		}
 
@@ -158,7 +170,12 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_user_meta( $user->ID, sanitize_text_field( $key ), $value );
+				$key = sanitize_text_field( $key );
+				// A value read back with "[redacted]" keeps the stored secrets.
+				if ( Goo1_MCP_Redactor::contains_mask( $value ) ) {
+					$value = Goo1_MCP_Redactor::restore_masked_value( $value, get_user_meta( $user->ID, $key, true ) );
+				}
+				update_user_meta( $user->ID, $key, wp_slash( $value ) );
 			}
 		}
 

@@ -35,6 +35,8 @@ class Goo1_MCP_OAuth {
 	const TOKEN_PREFIX    = 'goo1_mcp_oauth_at_';   // transient prefix for access tokens.
 	const CODE_PREFIX     = 'goo1_mcp_oauth_code_'; // transient prefix for auth codes.
 	const CODE_TTL        = 600;                    // 10 minutes.
+	const USED_RT_OPTION  = 'goo1_mcp_oauth_rt_used'; // rotated refresh-token hashes → family (replay detection).
+	const REFRESH_GRACE   = 120;                       // seconds an already rotated refresh token is still honoured.
 
 	private static $instance = null;
 
@@ -45,18 +47,75 @@ class Goo1_MCP_OAuth {
 		return self::$instance;
 	}
 
+	/** @var int Re-entrancy depth of the OAuth store lock. */
+	private $lock_depth = 0;
+
+	/** @var bool Whether GET_LOCK succeeded. */
+	private $locked = false;
+
+	/**
+	 * Read an OAuth store option straight from the database (bypassing a
+	 * possibly stale object cache), so read-modify-write cycles under the
+	 * lock never work on old data.
+	 */
+	private function fresh( $option ) {
+		wp_cache_delete( $option, 'options' );
+		$v = get_option( $option, array() );
+		return is_array( $v ) ? $v : array();
+	}
+
+	/**
+	 * Serialise writers of the OAuth stores (parallel refreshes of different
+	 * connections would otherwise drop each other's new refresh tokens).
+	 * MySQL named lock; released at the latest when the request ends.
+	 */
+	/**
+	 * @return bool Whether the lock is held (false after a 10 s timeout).
+	 */
+	private function lock() {
+		global $wpdb;
+		if ( 0 === $this->lock_depth++ ) {
+			$this->locked = '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 10)', self::lock_name() ) );
+		}
+		return $this->locked;
+	}
+
+	private function unlock() {
+		global $wpdb;
+		if ( $this->lock_depth > 0 && 0 === --$this->lock_depth && $this->locked ) {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::lock_name() ) );
+			$this->locked = false;
+		}
+	}
+
+	/**
+	 * Named locks are server-wide: make the name unique per site (DB + prefix).
+	 */
+	private static function lock_name() {
+		global $wpdb;
+		return 'goo1mcp_oauth_' . md5( DB_NAME . '|' . $wpdb->prefix );
+	}
+
+	/**
+	 * Whether an access token was issued by this server and is still live:
+	 * listed in the self-protected index, unexpired, connection not revoked.
+	 */
+	public function is_issued_token( $hash, $token_data ) {
+		$index = get_option( self::INDEX_OPTION, array() );
+		if ( ! is_array( $index ) || empty( $index[ $hash ] ) || (int) $index[ $hash ]['expires'] < time() ) {
+			return false;
+		}
+		if ( ! empty( $token_data['family'] ) && ! $this->family_alive( $token_data['family'] ) ) {
+			return false;
+		}
+		return isset( $index[ $hash ]['client_id'], $token_data['client_id'] ) && $index[ $hash ]['client_id'] === $token_data['client_id'];
+	}
+
 	/**
 	 * Effective OAuth settings merged with defaults.
 	 */
 	public static function settings() {
-		$defaults = array(
-			'default_rate_limit' => 60,
-			'oauth_enabled'      => true,
-			'oauth_dcr_enabled'  => true,
-			'oauth_token_ttl'    => 3600,
-			'oauth_default_scope'=> 'read',
-		);
-		return wp_parse_args( (array) get_option( 'goo1_mcp_settings', array() ), $defaults );
+		return wp_parse_args( (array) get_option( 'goo1_mcp_settings', array() ), Goo1_MCP_Activator::default_settings() );
 	}
 
 	/* ---------------------------------------------------------------------
@@ -147,7 +206,7 @@ class Goo1_MCP_OAuth {
 			'response_modes_supported'              => array( 'query' ),
 			'grant_types_supported'                 => array( 'authorization_code', 'refresh_token' ),
 			'token_endpoint_auth_methods_supported' => array( 'client_secret_post', 'client_secret_basic', 'none' ),
-			'code_challenge_methods_supported'      => array( 'S256', 'plain' ),
+			'code_challenge_methods_supported'      => array( 'S256' ),
 		);
 		if ( ! empty( self::settings()['oauth_dcr_enabled'] ) ) {
 			$meta['registration_endpoint'] = self::register_endpoint();
@@ -174,11 +233,15 @@ class Goo1_MCP_OAuth {
 		$redirect_uris = array();
 		if ( ! empty( $body['redirect_uris'] ) && is_array( $body['redirect_uris'] ) ) {
 			foreach ( $body['redirect_uris'] as $uri ) {
-				$uri = esc_url_raw( trim( (string) $uri ) );
-				if ( $uri ) {
-					$redirect_uris[] = $uri;
+				$uri = trim( (string) $uri );
+				if ( ! $this->is_acceptable_redirect( $uri ) ) {
+					$this->json_out( array( 'error' => 'invalid_redirect_uri', 'error_description' => 'Every redirect_uri must be an absolute https URL (or http on a loopback host).' ), 400 );
 				}
+				$redirect_uris[] = $uri;
 			}
+		}
+		if ( empty( $redirect_uris ) ) {
+			$this->json_out( array( 'error' => 'invalid_redirect_uri', 'error_description' => 'At least one redirect_uri is required.' ), 400 );
 		}
 
 		$auth_method = isset( $body['token_endpoint_auth_method'] ) ? sanitize_text_field( $body['token_endpoint_auth_method'] ) : 'client_secret_post';
@@ -241,6 +304,7 @@ class Goo1_MCP_OAuth {
 		$state         = isset( $_REQUEST['state'] ) ? wp_unslash( $_REQUEST['state'] ) : '';
 		$challenge     = isset( $_REQUEST['code_challenge'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['code_challenge'] ) ) : '';
 		$challenge_m   = isset( $_REQUEST['code_challenge_method'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['code_challenge_method'] ) ) : 'plain';
+		$state         = is_string( $state ) ? $state : '';
 
 		$client = $this->get_client( $client_id );
 		if ( ! $client ) {
@@ -250,23 +314,24 @@ class Goo1_MCP_OAuth {
 			// Never redirect to an unvalidated URI — show an error instead.
 			$this->html_error( __( 'Invalid or unregistered redirect_uri for this client.', 'goo1-mcp' ) );
 		}
-		if ( 'code' !== $response_type ) {
-			$this->redirect_error( $redirect_uri, 'unsupported_response_type', $state );
-		}
-		if ( '' === $challenge ) {
-			$this->redirect_error( $redirect_uri, 'invalid_request', $state, 'PKCE code_challenge is required.' );
-		}
-		if ( ! in_array( $challenge_m, array( 'S256', 'plain' ), true ) ) {
-			$this->redirect_error( $redirect_uri, 'invalid_request', $state, 'Unsupported code_challenge_method.' );
-		}
-
-		// Require a logged-in administrator to approve the connection.
+		// Require a logged-in administrator before any redirect back to the
+		// client (dynamically registered redirect URIs must not become an
+		// open redirect for anonymous visitors).
 		if ( ! is_user_logged_in() ) {
 			wp_safe_redirect( wp_login_url( $this->current_url() ) );
 			exit;
 		}
 		if ( ! current_user_can( 'manage_options' ) ) {
 			$this->html_error( __( 'You must be an administrator to authorize an MCP connector.', 'goo1-mcp' ) );
+		}
+		if ( 'code' !== $response_type ) {
+			$this->redirect_error( $redirect_uri, 'unsupported_response_type', $state );
+		}
+		if ( '' === $challenge ) {
+			$this->redirect_error( $redirect_uri, 'invalid_request', $state, 'PKCE code_challenge is required.' );
+		}
+		if ( 'S256' !== $challenge_m ) {
+			$this->redirect_error( $redirect_uri, 'invalid_request', $state, 'code_challenge_method must be S256.' );
 		}
 
 		// Decision submitted?
@@ -280,6 +345,11 @@ class Goo1_MCP_OAuth {
 			$granted = isset( $_POST['goo1_oauth_scope'] ) ? sanitize_text_field( wp_unslash( $_POST['goo1_oauth_scope'] ) ) : 'read';
 			list( $scope, $db_write ) = $this->map_scope_choice( $granted );
 
+			$grants = array();
+			if ( Goo1_MCP_Permissions::grants_enabled() && isset( $_POST['goo1_oauth_grant'] ) && is_array( $_POST['goo1_oauth_grant'] ) ) {
+				$grants = Goo1_MCP_Permissions::grants_from_form( array_map( 'sanitize_text_field', wp_unslash( $_POST['goo1_oauth_grant'] ) ) );
+			}
+
 			$code = 'goo1_code_' . bin2hex( random_bytes( 24 ) );
 			set_transient( self::CODE_PREFIX . hash( 'sha256', $code ), array(
 				'client_id'             => $client_id,
@@ -287,6 +357,7 @@ class Goo1_MCP_OAuth {
 				'scope'                 => $scope,
 				'db_write'              => $db_write,
 				'user_id'               => get_current_user_id(),
+				'grants'                => $grants,
 				'code_challenge'        => $challenge,
 				'code_challenge_method' => $challenge_m,
 			), self::CODE_TTL );
@@ -307,6 +378,11 @@ class Goo1_MCP_OAuth {
 	 * ------------------------------------------------------------------- */
 	private function handle_token() {
 		$this->maybe_preflight();
+		// Released when the request ends (json_out exits).
+		if ( ! $this->lock() ) {
+			header( 'Retry-After: 2' );
+			$this->json_out( array( 'error' => 'temporarily_unavailable', 'error_description' => 'Token endpoint busy, retry shortly.' ), 503 );
+		}
 
 		if ( 'POST' !== $this->method() ) {
 			$this->json_out( array( 'error' => 'invalid_request', 'error_description' => 'POST required.' ), 405 );
@@ -356,7 +432,8 @@ class Goo1_MCP_OAuth {
 			$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'PKCE verification failed.' ), 400 );
 		}
 
-		$this->json_out( $this->issue_tokens( $client, $data['user_id'], $data['scope'], $data['db_write'], true ) );
+		$grants = isset( $data['grants'] ) ? $data['grants'] : array();
+		$this->json_out( $this->issue_tokens( $client, $data['user_id'], $data['scope'], $data['db_write'], null, $grants ) );
 	}
 
 	private function grant_refresh_token( $client, $params ) {
@@ -365,26 +442,72 @@ class Goo1_MCP_OAuth {
 			$this->json_out( array( 'error' => 'invalid_request', 'error_description' => 'refresh_token required.' ), 400 );
 		}
 
-		$refresh = get_option( self::REFRESH_OPTION, array() );
+		$refresh = $this->fresh( self::REFRESH_OPTION );
 		$hash    = hash( 'sha256', $rt );
 		if ( empty( $refresh[ $hash ] ) ) {
+			// Replay of an already rotated token: revoke the whole connection.
+			$used = $this->fresh( self::USED_RT_OPTION );
+			if ( isset( $used[ $hash ] ) ) {
+				// Grace window: a client that refreshed twice in parallel (or lost
+				// the response) gets one fresh pair instead of a revoked connection —
+				// same client, still within the window, connection and user still valid.
+				$u = $used[ $hash ];
+				if ( ! empty( $u['record'] ) && empty( $u['grace_used'] ) && ( time() - (int) $u['at'] ) <= self::REFRESH_GRACE
+					&& $u['record']['client_id'] === $client['client_id'] && $this->family_alive( $u['family'] ) ) {
+					$r  = $u['record'];
+					$gu = get_userdata( (int) $r['user_id'] );
+					if ( $gu && user_can( $gu, 'manage_options' ) ) {
+						$used[ $hash ]['grace_used'] = true;
+						update_option( self::USED_RT_OPTION, $used, false );
+						$this->json_out( $this->issue_tokens( $client, $r['user_id'], $r['scope'], $r['db_write'], $r['family'], $this->family_grants( $r['family'] ), isset( $r['connected_at'] ) ? $r['connected_at'] : null ) );
+					}
+				}
+				$this->revoke_family( $used[ $hash ]['family'] );
+				$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'Refresh token was already used; the connection has been revoked. Please reconnect.' ), 400 );
+			}
 			$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'Unknown refresh token.' ), 400 );
 		}
 		$record = $refresh[ $hash ];
 		if ( $record['client_id'] !== $client['client_id'] ) {
 			$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'Refresh token belongs to another client.' ), 400 );
 		}
+		if ( ! empty( $record['expires_at'] ) && (int) $record['expires_at'] < time() ) {
+			unset( $refresh[ $hash ] );
+			update_option( self::REFRESH_OPTION, $refresh, false );
+			$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'Refresh token expired. Please reconnect.' ), 400 );
+		}
+		$user = get_userdata( (int) $record['user_id'] );
+		if ( ! $user || ! user_can( $user, 'manage_options' ) ) {
+			$this->revoke_family( isset( $record['family'] ) ? $record['family'] : '' );
+			$this->json_out( array( 'error' => 'invalid_grant', 'error_description' => 'The approving administrator no longer exists or lost admin rights.' ), 400 );
+		}
 
-		// Issue a fresh access token; keep the existing refresh token (no rotation).
-		$this->json_out( $this->issue_tokens( $client, $record['user_id'], $record['scope'], $record['db_write'], false ) );
+		// Rotate: the old refresh token becomes invalid, a new one replaces it.
+		unset( $refresh[ $hash ] );
+		update_option( self::REFRESH_OPTION, $refresh, false );
+		$used          = $this->fresh( self::USED_RT_OPTION );
+		$used[ $hash ] = array( 'family' => $record['family'], 'at' => time(), 'record' => $record );
+		update_option( self::USED_RT_OPTION, $used, false );
+
+		$this->json_out( $this->issue_tokens(
+			$client,
+			$record['user_id'],
+			$record['scope'],
+			$record['db_write'],
+			$record['family'],
+			isset( $record['grants'] ) ? $record['grants'] : array(),
+			isset( $record['connected_at'] ) ? $record['connected_at'] : null
+		) );
 	}
 
 	/* ---------------------------------------------------------------------
 	 * Token issuance + storage
 	 * ------------------------------------------------------------------- */
-	private function issue_tokens( $client, $user_id, $scope, $db_write, $issue_refresh = true ) {
+	private function issue_tokens( $client, $user_id, $scope, $db_write, $family = null, $grants = array(), $connected_at = null ) {
 		$settings = self::settings();
 		$ttl      = max( 60, (int) $settings['oauth_token_ttl'] );
+		$rt_ttl   = DAY_IN_SECONDS * max( 1, (int) $settings['oauth_refresh_ttl_days'] );
+		$family   = $family ? $family : bin2hex( random_bytes( 8 ) );
 
 		$at      = 'goo1_at_' . bin2hex( random_bytes( 32 ) );
 		$at_hash = hash( 'sha256', $at );
@@ -394,6 +517,7 @@ class Goo1_MCP_OAuth {
 			'key_hash'   => $at_hash,
 			'label'      => 'OAuth: ' . $client['client_name'],
 			'client_id'  => $client['client_id'],
+			'family'     => $family,
 			'user_id'    => (int) $user_id,
 			'scope'      => $scope,
 			'db_write'   => (bool) $db_write,
@@ -404,6 +528,7 @@ class Goo1_MCP_OAuth {
 		$this->index_add( $at_hash, array(
 			'client_id'   => $client['client_id'],
 			'client_name' => $client['client_name'],
+			'family'      => $family,
 			'scope'       => $scope,
 			'db_write'    => (bool) $db_write,
 			'user_id'     => (int) $user_id,
@@ -411,29 +536,189 @@ class Goo1_MCP_OAuth {
 			'expires'     => time() + $ttl,
 		) );
 
-		$response = array(
-			'access_token' => $at,
-			'token_type'   => 'Bearer',
-			'expires_in'   => $ttl,
+		$rt      = 'goo1_rt_' . bin2hex( random_bytes( 32 ) );
+		$refresh = $this->fresh( self::REFRESH_OPTION );
+		$refresh[ hash( 'sha256', $rt ) ] = array(
+			'client_id'    => $client['client_id'],
+			'client_name'  => $client['client_name'],
+			'family'       => $family,
+			'user_id'      => (int) $user_id,
 			'scope'        => $scope,
+			'db_write'     => (bool) $db_write,
+			'grants'       => Goo1_MCP_Permissions::sanitize_grants( $grants ),
+			'connected_at' => $connected_at ? $connected_at : current_time( 'mysql' ),
+			'created_at'   => current_time( 'mysql' ),
+			'expires_at'   => time() + $rt_ttl,
 		);
+		update_option( self::REFRESH_OPTION, $refresh, false );
 
-		if ( $issue_refresh ) {
-			$rt      = 'goo1_rt_' . bin2hex( random_bytes( 32 ) );
-			$refresh = get_option( self::REFRESH_OPTION, array() );
-			$refresh[ hash( 'sha256', $rt ) ] = array(
-				'client_id'   => $client['client_id'],
-				'client_name' => $client['client_name'],
-				'user_id'     => (int) $user_id,
-				'scope'       => $scope,
-				'db_write'    => (bool) $db_write,
-				'created_at'  => current_time( 'mysql' ),
+		return array(
+			'access_token'  => $at,
+			'token_type'    => 'Bearer',
+			'expires_in'    => $ttl,
+			'scope'         => $scope,
+			'refresh_token' => $rt,
+		);
+	}
+
+	/**
+	 * Add the live grants of the token's connection (stored on the refresh
+	 * record, editable by the admin at any time) to access-token data.
+	 */
+	public function hydrate_token_data( $token_data ) {
+		$token_data['grants'] = Goo1_MCP_Permissions::sanitize_grants( array() );
+		if ( empty( $token_data['family'] ) ) {
+			return $token_data;
+		}
+		foreach ( (array) $this->fresh( self::REFRESH_OPTION ) as $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $token_data['family'] ) {
+				$token_data['grants'] = Goo1_MCP_Permissions::sanitize_grants( isset( $r['grants'] ) ? $r['grants'] : array() );
+				break;
+			}
+		}
+		return $token_data;
+	}
+
+	private function family_alive( $family ) {
+		foreach ( (array) $this->fresh( self::REFRESH_OPTION ) as $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $family ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private function family_grants( $family ) {
+		foreach ( (array) $this->fresh( self::REFRESH_OPTION ) as $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $family ) {
+				return isset( $r['grants'] ) ? $r['grants'] : array();
+			}
+		}
+		return array();
+	}
+
+	/**
+	 * Connections (one per refresh-token family) for the admin UI.
+	 */
+	public function connections() {
+		$out = array();
+		foreach ( (array) $this->fresh( self::REFRESH_OPTION ) as $hash => $r ) {
+			$out[] = array(
+				'family'       => isset( $r['family'] ) ? $r['family'] : '',
+				'client_id'    => $r['client_id'],
+				'client_name'  => $r['client_name'],
+				'user_id'      => (int) $r['user_id'],
+				'scope'        => $r['scope'],
+				'db_write'     => ! empty( $r['db_write'] ),
+				'grants'       => Goo1_MCP_Permissions::sanitize_grants( isset( $r['grants'] ) ? $r['grants'] : array() ),
+				'connected_at' => isset( $r['connected_at'] ) ? $r['connected_at'] : $r['created_at'],
+				'expires_at'   => isset( $r['expires_at'] ) ? (int) $r['expires_at'] : 0,
 			);
+		}
+		return $out;
+	}
+
+	/**
+	 * Change the grants of a connection (admin UI). Applies immediately to
+	 * live access tokens because grants are resolved per request.
+	 */
+	public function update_connection_grants( $family, $grants ) {
+		$this->lock();
+		try {
+			return $this->update_connection_grants_locked( $family, $grants );
+		} finally {
+			$this->unlock();
+		}
+	}
+
+	private function update_connection_grants_locked( $family, $grants ) {
+		$refresh = $this->fresh( self::REFRESH_OPTION );
+		$found   = false;
+		foreach ( $refresh as $h => $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $family ) {
+				$refresh[ $h ]['grants'] = Goo1_MCP_Permissions::sanitize_grants( $grants );
+				$found                   = true;
+			}
+		}
+		if ( $found ) {
 			update_option( self::REFRESH_OPTION, $refresh, false );
-			$response['refresh_token'] = $rt;
+		}
+		return $found;
+	}
+
+	/**
+	 * Revoke a connection: its refresh token(s) and live access tokens.
+	 */
+	public function revoke_family( $family ) {
+		$this->lock();
+		try {
+			return $this->revoke_family_locked( $family );
+		} finally {
+			$this->unlock();
+		}
+	}
+
+	private function revoke_family_locked( $family ) {
+		if ( '' === (string) $family ) {
+			return;
+		}
+		$refresh = $this->fresh( self::REFRESH_OPTION );
+		foreach ( $refresh as $h => $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $family ) {
+				unset( $refresh[ $h ] );
+			}
+		}
+		update_option( self::REFRESH_OPTION, $refresh, false );
+
+		$index = $this->fresh( self::INDEX_OPTION );
+		foreach ( $index as $h => $r ) {
+			if ( isset( $r['family'] ) && $r['family'] === $family ) {
+				delete_transient( self::TOKEN_PREFIX . $h );
+				unset( $index[ $h ] );
+			}
+		}
+		update_option( self::INDEX_OPTION, $index, false );
+	}
+
+	/**
+	 * Daily cleanup: expired refresh tokens, stale index rows, old replay list.
+	 */
+	public function housekeeping() {
+		$this->lock();
+		try {
+			return $this->housekeeping_locked();
+		} finally {
+			$this->unlock();
+		}
+	}
+
+	private function housekeeping_locked() {
+		$refresh = $this->fresh( self::REFRESH_OPTION );
+		$changed = false;
+		foreach ( $refresh as $h => $r ) {
+			if ( ! empty( $r['expires_at'] ) && (int) $r['expires_at'] < time() ) {
+				unset( $refresh[ $h ] );
+				$changed = true;
+			}
+		}
+		if ( $changed ) {
+			update_option( self::REFRESH_OPTION, $refresh, false );
 		}
 
-		return $response;
+		$this->active_tokens(); // prunes the index.
+
+		$used    = $this->fresh( self::USED_RT_OPTION );
+		$cutoff  = time() - DAY_IN_SECONDS * max( 1, (int) self::settings()['oauth_refresh_ttl_days'] );
+		$changed = false;
+		foreach ( $used as $h => $u ) {
+			if ( (int) $u['at'] < $cutoff ) {
+				unset( $used[ $h ] );
+				$changed = true;
+			}
+		}
+		if ( $changed ) {
+			update_option( self::USED_RT_OPTION, $used, false );
+		}
 	}
 
 	/* ---------------------------------------------------------------------
@@ -472,7 +757,7 @@ class Goo1_MCP_OAuth {
 			'created_at'                 => current_time( 'mysql' ),
 		);
 
-		$clients = get_option( self::CLIENTS_OPTION, array() );
+		$clients = $this->fresh( self::CLIENTS_OPTION );
 		$clients[ $client_id ] = $record;
 		update_option( self::CLIENTS_OPTION, $clients, false );
 
@@ -483,12 +768,21 @@ class Goo1_MCP_OAuth {
 		if ( '' === (string) $client_id ) {
 			return null;
 		}
-		$clients = get_option( self::CLIENTS_OPTION, array() );
+		$clients = $this->fresh( self::CLIENTS_OPTION );
 		return isset( $clients[ $client_id ] ) ? $clients[ $client_id ] : null;
 	}
 
 	public function delete_client( $client_id ) {
-		$clients = get_option( self::CLIENTS_OPTION, array() );
+		$this->lock();
+		try {
+			return $this->delete_client_locked( $client_id );
+		} finally {
+			$this->unlock();
+		}
+	}
+
+	private function delete_client_locked( $client_id ) {
+		$clients = $this->fresh( self::CLIENTS_OPTION );
 		if ( ! isset( $clients[ $client_id ] ) ) {
 			return false;
 		}
@@ -496,7 +790,7 @@ class Goo1_MCP_OAuth {
 		update_option( self::CLIENTS_OPTION, $clients, false );
 
 		// Revoke this client's refresh tokens and indexed access tokens.
-		$refresh = get_option( self::REFRESH_OPTION, array() );
+		$refresh = $this->fresh( self::REFRESH_OPTION );
 		foreach ( $refresh as $h => $r ) {
 			if ( $r['client_id'] === $client_id ) {
 				unset( $refresh[ $h ] );
@@ -504,7 +798,7 @@ class Goo1_MCP_OAuth {
 		}
 		update_option( self::REFRESH_OPTION, $refresh, false );
 
-		$index = get_option( self::INDEX_OPTION, array() );
+		$index = $this->fresh( self::INDEX_OPTION );
 		foreach ( $index as $h => $r ) {
 			if ( $r['client_id'] === $client_id ) {
 				delete_transient( self::TOKEN_PREFIX . $h );
@@ -520,8 +814,17 @@ class Goo1_MCP_OAuth {
 	 * Revoke a single access token by its hash (also drops the index entry).
 	 */
 	public function revoke_token( $token_hash ) {
+		$this->lock();
+		try {
+			return $this->revoke_token_locked( $token_hash );
+		} finally {
+			$this->unlock();
+		}
+	}
+
+	private function revoke_token_locked( $token_hash ) {
 		delete_transient( self::TOKEN_PREFIX . $token_hash );
-		$index = get_option( self::INDEX_OPTION, array() );
+		$index = $this->fresh( self::INDEX_OPTION );
 		if ( isset( $index[ $token_hash ] ) ) {
 			unset( $index[ $token_hash ] );
 			update_option( self::INDEX_OPTION, $index, false );
@@ -532,7 +835,7 @@ class Goo1_MCP_OAuth {
 	 * Active (non-expired) tokens for the admin list. Prunes stale index rows.
 	 */
 	public function active_tokens() {
-		$index   = get_option( self::INDEX_OPTION, array() );
+		$index   = $this->fresh( self::INDEX_OPTION );
 		$active  = array();
 		$changed = false;
 		foreach ( $index as $hash => $row ) {
@@ -551,7 +854,7 @@ class Goo1_MCP_OAuth {
 	}
 
 	private function index_add( $hash, $row ) {
-		$index = get_option( self::INDEX_OPTION, array() );
+		$index = $this->fresh( self::INDEX_OPTION );
 		$index[ $hash ] = $row;
 		update_option( self::INDEX_OPTION, $index, false );
 	}
@@ -604,12 +907,11 @@ class Goo1_MCP_OAuth {
 		if ( '' === (string) $verifier ) {
 			return false;
 		}
-		if ( 'S256' === $method ) {
-			$computed = rtrim( strtr( base64_encode( hash( 'sha256', $verifier, true ) ), '+/', '-_' ), '=' );
-			return hash_equals( $challenge, $computed );
+		if ( 'S256' !== $method ) {
+			return false;
 		}
-		// plain
-		return hash_equals( $challenge, $verifier );
+		$computed = rtrim( strtr( base64_encode( hash( 'sha256', $verifier, true ) ), '+/', '-_' ), '=' );
+		return hash_equals( $challenge, $computed );
 	}
 
 	private function is_loopback( $uri ) {
@@ -617,23 +919,44 @@ class Goo1_MCP_OAuth {
 		return in_array( $host, array( 'localhost', '127.0.0.1', '::1', '[::1]' ), true );
 	}
 
-	private function validate_redirect( $client, $uri ) {
+	private function is_acceptable_redirect( $uri ) {
 		if ( '' === (string) $uri || ! filter_var( $uri, FILTER_VALIDATE_URL ) ) {
+			return false;
+		}
+		$scheme = strtolower( (string) parse_url( $uri, PHP_URL_SCHEME ) );
+		if ( 'https' === $scheme ) {
+			return true;
+		}
+		return 'http' === $scheme && $this->is_loopback( $uri );
+	}
+
+	private function validate_redirect( $client, $uri ) {
+		if ( ! $this->is_acceptable_redirect( $uri ) ) {
 			return false;
 		}
 		$list = isset( $client['redirect_uris'] ) ? (array) $client['redirect_uris'] : array();
 		if ( ! empty( $list ) ) {
 			foreach ( $list as $registered ) {
-				if ( hash_equals( $registered, $uri ) ) {
+				if ( hash_equals( (string) $registered, $uri ) ) {
+					return true;
+				}
+				// Native apps: a registered loopback redirect may come back on any port (RFC 8252 §7.3).
+				if ( $this->is_loopback( $registered ) && $this->is_loopback( $uri )
+					&& $this->strip_port( $registered ) === $this->strip_port( $uri ) ) {
 					return true;
 				}
 			}
-			// Native apps may use a loopback redirect with a dynamic port (OAuth 2.1).
-			return $this->is_loopback( $uri );
+			return false;
 		}
-		// No URIs registered (manual client left blank): allow https or loopback only.
-		$scheme = parse_url( $uri, PHP_URL_SCHEME );
-		return 'https' === $scheme || $this->is_loopback( $uri );
+		// Legacy manual clients without registered URIs (admin-created): https only.
+		// Dynamically registered clients always have URIs since 1.6.
+		return ( isset( $client['source'] ) && 'manual' === $client['source'] )
+			&& 'https' === strtolower( (string) parse_url( $uri, PHP_URL_SCHEME ) );
+	}
+
+	private function strip_port( $uri ) {
+		$p = wp_parse_url( $uri );
+		return strtolower( ( $p['scheme'] ?? '' ) . '://' . ( $p['host'] ?? '' ) . ( $p['path'] ?? '' ) . ( isset( $p['query'] ) ? '?' . $p['query'] : '' ) );
 	}
 
 	private function method() {
@@ -787,6 +1110,28 @@ class Goo1_MCP_OAuth {
 					</label>
 				<?php endforeach; ?>
 			</fieldset>
+
+			<?php if ( Goo1_MCP_Permissions::grants_enabled() ) : ?>
+			<fieldset>
+				<legend><?php esc_html_e( 'Extra rights (optional)', 'goo1-mcp' ); ?></legend>
+				<?php
+				$grant_labels = array(
+					'unredacted' => __( 'Secrets in clear text (only when a call asks for unredacted=true)', 'goo1-mcp' ),
+					'sql_files'  => __( 'SQL file access (LOAD_FILE, INTO OUTFILE/DUMPFILE)', 'goo1-mcp' ),
+				);
+				foreach ( $grant_labels as $g => $glabel ) :
+					?>
+					<label class="opt"><?php echo esc_html( $glabel ); ?><br>
+						<select name="goo1_oauth_grant[<?php echo esc_attr( $g ); ?>]">
+							<option value=""><?php esc_html_e( 'Not granted', 'goo1-mcp' ); ?></option>
+							<option value="60"><?php esc_html_e( 'For 60 minutes', 'goo1-mcp' ); ?></option>
+							<option value="1440"><?php esc_html_e( 'For 24 hours', 'goo1-mcp' ); ?></option>
+							<option value="perm"><?php esc_html_e( 'Permanently', 'goo1-mcp' ); ?></option>
+						</select>
+					</label>
+				<?php endforeach; ?>
+			</fieldset>
+			<?php endif; ?>
 
 			<div class="actions">
 				<button type="submit" class="deny" name="goo1_oauth_decision" value="deny"><?php esc_html_e( 'Deny', 'goo1-mcp' ); ?></button>

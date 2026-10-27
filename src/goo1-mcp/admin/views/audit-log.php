@@ -49,6 +49,7 @@ $result   = Goo1_MCP_Audit_Log::instance()->get_entries( array(
 					<th>Endpoint</th>
 					<th>Status</th>
 					<th>IP</th>
+					<th>Flags</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -60,6 +61,7 @@ $result   = Goo1_MCP_Audit_Log::instance()->get_entries( array(
 						<td><code><?php echo esc_html( $item->endpoint ); ?></code></td>
 						<td><?php echo esc_html( $item->response_code ); ?></td>
 						<td><?php echo esc_html( $item->ip_address ); ?></td>
+						<td><?php echo ! empty( $item->flags ) ? '<strong style="color:#b32d2e">' . esc_html( $item->flags ) . '</strong>' : ''; ?></td>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
