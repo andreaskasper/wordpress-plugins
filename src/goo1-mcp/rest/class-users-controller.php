@@ -126,7 +126,7 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_user_meta( $user_id, sanitize_text_field( $key ), $value );
+				update_user_meta( $user_id, sanitize_text_field( $key ), wp_slash( $value ) );
 			}
 		}
 
@@ -170,7 +170,12 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		if ( ! empty( $params['meta'] ) && is_array( $params['meta'] ) ) {
 			foreach ( $params['meta'] as $key => $value ) {
-				update_user_meta( $user->ID, sanitize_text_field( $key ), $value );
+				$key = sanitize_text_field( $key );
+				// A value read back with "[redacted]" keeps the stored secrets.
+				if ( Goo1_MCP_Redactor::contains_mask( $value ) ) {
+					$value = Goo1_MCP_Redactor::restore_masked_value( $value, get_user_meta( $user->ID, $key, true ) );
+				}
+				update_user_meta( $user->ID, $key, wp_slash( $value ) );
 			}
 		}
 
