@@ -110,6 +110,7 @@ class Goo1_MCP_Site_Health_Controller extends Goo1_MCP_Base_Controller {
 			'table_count'        => (int) $wpdb->get_var( "SELECT COUNT(*) FROM information_schema.TABLES WHERE table_schema = '" . esc_sql( DB_NAME ) . "'" ),
 			'upload_dir'         => $upload_dir['basedir'],
 			'memory_limit'       => WP_MEMORY_LIMIT,
+			'php_memory_limit'   => ini_get( 'memory_limit' ),
 			'max_upload_size'    => wp_max_upload_size(),
 			'debug_mode'         => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'debug_log'          => defined( 'WP_DEBUG_LOG' ) && WP_DEBUG_LOG,
@@ -222,24 +223,48 @@ class Goo1_MCP_Site_Health_Controller extends Goo1_MCP_Base_Controller {
 	public function run_cron( $request ) {
 		$hook = sanitize_text_field( $request['hook'] );
 
-		// Check if hook exists in cron.
+		// Collect the scheduled events for this hook, each with its own args.
 		$cron_array = _get_cron_array();
-		$found      = false;
-
-		foreach ( $cron_array as $timestamp => $hooks ) {
+		$events     = array();
+		foreach ( (array) $cron_array as $timestamp => $hooks ) {
 			if ( isset( $hooks[ $hook ] ) ) {
-				$found = true;
-				break;
+				foreach ( $hooks[ $hook ] as $event ) {
+					$events[] = isset( $event['args'] ) && is_array( $event['args'] ) ? $event['args'] : array();
+				}
 			}
 		}
 
-		if ( ! $found ) {
+		if ( empty( $events ) ) {
 			return $this->error( 'not_found', 'Cron hook not found.', 404 );
 		}
 
-		do_action( $hook );
+		// Optional: only run the event whose args match exactly.
+		$only = $request->get_param( 'args' );
+		if ( is_array( $only ) ) {
+			$events = array_values( array_filter( $events, function ( $a ) use ( $only ) {
+				return $a == $only; // phpcs:ignore -- loose compare on purpose (types from JSON).
+			} ) );
+			if ( empty( $events ) ) {
+				return $this->error( 'not_found', 'No scheduled event of this hook has these args.', 404 );
+			}
+		}
 
-		return $this->success( array( 'executed' => true, 'hook' => $hook ) );
+		// Same event args scheduled several times run once.
+		$unique = array();
+		foreach ( $events as $a ) {
+			$unique[ md5( serialize( $a ) ) ] = $a; // phpcs:ignore
+		}
+
+		foreach ( $unique as $args ) {
+			do_action_ref_array( $hook, $args );
+		}
+
+		return $this->success( array(
+			'executed' => true,
+			'hook'     => $hook,
+			'runs'     => count( $unique ),
+			'args'     => Goo1_MCP_Redactor::redact( array_values( $unique ) ),
+		) );
 	}
 
 	public function list_hooks( $request ) {
