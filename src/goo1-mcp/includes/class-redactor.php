@@ -8,8 +8,16 @@
  * nested arrays/objects (also inside serialized or JSON strings coming from
  * the database) and replace the value of every sensitive key.
  *
- * There is intentionally no switch to turn this off. Secrets move between
- * sites only sealed (see the secrets controller in 1.7).
+ * On top of the key-based masking, SQL results and REST-proxy output are
+ * checked against the site's known secret values (value matching), so a
+ * secret is also masked when a query returns it under another column name.
+ *
+ * Limit: with free SQL a full-scope token can still extract a secret on
+ * purpose (HEX(), SUBSTRING() …) — like it could by installing a plugin.
+ * Redaction prevents secrets from reaching the conversation by accident; it
+ * is not a boundary against a malicious token holder.
+ * Clear text only with the admin-granted "unredacted" grant plus an explicit
+ * unredacted=true on the call (flagged in the audit log).
  */
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -18,6 +26,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Goo1_MCP_Redactor {
 
 	const MASK = '[redacted]';
+
+	/** Values shorter than this are not used for value matching (too many false hits). */
+	const MIN_SECRET_LEN = 6;
+
+	/** @var string[]|null Known secret values of this site (per request). */
+	private static $known = null;
+
+	/** @var string[]|null Regexes (alternations of the known secrets), per request. */
+	private static $known_re = null;
+
+	/**
+	 * Substrings that mark an option value as possibly holding secrets
+	 * (used to pre-filter the options table for known_secrets()).
+	 */
+	private static $value_hints = array(
+		'pass', 'pwd', 'secret', 'token', 'apikey', 'api_key', 'api-key', 'accesskey', 'access_key',
+		'privatekey', 'private_key', 'licensekey', 'license_key', 'licencekey', 'licence_key',
+		'authkey', 'auth_key', 'signing', 'encryption', 'communication', 'potential', 'servicekey',
+		'service_key', '"key"',
+	);
 
 	/**
 	 * Option names whose whole value is never returned.
@@ -56,7 +84,7 @@ class Goo1_MCP_Redactor {
 	/**
 	 * Column names in SQL results that are always masked.
 	 */
-	private static $sensitive_columns = array( 'user_pass', 'user_activation_key' );
+	private static $sensitive_columns = array( 'user_pass', 'user_activation_key', 'consumer_key', 'consumer_secret' );
 
 	/**
 	 * Meta keys (usermeta/postmeta) whose meta_value is always masked.
@@ -153,7 +181,7 @@ class Goo1_MCP_Redactor {
 		if ( ! is_string( $v ) || strlen( $v ) < 20 ) {
 			return false;
 		}
-		return (bool) preg_match( '/^(\$P\$|\$H\$|\$wp\$|\$2[abxy]\$\d\d\$|\$argon2(id|i|d)\$)/', $v )
+		return (bool) preg_match( '/^(\d{9,}:)?(\$P\$|\$H\$|\$wp\$|\$generic\$|\$2[abxy]\$\d\d\$|\$argon2(id|i|d)\$)/', $v )
 			|| false !== strpos( $v, '-----BEGIN' ) && false !== strpos( $v, 'PRIVATE KEY-----' );
 	}
 
@@ -206,7 +234,7 @@ class Goo1_MCP_Redactor {
 			$opt_name = isset( $row['option_name'] ) ? (string) $row['option_name'] : null;
 			foreach ( $row as $col => $val ) {
 				$lc = strtolower( (string) $col );
-				if ( in_array( $lc, self::$sensitive_columns, true ) ) {
+				if ( in_array( $lc, self::$sensitive_columns, true ) || self::is_sensitive_key( $lc ) ) {
 					$row[ $col ] = ( null === $val || '' === $val ) ? $val : self::MASK;
 					continue;
 				}
@@ -218,7 +246,7 @@ class Goo1_MCP_Redactor {
 					$row[ $col ] = ( null === $val || '' === $val ) ? $val : self::MASK;
 					continue;
 				}
-				if ( self::looks_like_secret_value( $val ) ) {
+				if ( self::looks_like_secret_value( $val ) || self::contains_known_secret( $val ) ) {
 					$row[ $col ] = self::MASK;
 				} elseif ( is_string( $val ) && strlen( $val ) > 2 ) {
 					$row[ $col ] = self::redact_string( $val );
@@ -227,6 +255,159 @@ class Goo1_MCP_Redactor {
 			$rows[ $i ] = $row;
 		}
 		return $rows;
+	}
+
+	/**
+	 * Secret values stored on this site: the values of secret-bearing options
+	 * (mwp_potential_key …) and every value under a sensitive key inside any
+	 * option (UpdraftPlus secretkey, SMTP passwords, licence keys …).
+	 * Computed once per request.
+	 *
+	 * @return string[]
+	 */
+	public static function known_secrets() {
+		if ( null !== self::$known ) {
+			return self::$known;
+		}
+		global $wpdb;
+		$where = array();
+		$args  = array();
+		foreach ( self::$blocked_option_patterns as $p ) {
+			$where[] = 'option_name LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $p ) . '%';
+		}
+		foreach ( self::$value_hints as $p ) {
+			$where[] = 'option_value LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $p ) . '%';
+		}
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE LENGTH(option_value) < 1048576 AND ( " . implode( ' OR ', $where ) . ' )',
+				$args
+			),
+			ARRAY_A
+		);
+		$found = array();
+		foreach ( (array) $rows as $r ) {
+			$raw  = (string) $r['option_value'];
+			$data = null;
+			if ( is_serialized( $raw ) ) {
+				$data = @unserialize( $raw, array( 'allowed_classes' => false ) ); // phpcs:ignore
+			} elseif ( isset( $raw[0] ) && ( '{' === $raw[0] || '[' === $raw[0] ) ) {
+				$data = json_decode( $raw, true );
+			}
+			if ( is_array( $data ) || is_object( $data ) ) {
+				self::collect_secrets( $data, $found );
+			} elseif ( self::is_blocked_option( $r['option_name'] ) && ! self::is_bridge_store( $r['option_name'] ) ) {
+				self::add_secret( $raw, $found );
+			}
+		}
+		self::$known = array_keys( $found );
+		return self::$known;
+	}
+
+	/**
+	 * The bridge's own stores hold hashes/metadata, not usable secrets.
+	 */
+	private static function is_bridge_store( $name ) {
+		return false !== strpos( (string) $name, 'goo1_mcp_' );
+	}
+
+	private static function collect_secrets( $value, &$found, $under_secret = false, $depth = 0 ) {
+		if ( $depth > 32 ) {
+			return;
+		}
+		if ( is_object( $value ) ) {
+			$value = get_object_vars( $value );
+		}
+		if ( ! is_array( $value ) ) {
+			return;
+		}
+		foreach ( $value as $k => $v ) {
+			$sensitive = self::is_sensitive_key( $k );
+			if ( is_array( $v ) || is_object( $v ) ) {
+				self::collect_secrets( $v, $found, $sensitive, $depth + 1 );
+				continue;
+			}
+			if ( $sensitive || ( $under_secret && ( is_int( $k ) || in_array( strtolower( (string) $k ), array( 'value', 'default', 'val', 'current' ), true ) ) ) ) {
+				self::add_secret( $v, $found );
+			}
+		}
+	}
+
+	private static function add_secret( $v, &$found ) {
+		if ( ! is_string( $v ) ) {
+			return;
+		}
+		$v = trim( $v );
+		if ( strlen( $v ) < self::MIN_SECRET_LEN || self::MASK === $v || ! self::looks_random( $v ) ) {
+			return;
+		}
+		$found[ $v ] = true;
+	}
+
+	/**
+	 * Value matching only uses values that look like generated secrets, so
+	 * settings such as "lost-password" or "disabled" never mask ordinary text:
+	 * no whitespace, not only digits, and a digit or mixed case.
+	 */
+	private static function looks_random( $v ) {
+		if ( preg_match( '/\s/', $v ) || ctype_digit( $v ) ) {
+			return false;
+		}
+		$digit = (bool) preg_match( '/[0-9]/', $v );
+		$mixed = preg_match( '/[a-z]/', $v ) && preg_match( '/[A-Z]/', $v );
+		return $digit || $mixed;
+	}
+
+	/**
+	 * Whether a string contains one of the site's known secret values.
+	 */
+	public static function contains_known_secret( $val ) {
+		if ( ! is_string( $val ) || strlen( $val ) < self::MIN_SECRET_LEN ) {
+			return false;
+		}
+		if ( null === self::$known_re ) {
+			self::$known_re = array();
+			foreach ( array_chunk( self::known_secrets(), 200 ) as $chunk ) {
+				self::$known_re[] = '/' . implode( '|', array_map( function ( $x ) { return preg_quote( $x, '/' ); }, $chunk ) ) . '/';
+			}
+		}
+		foreach ( self::$known_re as $re ) {
+			if ( preg_match( $re, $val ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Mask every string anywhere in a structure that contains a known secret.
+	 */
+	public static function redact_known( $value, $depth = 0 ) {
+		if ( $depth > 32 ) {
+			return $value;
+		}
+		if ( is_string( $value ) ) {
+			return self::contains_known_secret( $value ) ? self::MASK : $value;
+		}
+		if ( is_object( $value ) ) {
+			$value = get_object_vars( $value );
+		}
+		if ( is_array( $value ) ) {
+			foreach ( $value as $k => $v ) {
+				$value[ $k ] = self::redact_known( $v, $depth + 1 );
+			}
+		}
+		return $value;
+	}
+
+	/**
+	 * Forget the cached secret list (after an option was written).
+	 */
+	public static function reset_known() {
+		self::$known    = null;
+		self::$known_re = null;
 	}
 
 	/**
@@ -249,11 +430,29 @@ class Goo1_MCP_Redactor {
 	}
 
 	/**
+	 * restore_masked() for meta values that may be JSON strings (e.g.
+	 * _elementor_data): decode both sides, restore, encode again.
+	 */
+	public static function restore_masked_value( $new, $old ) {
+		if ( is_string( $new ) && self::MASK !== $new && is_string( $old ) ) {
+			$n = json_decode( $new, true );
+			$o = json_decode( $old, true );
+			if ( is_array( $n ) && is_array( $o ) ) {
+				return wp_json_encode( self::restore_masked( $n, $o ) );
+			}
+		}
+		return self::restore_masked( $new, $old );
+	}
+
+	/**
 	 * Whether a value contains the mask anywhere.
 	 */
 	public static function contains_mask( $value ) {
 		if ( self::MASK === $value ) {
 			return true;
+		}
+		if ( is_string( $value ) && false !== strpos( $value, '"' . self::MASK . '"' ) ) {
+			return true; // JSON string holding a masked value.
 		}
 		if ( is_array( $value ) ) {
 			foreach ( $value as $v ) {
