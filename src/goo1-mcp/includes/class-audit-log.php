@@ -7,6 +7,25 @@ class Goo1_MCP_Audit_Log {
 
 	private static $instance = null;
 
+	/** @var string[] Flags collected for the request currently being handled. */
+	private static $flags = array();
+
+	/**
+	 * Mark the current request (e.g. 'unredacted', 'sql_files', 'guard_restored').
+	 */
+	public static function add_flag( $flag ) {
+		self::$flags[] = (string) $flag;
+	}
+
+	/**
+	 * Return and clear the collected flags.
+	 */
+	public static function take_flags() {
+		$f           = implode( ',', array_unique( self::$flags ) );
+		self::$flags = array();
+		return $f;
+	}
+
 	public static function instance() {
 		if ( null === self::$instance ) {
 			self::$instance = new self();
@@ -17,13 +36,14 @@ class Goo1_MCP_Audit_Log {
 	/**
 	 * Log an API request.
 	 */
-	public function log( $key_label, $endpoint, $method, $params, $response_code ) {
+	public function log( $key_label, $endpoint, $method, $params, $response_code, $flags = '' ) {
 		global $wpdb;
 
-		// Strip sensitive params from summary.
-		$safe_params = $params;
+		// Strip internal params and mask secrets in the summary.
+		$safe_params = is_array( $params ) ? $params : array();
 		unset( $safe_params['_goo1_mcp_key'] );
-		$summary = wp_json_encode( $safe_params );
+		$safe_params = Goo1_MCP_Redactor::redact( self::shrink( $safe_params ) );
+		$summary     = wp_json_encode( $safe_params );
 		if ( strlen( $summary ) > 2000 ) {
 			$summary = substr( $summary, 0, 2000 ) . '...[truncated]';
 		}
@@ -37,10 +57,27 @@ class Goo1_MCP_Audit_Log {
 				'request_summary' => $summary,
 				'response_code'   => (int) $response_code,
 				'ip_address'      => $this->get_client_ip(),
+				'flags'           => substr( sanitize_text_field( (string) $flags ), 0, 64 ),
 				'created_at'      => current_time( 'mysql' ),
 			),
-			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
+			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * Replace oversized strings (base64 uploads, Elementor JSON …) anywhere in
+	 * the params with a short placeholder.
+	 */
+	public static function shrink( $value, $depth = 0 ) {
+		if ( is_string( $value ) && strlen( $value ) > 2048 ) {
+			return '[' . strlen( $value ) . ' bytes omitted]';
+		}
+		if ( is_array( $value ) && $depth < 8 ) {
+			foreach ( $value as $k => $v ) {
+				$value[ $k ] = self::shrink( $v, $depth + 1 );
+			}
+		}
+		return $value;
 	}
 
 	/**

@@ -23,7 +23,7 @@ class Goo1_MCP_Rate_Limiter {
 	public function check( $key_data ) {
 		$limit          = isset( $key_data['rate_limit'] ) ? (int) $key_data['rate_limit'] : 60;
 		$window         = 60; // 1 minute sliding window.
-		$transient_key  = 'goo1_mcp_rl_' . substr( $key_data['key_hash'], 0, 16 );
+		$transient_key  = 'goo1_mcp_rl_' . substr( isset( $key_data['key_hash'] ) ? (string) $key_data['key_hash'] : md5( wp_json_encode( $key_data ) ), 0, 16 );
 
 		$timestamps = get_transient( $transient_key );
 		if ( ! is_array( $timestamps ) ) {
