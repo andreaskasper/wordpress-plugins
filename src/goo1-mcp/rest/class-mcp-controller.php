@@ -192,6 +192,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 			'WordPress site management tools for ' . home_url() . '. Each tool maps to a REST endpoint of this site.',
 			$user && $user->ID ? 'Requests run as WordPress user "' . $user->user_login . '" (ID ' . $user->ID . ').' : 'Requests run without a WordPress user (legacy API key): kses filtering applies and authorless content is created.',
 			'Secrets (passwords, API/S3 keys, tokens) are returned as "[redacted]". Writing "[redacted]" back keeps the stored secret.',
+			'Secrets never travel in clear text: create a request with secrets_request, then pass the sealed envelope (from goo1-seal.mjs on the owner\'s computer or secrets_export_sealed on another Bridge site) or secret_request_id after the owner used the inbox link.',
 			'Use wp_rest_request for any other REST route of this site (Redirection, menu items, Yoast, Polylang …); wp_rest_routes lists them.',
 			'Responses are slim by default: pass include_meta=true or meta_keys to wp_get_post when you need post meta.',
 		);
