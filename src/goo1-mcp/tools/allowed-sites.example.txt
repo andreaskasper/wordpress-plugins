@@ -1,0 +1,5 @@
+# Sites goo1-seal.mjs may seal secrets for. REQUIRED - without this file the script refuses to run.
+# One site per line: host (optional :port, "*.domain" for subdomains), optionally followed by
+# the entry names this site may receive (none listed = any entry).
+johnlindo.com     wasabi-johnlindo
+example.org

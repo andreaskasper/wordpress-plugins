@@ -1,0 +1,13 @@
+{
+  "items": {
+    "wasabi-johnlindo": {
+      "username": "ACCESS-KEY-HERE",
+      "password": "SECRET-KEY-HERE",
+      "fields": {
+        "endpoint": "s3.us-central-1.wasabisys.com",
+        "region": "us-central-1",
+        "bucket": "backup.wp.johnlindo"
+      }
+    }
+  }
+}
