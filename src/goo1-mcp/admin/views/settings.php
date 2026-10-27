@@ -40,6 +40,16 @@ $settings = Goo1_MCP_OAuth::settings();
 					<p class="description">Even when enabled, each key must individually have DB write permission granted.</p>
 				</td>
 			</tr>
+			<tr>
+				<th><label for="grants_enabled"><?php esc_html_e( 'Extra rights', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<label>
+						<input type="checkbox" id="grants_enabled" name="grants_enabled" value="1" <?php checked( ! empty( $settings['grants_enabled'] ) ); ?>>
+						<?php esc_html_e( 'Allow granting "Secrets in clear text" and "SQL file access" to individual keys/connections (master switch)', 'goo1-mcp' ); ?>
+					</label>
+					<p class="description"><?php esc_html_e( 'Off by default. Even with a grant, secrets stay redacted unless a call explicitly asks for unredacted=true; such calls are flagged in the audit log. Bridge settings can never be changed through the bridge itself.', 'goo1-mcp' ); ?></p>
+				</td>
+			</tr>
 		</table>
 
 		<h2><?php esc_html_e( 'OAuth Connector', 'goo1-mcp' ); ?></h2>
@@ -70,6 +80,13 @@ $settings = Goo1_MCP_OAuth::settings();
 				</td>
 			</tr>
 			<tr>
+				<th><label for="oauth_refresh_ttl_days"><?php esc_html_e( 'Connection Lifetime', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<input type="number" id="oauth_refresh_ttl_days" name="oauth_refresh_ttl_days" value="<?php echo esc_attr( $settings['oauth_refresh_ttl_days'] ); ?>" min="1" max="365" class="small-text">
+					<span><?php esc_html_e( 'days without use until a connection must be re-approved (refresh tokens rotate on every use)', 'goo1-mcp' ); ?></span>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="oauth_default_scope"><?php esc_html_e( 'Default Consent Scope', 'goo1-mcp' ); ?></label></th>
 				<td>
 					<select id="oauth_default_scope" name="oauth_default_scope">
@@ -92,7 +109,7 @@ $settings = Goo1_MCP_OAuth::settings();
 	<table class="form-table">
 		<tr>
 			<th>REST Namespace</th>
-			<td><code><?php echo esc_html( home_url( '/wp-json/goo1-mcp/v1/' ) ); ?></code></td>
+			<td><code><?php echo esc_html( rest_url( 'goo1-mcp/v1/' ) ); ?></code><?php Goo1_MCP_Admin::copy_button( rest_url( 'goo1-mcp/v1/' ) ); ?></td>
 		</tr>
 		<tr>
 			<th>Authentication</th>
@@ -100,7 +117,7 @@ $settings = Goo1_MCP_OAuth::settings();
 		</tr>
 		<tr>
 			<th>MCP Connector URL</th>
-			<td><code><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url() ); ?></code></td>
+			<td><code><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url() ); ?></code><?php Goo1_MCP_Admin::copy_button( Goo1_MCP_OAuth::mcp_resource_url() ); ?></td>
 		</tr>
 		<tr>
 			<th>Plugin Version</th>
