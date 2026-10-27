@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**goo1 WP Claude Bridge** (`goo1-mcp`) is a WordPress plugin that exposes WordPress functionality via a REST API for Claude AI integration. It provides ~45 REST endpoints covering content, users, database, site health, and WooCommerce. It can be used two ways: with static scoped API keys (`Authorization: Bearer goo1_mcp_…`) **or** as a remote MCP connector (Claude Desktop / claude.ai) via a built-in OAuth 2.1 server and a native MCP JSON-RPC transport endpoint. Pure PHP, no build tools.
+**goo1 WP Claude Bridge** (`goo1-mcp`) is a WordPress plugin that exposes WordPress functionality via a REST API for Claude AI integration. It provides ~80 REST endpoints / MCP tools covering content, users, database, site health, and WooCommerce. It can be used two ways: with static scoped API keys (`Authorization: Bearer goo1_mcp_…`) **or** as a remote MCP connector (Claude Desktop / claude.ai) via a built-in OAuth 2.1 server and a native MCP JSON-RPC transport endpoint. Pure PHP, no build tools.
 
 ## Architecture
 
 ### Two access surfaces
-1. **REST API** under `goo1-mcp/v1` — the ~45 endpoints below, each guarded by token + scope. Driven directly with a static API key, or internally by the MCP transport.
+1. **REST API** under `goo1-mcp/v1` — the endpoints below, each guarded by token + scope. Driven directly with a static API key, or internally by the MCP transport.
 2. **MCP transport** at `goo1-mcp/v1/mcp` (`rest/class-mcp-controller.php`) — a single JSON-RPC route speaking the MCP Streamable-HTTP protocol (`initialize` / `tools/list` / `tools/call` / `ping`). Tool definitions come from `mcp-server.json`; `tools/call` is dispatched *internally* via `rest_do_request()` to the REST controllers above, so scope checks, rate limiting and audit logging all still apply per tool.
 3. **OAuth 2.1 server** (`includes/class-oauth.php`) — lets an MCP client obtain a Bearer token without a pre-shared API key (discovery + DCR + auth-code/PKCE + refresh). See the OAuth section below.
 
@@ -18,11 +18,14 @@ All REST endpoints live under `goo1-mcp/v1`. The namespace constant is defined i
 
 ### Request Lifecycle
 1. Bearer token extracted from `Authorization` header
-2. `Goo1_MCP_Auth` validates token hash: first against the static API key store (`wp_options` → `goo1_mcp_api_keys`), then falls back to an OAuth access token (transient `goo1_mcp_oauth_at_{hash}`). Both resolve to the same "key data" shape (`scope`, `db_write`, `label`, `rate_limit`).
+2. `Goo1_MCP_Auth` validates token hash: first against the static API key store (`wp_options` → `goo1_mcp_api_keys`), then falls back to an OAuth access token (transient `goo1_mcp_oauth_at_{hash}`). Both resolve to the same "key data" shape (`scope`, `db_write`, `label`, `rate_limit`, `user_id`, `grants`).
+   **Run-as user (since 1.6):** if the key data has a `user_id`, that user must exist and have `manage_options`; it becomes the current user via `wp_set_current_user()`, so kses/unfiltered_html, authorship and other plugins' capability checks behave like in wp-admin. Elementor sanitises `_elementor_data` in a `register_meta` sanitize callback for users without `unfiltered_html` — this was the cause of stripped `<style>`/`<script>` before 1.6. Keys from before 1.6 have no `user_id` and still run as user 0.
+   The authenticated key data is kept in `Goo1_MCP_Auth::instance()->current()` (never trust a request param for it).
 3. `Goo1_MCP_Rate_Limiter` checks transient-based sliding window (60 req/min default)
 4. `Goo1_MCP_Permissions` verifies scope (`read`, `full`, `db_write`)
 5. Controller handles request
-6. `rest_post_dispatch` filter writes audit log entry to `{prefix}goo1_mcp_audit_log` table, and on a 401 adds a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the OAuth protected-resource metadata (RFC 9728 / MCP auth spec)
+6. Output passes `Goo1_MCP_Redactor` (secret-looking keys → `[redacted]`, SQL rows, serialized/JSON strings) unless the key has the `unredacted` grant **and** the call sends `unredacted=true`. SQL results and REST-proxy output are also value-matched against `known_secrets()` (values of secret-bearing options and of every sensitive key in any option; only values ≥ 6 chars that look generated — digit or mixed case, no whitespace — so settings like "lost-password" never mask text; one regex per request), so aliases / `CONCAT` / missing `option_name` columns don't leak. Columns named like secrets (`is_sensitive_key`, plus `consumer_key`/`consumer_secret`) are masked. Meta written back with `[redacted]` is restored via `restore_masked_value()` (handles JSON-string meta). Deliberate transformations (HEX, SUBSTRING) are not caught — redaction is accident protection, not a boundary.
+7. `rest_post_dispatch` filter writes audit log entry to `{prefix}goo1_mcp_audit_log` table, and on a 401 adds a `WWW-Authenticate: Bearer resource_metadata="…"` header pointing at the OAuth protected-resource metadata (RFC 9728 / MCP auth spec)
 
 ### OAuth 2.1 connector flow (`includes/class-oauth.php`)
 `Goo1_MCP_OAuth` is a self-contained authorization server, served **outside** the REST stack from a front-controller hooked on `init` priority 0 (`maybe_handle_request()`), so it runs with full WordPress + cookie context and bypasses REST permissions. It intercepts these paths (matched against the request URI, relative to the WP home path):
@@ -31,10 +34,19 @@ All REST endpoints live under `goo1-mcp/v1`. The namespace constant is defined i
 
 **Dual discovery location (hardening workaround).** Many servers 403-block the entire root `/.well-known/` directory (a "hide dotfiles" hardening rule — which also breaks ACME/Let's Encrypt). To survive that, the **issuer is path-based** (`home_url('/goo1-mcp-oauth')`), so the OIDC-style "well-known appended to the issuer path" discovery URL — `/goo1-mcp-oauth/.well-known/oauth-authorization-server` — is reachable even with root `.well-known` blocked, and the `WWW-Authenticate: resource_metadata="…"` pointer (used verbatim by the client, RFC 9728) targets `/goo1-mcp-oauth/.well-known/oauth-protected-resource`. The canonical root `/.well-known/` handlers are kept too, so once hardening allows them the standard path also resolves. This is why `issuer()` / `protected_resource_url()` in `class-oauth.php` return `/goo1-mcp-oauth`-prefixed URLs rather than the bare host.
 - `/goo1-mcp-oauth/register` — Dynamic Client Registration (RFC 7591), POST only.
-- `/goo1-mcp-oauth/authorize` — auth-code flow + PKCE (S256/plain). Requires a logged-in `manage_options` admin who picks a scope on an HTML consent page; issues a single-use code (transient, 10 min TTL).
-- `/goo1-mcp-oauth/token` — token + refresh. Issues a Bearer access token stored as a transient (`oauth_token_ttl`, default 3600s) plus a non-rotating refresh token in `goo1_mcp_oauth_refresh`.
+- `/goo1-mcp-oauth/authorize` — auth-code flow + PKCE (S256 only since 1.6). Requires a logged-in `manage_options` admin who picks a scope on an HTML consent page; issues a single-use code (transient, 10 min TTL).
+- `/goo1-mcp-oauth/token` — token + refresh. Issues a Bearer access token stored as a transient (`oauth_token_ttl`, default 3600s) plus a refresh token in `goo1_mcp_oauth_refresh`. Since 1.6 refresh tokens **rotate** on every use; each connection is a `family`. A rotated token is still honoured for `REFRESH_GRACE` (120 s, parallel refreshes); after that a replay revokes the whole family. Refresh tokens expire after `oauth_refresh_ttl_days` (90) and require the approving user to still be an admin. DCR requires https/loopback `redirect_uris`; PKCE is S256 only.
 
 Issued access tokens are plain Bearer tokens validated by `Goo1_MCP_Auth` alongside the static keys, so every existing endpoint accepts them transparently. The consent scope choice maps to `read` / `full` / `full`+`db_write`. CORS headers (incl. `Mcp-Protocol-Version` / `Mcp-Session-Id`) are emitted for the claude.ai web client. **Routing note:** because discovery and OAuth endpoints are intercepted on `init` (not registered as rewrite rules), the request must actually reach WordPress's `index.php`. A server/WAF/security layer that serves `/.well-known/*` from disk or 403s non-standard paths will break the connector handshake before any code runs — that is the first thing to check when registration fails.
+
+### Secrets, grants, self-protection (since 1.6)
+- `includes/class-redactor.php` — value-based redaction. `is_blocked_option()` (whole option hidden), `is_sensitive_key()` (nested keys like secretkey/accesskey/password/token, minus suffixes such as `_ttl`/`_enabled`), `redact_rows()` for SQL results, `restore_masked()` so writing a read-back value with `[redacted]` keeps the stored secret.
+- Grants (`unredacted`, `sql_files`) live on the API key (`grants`) or on the OAuth refresh record of a connection (resolved per request by `Goo1_MCP_OAuth::hydrate_token_data()`, so admin changes apply immediately). Each grant is `null` (no), `0` (permanent) or an expiry timestamp. Master switch `grants_enabled` in settings, default off. Only settable in wp-admin.
+- `includes/class-guard.php` — the bridge's own `goo1_mcp_*` options are off limits for its tools. **Tripwire, not a security boundary** (a full-scope token that installs plugins can run code). Name checks must respect MySQL collation: `ｇoo1_mcp_settings` (full-width g) matches `goo1_mcp_settings` in `utf8mb4_general_ci` — so tool-supplied option names must be plain ASCII (`is_valid_option_name()`) and are resolved to the stored name (`stored_name()`). Raw SQL writes run via `run_sql_write()` inside a transaction (rolled back if any row named like `%goo1_mcp_%` except rate-limit transients changed); the REST proxy and plugin activation snapshot/restore only the core settings (`CORE`) to avoid reverting concurrent legitimate OAuth writes. Flagged as `guard_restored` in the audit log.
+- OAuth access tokens are only valid if listed in the protected `goo1_mcp_oauth_token_index` (unexpired, family alive) — `Goo1_MCP_OAuth::is_issued_token()`. A transient alone (e.g. forged via SQL) is not enough. Writers of the OAuth stores take a MySQL named lock (`lock()`/`unlock()`) and read with `fresh()`.
+- `wp_db_query` and `wp_rest_request` require full scope; SQL keyword scanning uses `code_only()` (a small lexer: strings → empty, backtick identifiers → their content, comments → space, honours NO_BACKSLASH_ESCAPES), never regexes on the raw statement. Executable comments (`/*! … */`, MariaDB `/*M! … */`) and `GET_LOCK` are rejected outright.
+- Known limits of the tripwire: the REST proxy and plugin activation only snapshot `Guard::CORE`, so a third-party route that writes arbitrary options could still touch the OAuth stores; `run_sql_write()` issues `START TRANSACTION` on the shared `$wpdb` connection (would commit a transaction another plugin left open). Collations that ignore zero-width characters are covered by also snapshotting every non-ASCII option name; all bridge stores are pre-created by the activator so none can be planted as a new row.
+- The OAuth lock name is per site (`md5(DB_NAME|prefix)`), because MySQL named locks are server-wide; if `GET_LOCK` times out the token endpoint answers 503 instead of running unlocked.
 
 ### Class Naming & Prefix
 All classes use `Goo1_MCP_` prefix. Controllers extend `Goo1_MCP_Base_Controller` which provides `get_permission_callback($scope)`, `success($data)`, and `error($code, $msg, $status)`.
@@ -58,7 +70,9 @@ includes/
   class-permissions.php         # Scope checking (read/full/db_write)
   class-rate-limiter.php        # Transient-based sliding window
   class-audit-log.php           # DB logging + purge + query
-  class-oauth.php               # OAuth 2.1 AS: discovery, DCR, authorize+PKCE, token+refresh, client/token storage
+  class-oauth.php               # OAuth 2.1 AS: discovery, DCR, authorize+PKCE, token+refresh (rotation), connections, client/token storage
+  class-redactor.php            # Secret redaction for all tool output
+  class-guard.php               # Snapshot/restore of goo1_mcp_* options around indirect writes
 admin/
   class-admin.php               # Menu pages, form handlers (keys, settings, purge, OAuth client/token revoke)
   views/{api-keys,audit-log,settings,oauth-clients}.php
@@ -71,7 +85,8 @@ rest/
   class-menus-controller.php    # Nav menus, locations, widgets
   class-users-controller.php    # Users + roles
   class-options-controller.php  # Options with blocklist filtering
-  class-plugins-controller.php  # Plugins, themes, rewrite rules
+  class-plugins-controller.php  # Plugins, themes (list/activate/install/update/delete), available updates, rewrite rules
+  class-rest-proxy-controller.php # wp_rest_request / wp_rest_routes: internal rest_do_request to any non-goo1 route
   class-database-controller.php # SQL queries, table list, schema, sample
   class-site-health-controller.php # Health, error log, cron, hooks, transients
   class-mcp-controller.php      # MCP JSON-RPC transport at /mcp (bridges tools/* to REST via rest_do_request)
@@ -86,10 +101,11 @@ uninstall.php                   # Drops table, removes options (incl. OAuth) and
 3. Use `$this->get_permission_callback('read'|'full'|'db_write')` for permission callbacks
 4. Return via `$this->success($data)` or `$this->error($code, $msg, $status)`
 5. Add `require_once` in `goo1-mcp.php` and add class name to the `$controllers` array in `rest_api_init`
-6. Add corresponding tool definitions in `mcp-server.json` (this is what surfaces the endpoint to MCP `tools/list` / `tools/call`)
+6. Add corresponding tool definitions in `mcp-server.json` (this is what surfaces the endpoint to MCP `tools/list` / `tools/call`). Add `annotations` (readOnlyHint / destructiveHint / idempotentHint / openWorldHint) and, for optional integrations, `"requires": "<integration>"` (checked in `Goo1_MCP_MCP_Controller::tool_available()`).
+7. Anything that returns stored data must go through `Goo1_MCP_Redactor` (respecting `Goo1_MCP_Permissions::allow_unredacted()`); anything that can write options indirectly must be wrapped with `Goo1_MCP_Guard::snapshot()` / `restore_if_changed()`.
 
 ### API Key Scopes
-- `read`: GET requests only on all endpoints
+- `read`: GET requests only (except free SQL and the REST proxy, which need `full` since 1.6)
 - `full`: All HTTP methods (POST, PUT, DELETE)
 - `db_write`: Required additionally for SQL INSERT/UPDATE/DELETE (key must also be `full` scope)
 
@@ -104,6 +120,8 @@ One custom table: `{prefix}goo1_mcp_audit_log` (created on activation via `dbDel
 - `goo1_mcp_oauth_clients` — registered OAuth clients (DCR + manual); secret stored as SHA-256 hash
 - `goo1_mcp_oauth_refresh` — refresh tokens (hashed)
 - `goo1_mcp_oauth_token_index` — enumerable index of live access tokens for the admin UI
+- `goo1_mcp_oauth_rt_used` — rotated refresh-token hashes (grace window + replay detection)
+- `goo1_mcp_db_version` — triggers `Goo1_MCP_Activator::install()` on `plugins_loaded` after an update (activation hooks don't fire on update); daily cron `goo1_mcp_daily_maintenance` (audit retention, OAuth housekeeping)
 
 Transients: `goo1_mcp_oauth_at_{hash}` (access tokens), `goo1_mcp_oauth_code_{hash}` (auth codes), `goo1_mcp_rl_*` (rate limiter).
 
