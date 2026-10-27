@@ -87,7 +87,19 @@ class Goo1_MCP_Users_Controller extends Goo1_MCP_Base_Controller {
 
 		$data                 = $this->format_user( $user );
 		$data['capabilities'] = $user->allcaps;
-		$data['meta']         = array_map( function ( $v ) { return $v[0] ?? ''; }, get_user_meta( $user->ID ) );
+		$meta = array_map( function ( $v ) { return $v[0] ?? ''; }, get_user_meta( $user->ID ) );
+		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		} else {
+			foreach ( $meta as $mk => $mv ) {
+				if ( 'session_tokens' === $mk || Goo1_MCP_Redactor::is_sensitive_key( $mk ) ) {
+					$meta[ $mk ] = '' === $mv ? '' : Goo1_MCP_Redactor::MASK;
+				} else {
+					$meta[ $mk ] = Goo1_MCP_Redactor::redact_string( $mv );
+				}
+			}
+		}
+		$data['meta'] = $meta;
 
 		return $this->success( $data );
 	}
