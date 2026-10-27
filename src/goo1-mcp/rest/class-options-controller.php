@@ -97,7 +97,7 @@ class Goo1_MCP_Options_Controller extends Goo1_MCP_Base_Controller {
 			}
 			// A value read back with "[redacted]" placeholders must not overwrite the real secrets.
 			if ( Goo1_MCP_Redactor::contains_mask( $value ) ) {
-				$value  = Goo1_MCP_Redactor::restore_masked( $value, get_option( $key ) );
+				$value  = Goo1_MCP_Redactor::restore_masked_value( $value, get_option( $key ) );
 				$kept[] = $key;
 			}
 			update_option( $key, $value );

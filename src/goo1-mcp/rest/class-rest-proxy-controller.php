@@ -105,7 +105,7 @@ class Goo1_MCP_Rest_Proxy_Controller extends Goo1_MCP_Base_Controller {
 		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
 			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
 		} else {
-			$data = Goo1_MCP_Redactor::redact( $data );
+			$data = Goo1_MCP_Redactor::redact_known( Goo1_MCP_Redactor::redact( $data ) );
 		}
 
 		$max  = (int) ( $request->get_param( 'max_bytes' ) ?: self::MAX_BYTES_DEFAULT );
