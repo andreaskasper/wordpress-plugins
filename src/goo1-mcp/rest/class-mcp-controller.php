@@ -31,6 +31,22 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 				'permission_callback' => array( $this, 'authenticate_only' ),
 			),
 		) );
+		// Lean profile: four meta tools instead of the full list (saves the
+		// client's context window). Same auth, scopes, redaction and audit.
+		register_rest_route( self::NAMESPACE, '/mcp/lean', array(
+			array(
+				'methods'             => 'POST, GET, DELETE',
+				'callback'            => array( $this, 'handle' ),
+				'permission_callback' => array( $this, 'authenticate_only' ),
+			),
+		) );
+	}
+
+	/** Lean meta tools (wp_find_tools, wp_describe_tool, wp_call_read, wp_call_write). */
+	const LEAN_TOOLS = array( 'wp_find_tools', 'wp_describe_tool', 'wp_call_read', 'wp_call_write' );
+
+	public static function is_lean_route( $route ) {
+		return '/mcp/lean' === substr( (string) $route, -9 );
 	}
 
 	/**
@@ -66,12 +82,13 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		$is_batch = array_keys( $body ) === range( 0, count( $body ) - 1 );
 		$messages = $is_batch ? $body : array( $body );
 
+		$lean      = self::is_lean_route( $request->get_route() );
 		$responses = array();
 		foreach ( $messages as $message ) {
 			if ( ! is_array( $message ) ) {
 				continue;
 			}
-			$result = $this->process_message( $message, $request );
+			$result = $this->process_message( $message, $request, $lean );
 			if ( null !== $result ) {
 				$responses[] = $result;
 			}
@@ -90,7 +107,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 	 * Process one JSON-RPC message. Returns the response array, or null for
 	 * notifications (messages without an id).
 	 */
-	private function process_message( $message, WP_REST_Request $request ) {
+	private function process_message( $message, WP_REST_Request $request, $lean = false ) {
 		$id        = array_key_exists( 'id', $message ) ? $message['id'] : null;
 		$method    = isset( $message['method'] ) ? (string) $message['method'] : '';
 		$params    = isset( $message['params'] ) && is_array( $message['params'] ) ? $message['params'] : array();
@@ -115,17 +132,17 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 						'name'    => 'goo1 WP Claude Bridge',
 						'version' => defined( 'GOO1_MCP_VERSION' ) ? GOO1_MCP_VERSION : '1.0.0',
 					),
-					'instructions'    => $this->instructions(),
+					'instructions'    => $this->instructions( $lean ),
 				) );
 
 			case 'ping':
 				return $this->rpc_result( $id, (object) array() );
 
 			case 'tools/list':
-				return $this->rpc_result( $id, array( 'tools' => $this->list_tools() ) );
+				return $this->rpc_result( $id, array( 'tools' => $lean ? $this->lean_tool_definitions() : $this->list_tools() ) );
 
 			case 'tools/call':
-				return $this->call_tool( $id, $params, $request );
+				return $lean ? $this->call_lean( $id, $params, $request ) : $this->call_tool( $id, $params, $request );
 
 			case 'resources/list':
 				return $this->rpc_result( $id, array( 'resources' => array() ) );
@@ -186,10 +203,12 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 	 * Server instructions sent on initialize: the few things a client must
 	 * know to use these tools well.
 	 */
-	private function instructions() {
+	private function instructions( $lean = false ) {
 		$user = wp_get_current_user();
 		$lines = array(
-			'WordPress site management tools for ' . home_url() . '. Each tool maps to a REST endpoint of this site.',
+			$lean
+				? 'WordPress site management for ' . home_url() . ' (lean profile). Discover tools with wp_find_tools, get the exact input schema with wp_describe_tool, then run read-only tools with wp_call_read and everything else with wp_call_write (tool + arguments).'
+				: 'WordPress site management tools for ' . home_url() . '. Each tool maps to a REST endpoint of this site.',
 			$user && $user->ID ? 'Requests run as WordPress user "' . $user->user_login . '" (ID ' . $user->ID . ').' : 'Requests run without a WordPress user (legacy API key): kses filtering applies and authorless content is created.',
 			'Secrets (passwords, API/S3 keys, tokens) are returned as "[redacted]". Writing "[redacted]" back keeps the stored secret.',
 			'Secrets never travel in clear text: create a request with secrets_request, then pass the sealed envelope (from goo1-seal.mjs on the owner\'s computer or secrets_export_sealed on another Bridge site) or secret_request_id after the owner used the inbox link.',
@@ -278,6 +297,191 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		}
 
 		return $node;
+	}
+
+	/* ---- Lean profile ---- */
+
+	private function lean_tool_definitions() {
+		$call_props = array(
+			'tool'      => array( 'type' => 'string', 'description' => 'Tool name from wp_find_tools, e.g. wp_list_posts.' ),
+			'arguments' => array( 'type' => 'object', 'description' => 'Arguments exactly as in the inputSchema from wp_describe_tool.' ),
+		);
+		$defs = array(
+			array(
+				'name'        => 'wp_find_tools',
+				'description' => 'Search the tools of this WordPress site (' . home_url() . ') by keywords, e.g. "elementor widget", "updraft backup", "plugin update". Returns name, short description and access (read/write). Without a query: all tool names. Then use wp_describe_tool for the input schema.',
+				'inputSchema' => array(
+					'type'       => 'object',
+					'properties' => array(
+						'query' => array( 'type' => 'string', 'description' => 'Keywords (any order). Empty = list all tool names.' ),
+						'limit' => array( 'type' => 'integer', 'default' => 25 ),
+					),
+				),
+				'annotations' => array( 'title' => 'wp find tools', 'readOnlyHint' => true, 'openWorldHint' => false ),
+			),
+			array(
+				'name'        => 'wp_describe_tool',
+				'description' => 'Full description and input schema of one or more tools (comma-separated names, max 10).',
+				'inputSchema' => array(
+					'type'       => 'object',
+					'properties' => array(
+						'name' => array( 'type' => 'string', 'description' => 'Tool name, or several comma-separated.' ),
+					),
+					'required'   => array( 'name' ),
+				),
+				'annotations' => array( 'title' => 'wp describe tool', 'readOnlyHint' => true, 'openWorldHint' => false ),
+			),
+			array(
+				'name'        => 'wp_call_read',
+				'description' => 'Run a READ-ONLY tool of this site (access=read in wp_find_tools). Refuses tools that change anything — use wp_call_write for those.',
+				'inputSchema' => array( 'type' => 'object', 'properties' => $call_props, 'required' => array( 'tool' ) ),
+				'annotations' => array( 'title' => 'wp call read', 'readOnlyHint' => true, 'openWorldHint' => false ),
+			),
+			array(
+				'name'        => 'wp_call_write',
+				'description' => 'Run a tool of this site that changes data (create/update/delete, plugin updates, SQL, REST proxy …). Check the schema with wp_describe_tool first.',
+				'inputSchema' => array( 'type' => 'object', 'properties' => $call_props, 'required' => array( 'tool' ) ),
+				'annotations' => array( 'title' => 'wp call write', 'readOnlyHint' => false, 'destructiveHint' => true, 'idempotentHint' => false, 'openWorldHint' => false ),
+			),
+		);
+		foreach ( $defs as $i => $d ) {
+			$defs[ $i ]['inputSchema'] = $this->normalize_schema( $d['inputSchema'] );
+		}
+		return $defs;
+	}
+
+	private static function tool_access( $tool ) {
+		return ( isset( $tool['annotations']['readOnlyHint'] ) && true === $tool['annotations']['readOnlyHint'] ) ? 'read' : 'write';
+	}
+
+	private static function short_description( $text ) {
+		$text = trim( preg_replace( '/\s+/', ' ', (string) $text ) );
+		if ( preg_match( '/^(.{20,}?[.!?])\s/u', $text, $m ) ) {
+			$text = $m[1];
+		}
+		return function_exists( 'mb_strimwidth' ) ? mb_strimwidth( $text, 0, 180, '…', 'UTF-8' ) : substr( $text, 0, 180 );
+	}
+
+	/** Available (integration present) tools, keyed by name. */
+	private function available_tools() {
+		$out = array();
+		foreach ( $this->load_tools() as $tool ) {
+			if ( ! empty( $tool['name'] ) && $this->tool_available( $tool ) ) {
+				$out[ $tool['name'] ] = $tool;
+			}
+		}
+		return $out;
+	}
+
+	private function lean_text( $id, $data, $is_error = false ) {
+		return $this->rpc_result( $id, array(
+			'content' => array( array( 'type' => 'text', 'text' => wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) ) ),
+			'isError' => (bool) $is_error,
+		) );
+	}
+
+	private function call_lean( $id, $params, WP_REST_Request $request ) {
+		$name = isset( $params['name'] ) ? (string) $params['name'] : '';
+		$args = isset( $params['arguments'] ) && is_array( $params['arguments'] ) ? $params['arguments'] : array();
+		$all  = $this->available_tools();
+
+		switch ( $name ) {
+			case 'wp_find_tools':
+				return $this->lean_text( $id, $this->find_tools( $all, isset( $args['query'] ) ? (string) $args['query'] : '', isset( $args['limit'] ) ? (int) $args['limit'] : 25 ) );
+
+			case 'wp_describe_tool':
+				$names = array_filter( array_map( 'trim', explode( ',', isset( $args['name'] ) && is_scalar( $args['name'] ) ? (string) $args['name'] : '' ) ) );
+				$out   = array();
+				$miss  = array();
+				foreach ( array_slice( array_values( array_unique( $names ) ), 0, 10 ) as $n ) {
+					if ( ! isset( $all[ $n ] ) ) {
+						$miss[] = $n;
+						continue;
+					}
+					$t     = $all[ $n ];
+					$out[] = array(
+						'name'        => $t['name'],
+						'access'      => self::tool_access( $t ),
+						'description' => isset( $t['description'] ) ? $t['description'] : '',
+						'inputSchema' => $this->normalize_schema( isset( $t['inputSchema'] ) ? $t['inputSchema'] : array() ),
+						'annotations' => isset( $t['annotations'] ) ? $t['annotations'] : (object) array(),
+					);
+				}
+				if ( ! $out ) {
+					return $this->lean_text( $id, array( 'error' => 'Unknown tool(s): ' . implode( ', ', $miss ? $miss : array( '(none given)' ) ) . '. Use wp_find_tools.' ), true );
+				}
+				return $this->lean_text( $id, array( 'tools' => $out, 'unknown' => $miss ) );
+
+			case 'wp_call_read':
+			case 'wp_call_write':
+				$tool_name = isset( $args['tool'] ) && is_scalar( $args['tool'] ) ? (string) $args['tool'] : '';
+				if ( ! isset( $all[ $tool_name ] ) ) {
+					return $this->lean_text( $id, array( 'error' => 'Unknown tool: ' . $tool_name . '. Use wp_find_tools.' ), true );
+				}
+				if ( 'wp_call_read' === $name && 'read' !== self::tool_access( $all[ $tool_name ] ) ) {
+					return $this->lean_text( $id, array( 'error' => $tool_name . ' can change data and is not available through wp_call_read. Use wp_call_write.' ), true );
+				}
+				$inner = isset( $args['arguments'] ) ? $args['arguments'] : array();
+				if ( is_string( $inner ) && '' !== trim( $inner ) ) {
+					$inner = json_decode( $inner, true );
+				}
+				if ( null === $inner || '' === $inner ) {
+					$inner = array();
+				}
+				if ( ! is_array( $inner ) ) {
+					return $this->lean_text( $id, array( 'error' => '`arguments` must be an object.' ), true );
+				}
+				return $this->call_tool( $id, array( 'name' => $tool_name, 'arguments' => $inner ), $request );
+
+			default:
+				return $this->rpc_error( $id, -32602, 'Unknown tool: ' . $name . ' (lean profile: ' . implode( ', ', self::LEAN_TOOLS ) . ')' );
+		}
+	}
+
+	/**
+	 * Keyword search over tool names and descriptions. Every keyword scores
+	 * (name hits weigh more); tools without any hit are dropped.
+	 */
+	private function find_tools( $all, $query, $limit ) {
+		$limit = max( 1, min( 200, $limit ) );
+		$query = strtolower( trim( $query ) );
+		if ( '' === $query ) {
+			$list = array();
+			foreach ( $all as $t ) {
+				$list[] = $t['name'] . ' (' . self::tool_access( $t ) . ')';
+			}
+			return array( 'site' => home_url(), 'total' => count( $list ), 'tools' => $list, 'hint' => 'Search with query for short descriptions; wp_describe_tool for schemas.' );
+		}
+		$words = array_values( array_filter( preg_split( '/[\s_,\/-]+/', $query ), function ( $w ) { return strlen( $w ) > 1; } ) );
+		$hits  = array();
+		foreach ( $all as $t ) {
+			$name  = strtolower( $t['name'] );
+			$desc  = strtolower( isset( $t['description'] ) ? $t['description'] : '' );
+			$score = 0;
+			foreach ( $words as $w ) {
+				$stem = strlen( $w ) > 4 ? rtrim( $w, 's' ) : $w; // "plugins" finds "plugin".
+				if ( false !== strpos( $name, $stem ) ) {
+					$score += 3;
+				} elseif ( false !== strpos( $desc, $stem ) ) {
+					$score += 1;
+				}
+			}
+			if ( $score > 0 ) {
+				$hits[] = array( 'score' => $score, 'tool' => $t );
+			}
+		}
+		usort( $hits, function ( $a, $b ) {
+			return $b['score'] - $a['score'] ?: strcmp( $a['tool']['name'], $b['tool']['name'] );
+		} );
+		$out = array();
+		foreach ( array_slice( $hits, 0, $limit ) as $h ) {
+			$out[] = array(
+				'name'        => $h['tool']['name'],
+				'access'      => self::tool_access( $h['tool'] ),
+				'description' => self::short_description( isset( $h['tool']['description'] ) ? $h['tool']['description'] : '' ),
+			);
+		}
+		return array( 'site' => home_url(), 'query' => $query, 'matches' => count( $hits ), 'tools' => $out );
 	}
 
 	private function call_tool( $id, $params, WP_REST_Request $request ) {

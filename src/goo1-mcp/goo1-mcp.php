@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.7.261027
+ * Version:     1.8.261028
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_MCP_VERSION', '1.7.261027' );
+define( 'GOO1_MCP_VERSION', '1.8.261028' );
 define( 'GOO1_MCP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -143,14 +143,14 @@ add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 		if ( 401 === $response->get_status() ) {
 			$response->header(
 				'WWW-Authenticate',
-				sprintf( 'Bearer resource_metadata="%s"', Goo1_MCP_OAuth::protected_resource_url() )
+				sprintf( 'Bearer resource_metadata="%s"', Goo1_MCP_OAuth::protected_resource_url( Goo1_MCP_MCP_Controller::is_lean_route( $route ) ) )
 			);
 		}
 
 		$key_data = Goo1_MCP_Auth::instance()->current();
 		// Skip the /mcp envelope itself — each tools/call is dispatched
 		// internally and audited under its real endpoint.
-		if ( $key_data && substr( $route, -4 ) !== '/mcp' ) {
+		if ( $key_data && substr( $route, -4 ) !== '/mcp' && ! Goo1_MCP_MCP_Controller::is_lean_route( $route ) ) {
 			Goo1_MCP_Audit_Log::instance()->log(
 				$key_data['label'],
 				$route,

@@ -131,6 +131,11 @@ $settings = Goo1_MCP_OAuth::settings();
 			<td><code><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url() ); ?></code><?php Goo1_MCP_Admin::copy_button( Goo1_MCP_OAuth::mcp_resource_url() ); ?></td>
 		</tr>
 		<tr>
+			<th>MCP Connector URL (lean)</th>
+			<td><code><?php echo esc_html( Goo1_MCP_OAuth::mcp_resource_url( true ) ); ?></code><?php Goo1_MCP_Admin::copy_button( Goo1_MCP_OAuth::mcp_resource_url( true ) ); ?>
+				<p class="description"><?php esc_html_e( 'Same tools, but offered as four meta tools (find, describe, call read, call write) — about 5 % of the context the full list needs. Recommended when many sites are connected.', 'goo1-mcp' ); ?></p></td>
+		</tr>
+		<tr>
 			<th>Plugin Version</th>
 			<td><?php echo esc_html( GOO1_MCP_VERSION ); ?></td>
 		</tr>
