@@ -140,7 +140,9 @@ class Goo1_MCP_OAuth {
 
 		if ( 0 === strpos( $path, '.well-known/oauth-protected-resource' )
 			|| 0 === strpos( $path, 'goo1-mcp-oauth/.well-known/oauth-protected-resource' ) ) {
-			$this->serve_protected_resource_metadata();
+			// Path-suffixed lookups (RFC 9728 §3.1) for the lean profile, e.g.
+			// …/oauth-protected-resource/mcp/lean or …/wp-json/goo1-mcp/v1/mcp/lean.
+			$this->serve_protected_resource_metadata( '/mcp/lean' === substr( $path, -9 ) );
 		} elseif ( 0 === strpos( $path, '.well-known/oauth-authorization-server' )
 			|| '.well-known/openid-configuration' === $path
 			|| 0 === strpos( $path, 'goo1-mcp-oauth/.well-known/oauth-authorization-server' )
@@ -164,8 +166,8 @@ class Goo1_MCP_OAuth {
 		// even when the root /.well-known/ directory is hardening-blocked.
 		return untrailingslashit( home_url( '/goo1-mcp-oauth' ) );
 	}
-	public static function mcp_resource_url() {
-		return rest_url( 'goo1-mcp/v1/mcp' );
+	public static function mcp_resource_url( $lean = false ) {
+		return rest_url( $lean ? 'goo1-mcp/v1/mcp/lean' : 'goo1-mcp/v1/mcp' );
 	}
 	public static function authorize_endpoint() {
 		return home_url( '/goo1-mcp-oauth/authorize' );
@@ -176,19 +178,21 @@ class Goo1_MCP_OAuth {
 	public static function register_endpoint() {
 		return home_url( '/goo1-mcp-oauth/register' );
 	}
-	public static function protected_resource_url() {
+	public static function protected_resource_url( $lean = false ) {
 		// Served from the non-blocked path; the client uses this URL verbatim
 		// (RFC 9728), so it does not need to live under the root /.well-known/.
-		return home_url( '/goo1-mcp-oauth/.well-known/oauth-protected-resource' );
+		// The lean profile (/mcp/lean) gets its own suffix so the metadata names
+		// exactly the URL the client connected to.
+		return home_url( '/goo1-mcp-oauth/.well-known/oauth-protected-resource' . ( $lean ? '/mcp/lean' : '' ) );
 	}
 
 	/* ---------------------------------------------------------------------
 	 * Discovery metadata
 	 * ------------------------------------------------------------------- */
-	private function serve_protected_resource_metadata() {
+	private function serve_protected_resource_metadata( $lean = false ) {
 		$this->maybe_preflight();
 		$this->json_out( array(
-			'resource'                => self::mcp_resource_url(),
+			'resource'                => self::mcp_resource_url( $lean ),
 			'authorization_servers'   => array( self::issuer() ),
 			'scopes_supported'        => array( 'read', 'full', 'db_write' ),
 			'bearer_methods_supported'=> array( 'header' ),
