@@ -21,6 +21,7 @@ class Goo1_MCP_Activator {
 			'oauth_token_ttl'          => 3600,
 			'oauth_refresh_ttl_days'   => 90,
 			'oauth_default_scope'      => 'read',
+			'seal_export_targets'      => '',
 		);
 	}
 
@@ -56,6 +57,9 @@ class Goo1_MCP_Activator {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+		if ( class_exists( 'Goo1_MCP_Backups' ) ) {
+			dbDelta( Goo1_MCP_Backups::schema_sql( $charset_collate ) );
+		}
 
 		if ( false === get_option( 'goo1_mcp_api_keys' ) ) {
 			add_option( 'goo1_mcp_api_keys', array(), '', 'yes' );
@@ -119,6 +123,9 @@ class Goo1_MCP_Activator {
 		$settings = wp_parse_args( (array) get_option( 'goo1_mcp_settings', array() ), self::default_settings() );
 		Goo1_MCP_Audit_Log::instance()->purge( max( 1, (int) $settings['audit_log_retention_days'] ) );
 		Goo1_MCP_OAuth::instance()->housekeeping();
+		if ( class_exists( 'Goo1_MCP_Seal' ) ) {
+			Goo1_MCP_Seal::prune();
+		}
 	}
 }
 

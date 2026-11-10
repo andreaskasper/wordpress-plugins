@@ -52,6 +52,17 @@ $settings = Goo1_MCP_OAuth::settings();
 			</tr>
 		</table>
 
+		<h2><?php esc_html_e( 'Secrets', 'goo1-mcp' ); ?></h2>
+		<table class="form-table">
+			<tr>
+				<th><label for="seal_export_targets"><?php esc_html_e( 'Secret export targets', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<textarea id="seal_export_targets" name="seal_export_targets" rows="4" class="large-text code" placeholder="johnlindo.com&#10;www.example.org"><?php echo esc_textarea( isset( $settings['seal_export_targets'] ) ? $settings['seal_export_targets'] : '' ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Sites this site may hand its stored secrets to (sealed, e.g. UpdraftPlus S3 keys for a new site). Exact hosts, one per line, optional :port (no wildcards). Each entry trusts every full-scope key/connection of THIS site to hand over its credentials to that host. Empty = no exports.', 'goo1-mcp' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
 		<h2><?php esc_html_e( 'OAuth Connector', 'goo1-mcp' ); ?></h2>
 		<table class="form-table">
 			<tr>

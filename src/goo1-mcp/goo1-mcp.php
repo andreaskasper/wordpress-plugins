@@ -3,7 +3,7 @@
  * Plugin Name: goo1 MCP WP Claude Bridge
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Exposes WordPress functionality via REST API for Claude AI integration. Manage posts, pages, users, options, database, and more.
- * Version:     1.6.261027
+ * Version:     1.7.261027
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_MCP_VERSION', '1.6.261027' );
+define( 'GOO1_MCP_VERSION', '1.7.261027' );
 define( 'GOO1_MCP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'GOO1_MCP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
@@ -35,6 +35,8 @@ require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-permissions.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-rate-limiter.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-audit-log.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-oauth.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-seal.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'includes/class-backups.php';
 
 // REST controllers.
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-base-controller.php';
@@ -49,6 +51,9 @@ require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-plugins-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-database-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-site-health-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-rest-proxy-controller.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-secrets-controller.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-site-tools-controller.php';
+require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-managewp-controller.php';
 require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-mcp-controller.php';
 
 // Schema/settings upgrade after plugin updates (activation hook does not fire on update).
@@ -62,6 +67,9 @@ add_action( 'plugins_loaded', function () {
 	}
 	if ( defined( 'ELEMENTOR_VERSION' ) || class_exists( '\\Elementor\\Plugin' ) ) {
 		require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-elementor-controller.php';
+	}
+	if ( class_exists( 'UpdraftPlus' ) ) {
+		require_once GOO1_MCP_PLUGIN_DIR . 'rest/class-updraft-controller.php';
 	}
 } );
 
@@ -103,6 +111,9 @@ add_action( 'rest_api_init', function () {
 		'Goo1_MCP_Database_Controller',
 		'Goo1_MCP_Site_Health_Controller',
 		'Goo1_MCP_Rest_Proxy_Controller',
+		'Goo1_MCP_Secrets_Controller',
+		'Goo1_MCP_Site_Tools_Controller',
+		'Goo1_MCP_ManageWP_Controller',
 		'Goo1_MCP_MCP_Controller',
 	);
 
@@ -111,6 +122,9 @@ add_action( 'rest_api_init', function () {
 	}
 	if ( class_exists( 'Goo1_MCP_Elementor_Controller' ) ) {
 		$controllers[] = 'Goo1_MCP_Elementor_Controller';
+	}
+	if ( class_exists( 'Goo1_MCP_Updraft_Controller' ) ) {
+		$controllers[] = 'Goo1_MCP_Updraft_Controller';
 	}
 
 	foreach ( $controllers as $class ) {

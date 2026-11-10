@@ -19,6 +19,7 @@ class Goo1_MCP_Admin {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'handle_actions' ) );
 		add_action( 'admin_notices', array( $this, 'legacy_key_notice' ) );
+		add_action( 'admin_head', array( __CLASS__, 'hide_inbox_menu_item' ) );
 	}
 
 	/**
@@ -138,6 +139,26 @@ class Goo1_MCP_Admin {
 
 		add_submenu_page(
 			'goo1-mcp',
+			'ManageWP',
+			'ManageWP',
+			'manage_options',
+			'goo1-mcp-managewp',
+			array( $this, 'render_managewp_page' )
+		);
+
+		// Opened from a link Claude hands out; hidden from the menu via CSS
+		// (a parent of '' / null triggers PHP 8 deprecations in admin-header.php).
+		add_submenu_page(
+			'goo1-mcp',
+			'Secret inbox',
+			'Secret inbox',
+			'manage_options',
+			'goo1-mcp-secret-inbox',
+			array( $this, 'render_secret_inbox_page' )
+		);
+
+		add_submenu_page(
+			'goo1-mcp',
 			'Audit Log',
 			'Audit Log',
 			'manage_options',
@@ -225,6 +246,23 @@ class Goo1_MCP_Admin {
 			add_settings_error( 'goo1_mcp', 'conn_revoked', 'Connection revoked.', 'success' );
 		}
 
+		// Secret inbox: seal what the admin typed for the request, server-side.
+		if ( isset( $_POST['goo1_mcp_secret_inbox'] ) && check_admin_referer( 'goo1_mcp_secret_inbox' ) ) {
+			$rid = sanitize_text_field( wp_unslash( $_POST['request'] ?? '' ) );
+			$req = Goo1_MCP_Seal::get_request( $rid );
+			if ( $req ) {
+				$secret = (string) wp_unslash( $_POST['gs_secret'] ?? '' ); // phpcs:ignore -- secret, not sanitised on purpose.
+				$payload = array( 'type' => 's3', 'access_key' => trim( (string) wp_unslash( $_POST['gs_access'] ?? '' ) ), 'secret_key' => trim( $secret ) );
+				$pk      = Goo1_MCP_Seal::public_view( $rid, $req )['public_key'];
+				$env     = Goo1_MCP_Seal::seal( $payload, $pk, $rid );
+				if ( ! is_wp_error( $env ) && Goo1_MCP_Seal::set_inbox( $rid, $env ) ) {
+					wp_safe_redirect( admin_url( 'admin.php?page=goo1-mcp-secret-inbox&done=1' ) );
+					exit;
+				}
+			}
+			add_settings_error( 'goo1_mcp', 'inbox_failed', 'The request has expired. Ask Claude for a new link.' );
+		}
+
 		// Revoke key.
 		if ( isset( $_POST['goo1_mcp_revoke_key'] ) && check_admin_referer( 'goo1_mcp_revoke_key' ) ) {
 			$key_hash = sanitize_text_field( wp_unslash( $_POST['key_hash'] ?? '' ) );
@@ -249,6 +287,7 @@ class Goo1_MCP_Admin {
 				'oauth_token_ttl'          => max( 60, (int) ( $_POST['oauth_token_ttl'] ?? 3600 ) ),
 				'oauth_refresh_ttl_days'   => max( 1, min( 365, (int) ( $_POST['oauth_refresh_ttl_days'] ?? 90 ) ) ),
 				'oauth_default_scope'      => $scope,
+				'seal_export_targets'      => sanitize_textarea_field( wp_unslash( $_POST['seal_export_targets'] ?? '' ) ),
 			) );
 			update_option( 'goo1_mcp_settings', $settings );
 			add_settings_error( 'goo1_mcp', 'settings_saved', 'Settings saved.', 'success' );
@@ -290,6 +329,18 @@ class Goo1_MCP_Admin {
 
 	public function render_audit_page() {
 		require_once GOO1_MCP_PLUGIN_DIR . 'admin/views/audit-log.php';
+	}
+
+	public static function hide_inbox_menu_item() {
+		echo '<style>#adminmenu a[href$="page=goo1-mcp-secret-inbox"]{display:none}</style>';
+	}
+
+	public function render_managewp_page() {
+		require_once GOO1_MCP_PLUGIN_DIR . 'admin/views/managewp.php';
+	}
+
+	public function render_secret_inbox_page() {
+		require_once GOO1_MCP_PLUGIN_DIR . 'admin/views/secret-inbox.php';
 	}
 
 	public function render_settings_page() {
