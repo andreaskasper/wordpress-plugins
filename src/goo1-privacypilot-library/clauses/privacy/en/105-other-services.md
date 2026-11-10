@@ -8,6 +8,4 @@ jurisdiction: us, eu, uk
 ---
 ## Other services we use
 
-{{#services_table:necessary}}
-
-{{#services_table:preferences}}
+{{#services_table:necessary,preferences}}

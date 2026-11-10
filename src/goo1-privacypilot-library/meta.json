@@ -1,6 +1,7 @@
 {
   "name": "PrivacyPilot clause library",
   "schema": 1,
+  "requires_plugin": "0.9.261110",
   "maintainer": "Andreas Kasper <andreas.kasper@goo1.de>",
   "note": "Own wording, written from the legal texts and the guidance of the supervisory authorities. Not legal advice. Clauses carry reviewed_by/reviewed_at once a lawyer has checked them."
 }

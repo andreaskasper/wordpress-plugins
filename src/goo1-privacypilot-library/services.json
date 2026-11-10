@@ -663,6 +663,28 @@
     }
   },
   {
+    "id": "font-awesome",
+    "name": "Font Awesome (loaded from Fonticons)",
+    "provider": "Fonticons, Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "fonts",
+    "purpose": {
+      "en": "Icon font. The browser connects to servers of Fonticons.",
+      "de": "Icon-Schrift. Der Browser verbindet sich mit Servern von Fonticons."
+    },
+    "privacy_url": "https://fontawesome.com/privacy",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "kit\\.fontawesome\\.com"
+      ],
+      "link": [
+        "(use|kit|ka-f)\\.fontawesome\\.com"
+      ]
+    }
+  },
+  {
     "id": "gravatar",
     "name": "Gravatar",
     "provider": "Automattic Inc.",
@@ -751,6 +773,21 @@
     "plugins": [
       "woocommerce-paypal-payments/woocommerce-paypal-payments.php"
     ]
+  },
+  {
+    "id": "zelle",
+    "name": "Zelle",
+    "provider": "Early Warning Services, LLC",
+    "country": "US",
+    "category": "necessary",
+    "group": "payments",
+    "purpose": {
+      "en": "Bank-to-bank payments. You pay from your own bank; we receive your name and the payment.",
+      "de": "Zahlungen von Bank zu Bank. Sie zahlen über Ihre eigene Bank; wir erhalten Ihren Namen und die Zahlung."
+    },
+    "privacy_url": "https://www.zellepay.com/privacy-policy",
+    "cookies": [],
+    "patterns": {}
   },
   {
     "id": "woocommerce",
