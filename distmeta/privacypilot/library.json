@@ -1,9 +1,9 @@
 {
  "name": "PrivacyPilot clause library",
  "schema": 1,
- "version": "2026.11.10.1046",
- "commit": "a50a1fe",
- "content_hash": "e5dcbd60585ae990bdcf85a4aac52cd088c838da946973730bbbf772bd4d3c95",
+ "version": "2026.11.10.1143",
+ "commit": "8104571",
+ "content_hash": "ca3882cdc85e757e3fc60a07a0b750fab30ebf3d83b89a7f551b635c8ca4eb11",
  "requires_plugin": "0.9.261110",
  "documents": [
   {
@@ -1907,7 +1907,9 @@
     "load": "Load content",
     "always": "Always allow %s",
     "open": "Open on the provider's site",
-    "privacy": "Provider privacy policy"
+    "privacy": "Provider privacy policy",
+    "form_gate": "This form uses %s to protect against spam. It can only be sent once you allow %s.",
+    "form_gate_allow": "Allow %s"
    },
    "form": {
     "type": "Your request",
@@ -2032,7 +2034,9 @@
     "load": "Inhalt laden",
     "always": "%s immer erlauben",
     "open": "Beim Anbieter öffnen",
-    "privacy": "Datenschutzerklärung des Anbieters"
+    "privacy": "Datenschutzerklärung des Anbieters",
+    "form_gate": "Dieses Formular nutzt %s zum Schutz vor Spam. Es kann erst gesendet werden, wenn Sie %s erlauben.",
+    "form_gate_allow": "%s erlauben"
    },
    "form": {
     "type": "Ihr Anliegen",
