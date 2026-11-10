@@ -7,7 +7,7 @@
     "requires": "6.0",
     "requires_php": "7.4",
     "tested": "7.1",
-    "last_updated": "2026-10-27 21:52:21",
+    "last_updated": "2026-11-10 06:31:51",
     "upgrade_notice": "Version 1.6.261027: Run-as user: every request now runs as a WordPress administrator — OAuth connections as the admin who approved them, API keys as the admin chosen under \"Runs as\" (default: the admin creating the key). Fixes Elementor HTML widgets losing <style>/<script>/SVG and `&` turning into `&amp;` (Elementor sanitises _elementor_data for users without unfiltered_html), new posts having author 0, and capability checks of other plugins failing. Keys created before 1.6 keep working witho...",
     "author": "Andreas Kasper",
     "author_homepage": "https://goo1.de/",
