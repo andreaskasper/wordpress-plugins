@@ -135,3 +135,32 @@
 	border-radius: 8px;
 	font: 14px/1.4 system-ui, sans-serif;
 }
+
+/* Forms that need a blocked service (reCAPTCHA) */
+.pp-form-gate {
+	margin: 0 0 12px;
+	padding: 12px 14px;
+	border: 1px solid #e0b252;
+	border-left-width: 4px;
+	border-radius: 6px;
+	background: #fff8e6;
+	color: #16181d;
+	font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	width: 100%;
+	box-sizing: border-box;
+}
+.pp-form-gate p { margin: 0 0 8px; }
+.pp-form-gate-allow {
+	cursor: pointer;
+	border: 0;
+	border-radius: 6px;
+	padding: 8px 14px;
+	background: var(--pp-primary, #1f4fd1);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+}
+.pp-form-gate-allow:focus-visible { outline: 3px solid var(--pp-primary, #1f4fd1); outline-offset: 2px; }
+.pp-form-gate-flash { animation: pp-gate-flash .8s ease-in-out 2; }
+@keyframes pp-gate-flash { 50% { background: #ffe3a3; } }
+@media (prefers-reduced-motion: reduce) { .pp-form-gate-flash { animation: none; outline: 2px solid #e0b252; } }

@@ -152,16 +152,107 @@
 		el.setAttribute('data-settings', settings);
 		el.removeAttribute('data-pp-settings');
 		el.classList.remove('pp-elementor-video');
+		el.classList.remove('pp-elementor-bg');
 		var overlay = el.querySelector(':scope > .pp-embed-overlay');
 		if (overlay) {
 			overlay.parentNode.removeChild(overlay);
 		}
 		if (window.elementorFrontend && window.elementorFrontend.elementsHandler && window.jQuery) {
 			try {
+				window.jQuery(el).removeData('settings');
 				window.elementorFrontend.elementsHandler.runReadyTrigger(window.jQuery(el));
 			} catch (e) { /* Elementor not ready yet: it will pick up data-settings itself. */ }
 		}
 	}
+
+	/* ------------------------------------------------------------------ *
+	 * Forms that need a blocked service (reCAPTCHA): instead of failing
+	 * silently, show a notice above the submit button and stop sending
+	 * until the visitor allows that one service.
+	 * ------------------------------------------------------------------ */
+
+	var FORM_GATES = [
+		{ svc: 'recaptcha', name: 'Google reCAPTCHA', sel: '.elementor-g-recaptcha, .g-recaptcha, [data-pp-needs="recaptcha"]' }
+	];
+
+	function fmt(str, name) {
+		return String(str).replace(/%s/g, name);
+	}
+
+	function gateBlocked(g) {
+		// Still blocked as long as its script waits as text/plain.
+		return !!document.querySelector('script[type="text/plain"][data-pp-service="' + g.svc + '"]');
+	}
+
+	function gateName(g) {
+		var s = (cfg.services || []).filter(function (x) { return x.id === g.svc; })[0];
+		return s ? s.name : g.name;
+	}
+
+	function formGates() {
+		FORM_GATES.forEach(function (g) {
+			var blocked = gateBlocked(g);
+			Array.prototype.forEach.call(document.querySelectorAll(g.sel), function (w) {
+				var form = w.closest('form');
+				if (!form) {
+					return;
+				}
+				var note = form.querySelector('.pp-form-gate[data-pp-service="' + g.svc + '"]');
+				if (!blocked) {
+					if (note) {
+						note.parentNode.removeChild(note);
+					}
+					form.removeAttribute('data-pp-gated');
+					return;
+				}
+				form.setAttribute('data-pp-gated', g.svc);
+				if (note) {
+					return;
+				}
+				var name = gateName(g);
+				note = el('div', { class: 'pp-form-gate', role: 'status', 'data-pp-service': g.svc }, [
+					el('p', { text: fmt(P.form_gate || 'This form uses %s to protect against spam. It can only be sent once you allow %s.', name) }),
+					el('button', { type: 'button', class: 'pp-form-gate-allow', 'data-pp-service': g.svc, text: fmt(P.form_gate_allow || 'Allow %s', name) })
+				]);
+				var submit = form.querySelector('[type="submit"]');
+				var anchor = submit ? (submit.closest('.elementor-field-group, .elementor-field-type-submit') || submit) : null;
+				if (anchor && anchor.parentNode && form.contains(anchor)) {
+					anchor.parentNode.insertBefore(note, anchor);
+				} else {
+					form.appendChild(note);
+				}
+			});
+		});
+	}
+
+	function allowService(svc) {
+		var cats = state ? state.c.slice() : ['necessary'];
+		var svcs = state && state.s ? state.s.slice() : [];
+		if (svcs.indexOf(svc) === -1) {
+			svcs.push(svc);
+		}
+		save(cats, svcs, 'custom');
+	}
+
+	// Capture phase: runs before Elementor's own submit handler.
+	document.addEventListener('submit', function (e) {
+		var form = e.target;
+		if (!form || !form.getAttribute || !form.getAttribute('data-pp-gated')) {
+			return;
+		}
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		var note = form.querySelector('.pp-form-gate');
+		if (note) {
+			note.classList.remove('pp-form-gate-flash');
+			void note.offsetWidth; // restart the animation
+			note.classList.add('pp-form-gate-flash');
+			var btn = note.querySelector('button');
+			if (btn) {
+				btn.focus();
+			}
+		}
+	}, true);
 
 	function applyAll() {
 		consentModeUpdate();
@@ -177,11 +268,12 @@
 					activateEmbed(el);
 				}
 			});
-			Array.prototype.forEach.call(document.querySelectorAll('.pp-elementor-video[data-pp-settings]'), function (el) {
+			Array.prototype.forEach.call(document.querySelectorAll('.pp-elementor-video[data-pp-settings], .pp-elementor-bg[data-pp-settings]'), function (el) {
 				if (allowed(el.getAttribute('data-pp-category'), el.getAttribute('data-pp-service'))) {
 					activateElementor(el);
 				}
 			});
+			formGates();
 			document.dispatchEvent(new CustomEvent('goo1:consent', { detail: state }));
 		});
 	}
@@ -440,6 +532,14 @@
 	 * ------------------------------------------------------------------ */
 
 	document.addEventListener('click', function (e) {
+		var gate = e.target.closest && e.target.closest('.pp-form-gate-allow');
+		if (gate) {
+			allowService(gate.getAttribute('data-pp-service'));
+			if (bannerEl) {
+				close();
+			}
+			return;
+		}
 		var btn = e.target.closest && e.target.closest('.pp-embed-load');
 		if (btn) {
 			var holder = btn.closest('.pp-embed, .pp-elementor-video');
@@ -615,6 +715,8 @@
 	if (!cfg.enabled) {
 		return;
 	}
+
+	onReady(formGates);
 
 	determineRule().then(function (r) {
 		rule = r === 'optout' ? 'optout' : 'optin';

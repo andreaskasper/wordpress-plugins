@@ -40,13 +40,14 @@ The clause library is **not** in this folder: `src/goo1-privacypilot-library/` (
 
 - Cookie `pp_consent` = JSON `{id, v (banner version), t, c (categories), s (services), r (rule), a (action)}`; banner version is a hash of the used services, so adding a service asks again.
 - Rule: EU/EEA/UK/CH opt-in, US opt-out (notice + "Do Not Sell or Share"), other/unknown opt-in. Country from `/cdn-cgi/trace` (Cloudflare) with REST `/geo` as fallback; without Cloudflare everybody gets opt-in.
+- Site answer `services.necessary` (checkboxes below the services question, not a library question) turns selected services into category `necessary` inside `Goo1_PP_Library::services()` (`category_default` keeps the original), so blocker, banner and documents all follow. Changing it changes the site hash, so documents wait for approval.
 - GPC removes `marketing`. Consent Mode defaults are denied and updated once per distinct state.
 - Revoking a category reloads the page (scripts that ran cannot be unloaded).
 - Consent log stores no IP and no user agent.
 
 ## Blocker
 
-Output buffer on the front end only (not admin, REST, feeds, builders' preview). Scripts matching a service pattern become `type="text/plain" data-pp-category data-pp-service`; iframes become `.pp-embed` placeholders holding the original markup base64-encoded; Elementor video widgets get their `data-settings` parked in `data-pp-settings` (no second overlay when the widget already contains a blocked iframe, e.g. Vimeo). Category `necessary` is never blocked; `cmp` tools can be removed.
+Output buffer on the front end only (not admin, REST, feeds, builders' preview). Scripts matching a service pattern become `type="text/plain" data-pp-category data-pp-service`; iframes become `.pp-embed` placeholders holding the original markup base64-encoded; Elementor video widgets get their `data-settings` parked in `data-pp-settings` (no second overlay when the widget already contains a blocked iframe, e.g. Vimeo). Section/container background videos (`background_video_link` in `data-settings`) keep a static copy of their settings without the video and get class `pp-elementor-bg`; no overlay. Category `necessary` is never blocked; `cmp` tools can be removed. Forms that need a blocked service (`FORM_GATES` in `banner.js`, currently reCAPTCHA: `.elementor-g-recaptcha`, `.g-recaptcha`, `[data-pp-needs]`) get a `.pp-form-gate` notice with an allow button (service-level consent) and their submit is stopped in the capture phase until the script is active.
 
 ## Clause library (`src/goo1-privacypilot-library/`)
 

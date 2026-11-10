@@ -4,7 +4,7 @@ Tags: privacy policy, cookie banner, gdpr, ccpa, consent
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.261110
+Stable tag: 0.9.261111
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,11 @@ PrivacyPilot is not legal advice. The site owner is responsible for the answers 
 Updates are delivered from GitHub and appear under Dashboard → Updates.
 
 == Changelog ==
+
+= 0.9.261111 =
+* Elementor section and container background videos (YouTube, Vimeo) are blocked until consent; the section shows its static background meanwhile.
+* Services can be marked as strictly necessary for a site (below the services question), e.g. reCAPTCHA against form spam: they load without consent and the documents list them as necessary.
+* Forms with Google reCAPTCHA show a notice with an "Allow reCAPTCHA" button while reCAPTCHA has no consent, and are not sent until it is allowed (instead of failing silently).
 
 = 0.9.261110 =
 * Block helpers services_table and services_list accept several groups (necessary,preferences), so the privacy policy shows one table for other services.

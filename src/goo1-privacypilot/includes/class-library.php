@@ -186,9 +186,26 @@ class Goo1_PP_Library {
 		return (array) $lib['questions'];
 	}
 
+	/**
+	 * Service catalogue, with the site's own decisions applied: services the
+	 * site owner declared strictly necessary (site answer services.necessary,
+	 * e.g. reCAPTCHA against form spam) get category "necessary", so they load
+	 * without consent and the documents list them as necessary.
+	 */
 	public static function services() {
-		$lib = self::get();
-		return (array) $lib['services'];
+		$lib  = self::get();
+		$list = (array) $lib['services'];
+		$nec  = class_exists( 'Goo1_PP_Questionnaire' ) ? (array) ( Goo1_PP_Questionnaire::site_answers()['services.necessary'] ?? array() ) : array();
+		if ( $nec ) {
+			foreach ( $list as $i => $svc ) {
+				if ( in_array( $svc['id'], $nec, true ) && ! in_array( $svc['category'], array( 'necessary', 'cmp' ), true ) ) {
+					$list[ $i ]['category_default']   = $svc['category'];
+					$list[ $i ]['category']           = 'necessary';
+					$list[ $i ]['necessary_override'] = true;
+				}
+			}
+		}
+		return $list;
 	}
 
 	public static function service( $id ) {
