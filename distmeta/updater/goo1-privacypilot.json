@@ -1,19 +1,19 @@
 {
     "name": "PrivacyPilot",
     "slug": "goo1-privacypilot",
-    "version": "0.9.261109",
-    "download_url": "https://github.com/andreaskasper/wordpress-plugins/releases/download/goo1-privacypilot-v0.9.261109/goo1-privacypilot.zip",
+    "version": "0.9.261110",
+    "download_url": "https://github.com/andreaskasper/wordpress-plugins/releases/download/goo1-privacypilot-v0.9.261110/goo1-privacypilot.zip",
     "homepage": "https://github.com/andreaskasper/wordpress-plugins",
     "requires": "6.0",
     "requires_php": "7.4",
     "tested": "7.1",
-    "last_updated": "2026-11-10 06:32:06",
+    "last_updated": "2026-11-10 10:47:10",
     "author": "Andreas Kasper",
     "author_homepage": "https://goo1.de/",
     "sections": {
         "description": "<p>Privacy policy, cookie policy, terms and imprint generated from a questionnaire and a centrally maintained, signed clause library, plus a consent banner with script blocking, Google Consent Mode v2, GPC support, a request form and Site Health checks. US and EU/UK, English and German.</p><p>PrivacyPilot is not legal advice.</p>",
         "installation": "<p>Download the ZIP from the GitHub releases page and upload it under Plugins → Add New → Upload Plugin. Then open Settings → PrivacyPilot.</p>",
-        "changelog": "<h2>Changelog</h2><h4>0.9.261109</h4><ul><li>First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration.</li><li>Admin in English and German.</li><li>Signed library feed (Ed25519, key 1).</li><li>Warnings when answers contradict the services in use (e.g. an advertising pixel without &quot;sharing&quot;).</li><li>Asset URLs carry the file time, so CDNs never serve an outdated banner script.</li></ul>"
+        "changelog": "<h2>Changelog</h2><h4>0.9.261110</h4><ul><li>Block helpers services_table and services_list accept several groups (necessary,preferences), so the privacy policy shows one table for other services.</li><li>New placeholder entity.address_line (address in one line) for sentences such as the introduction of the Terms of Use.</li><li>Library feeds can require a minimum plugin version (requires_plugin); older plugins keep their library until they are updated.</li><li>Library: Font Awesome and Zelle in the service catalogue; competition details only when the site runs competitions.</li></ul><h4>0.9.261109</h4><ul><li>First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration.</li><li>Admin in English and German.</li><li>Signed library feed (Ed25519, key 1).</li><li>Warnings when answers contradict the services in use (e.g. an advertising pixel without &quot;sharing&quot;).</li><li>Asset URLs carry the file time, so CDNs never serve an outdated banner script.</li></ul>"
     },
     "icons": {
         "1x": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/goo1-privacypilot-icon-128x128.png",
@@ -24,5 +24,5 @@
         "high": "https://raw.githubusercontent.com/andreaskasper/wordpress-plugins/main/distmeta/updater/goo1-privacypilot-banner-1544x500.png"
     },
     "translations": [],
-    "upgrade_notice": "Version 0.9.261109: First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration. Admin in English and German. Signed library feed (Ed25519, key 1). Warnings when answers contradict the services in use (e.g. an advertising pixel without \"sharing\"). Asset URLs carry the file time, s..."
+    "upgrade_notice": "Version 0.9.261110: Block helpers services_table and services_list accept several groups (necessary,preferences), so the privacy policy shows one table for other services. New placeholder entity.address_line (address in one line) for sentences such as the introduction of the Terms of Use. Library feeds can require a minimum plugin version (requires_plugin); older plugins keep their library until they are updated. Library: Font Awesome and Zelle in the service catalogue; competition details on..."
 }

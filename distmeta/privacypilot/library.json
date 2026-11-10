@@ -1,9 +1,10 @@
 {
  "name": "PrivacyPilot clause library",
  "schema": 1,
- "version": "2026.11.10.0631",
- "commit": "5ae75f9",
- "content_hash": "35999985147bd61ce09f9ff90cc03bdf2b70459a3ffa86a015f545458096a2e6",
+ "version": "2026.11.10.1046",
+ "commit": "a50a1fe",
+ "content_hash": "e5dcbd60585ae990bdcf85a4aac52cd088c838da946973730bbbf772bd4d3c95",
+ "requires_plugin": "0.9.261110",
  "documents": [
   {
    "id": "privacy",
@@ -1385,6 +1386,28 @@
    }
   },
   {
+   "id": "font-awesome",
+   "name": "Font Awesome (loaded from Fonticons)",
+   "provider": "Fonticons, Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "fonts",
+   "purpose": {
+    "en": "Icon font. The browser connects to servers of Fonticons.",
+    "de": "Icon-Schrift. Der Browser verbindet sich mit Servern von Fonticons."
+   },
+   "privacy_url": "https://fontawesome.com/privacy",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "kit\\.fontawesome\\.com"
+    ],
+    "link": [
+     "(use|kit|ka-f)\\.fontawesome\\.com"
+    ]
+   }
+  },
+  {
    "id": "gravatar",
    "name": "Gravatar",
    "provider": "Automattic Inc.",
@@ -1473,6 +1496,21 @@
    "plugins": [
     "woocommerce-paypal-payments/woocommerce-paypal-payments.php"
    ]
+  },
+  {
+   "id": "zelle",
+   "name": "Zelle",
+   "provider": "Early Warning Services, LLC",
+   "country": "US",
+   "category": "necessary",
+   "group": "payments",
+   "purpose": {
+    "en": "Bank-to-bank payments. You pay from your own bank; we receive your name and the payment.",
+    "de": "Zahlungen von Bank zu Bank. Sie zahlen über Ihre eigene Bank; wir erhalten Ihren Namen und die Zahlung."
+   },
+   "privacy_url": "https://www.zellepay.com/privacy-policy",
+   "cookies": [],
+   "patterns": {}
   },
   {
    "id": "woocommerce",
@@ -3353,8 +3391,8 @@
    "jurisdiction": [],
    "reviewed_by": null,
    "reviewed_at": null,
-   "body": "## Weitere Dienste\n\nDienste, die für Betrieb, Sicherheit und Bereitstellung der Website erforderlich sind, setzen wir auf Grundlage unseres berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO) oder zur Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO) ein. Funktionale Dienste, die nicht unbedingt erforderlich sind, nur mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).\n\n{{#services_table:necessary}}\n\n{{#services_table:preferences}}\n",
-   "hash": "9a5592fa2ba800e1"
+   "body": "## Weitere Dienste\n\nDienste, die für Betrieb, Sicherheit und Bereitstellung der Website erforderlich sind, setzen wir auf Grundlage unseres berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO) oder zur Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO) ein. Funktionale Dienste, die nicht unbedingt erforderlich sind, nur mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).\n\n{{#services_table:necessary,preferences}}\n",
+   "hash": "35622f6871d647c6"
   },
   {
    "id": "social-pages",
@@ -3737,11 +3775,11 @@
    "hash": "a5006b3a1075c4d2"
   },
   {
-   "id": "categories-event",
+   "id": "categories-competition",
    "doc": "privacy",
    "lang": "en",
    "order": 42,
-   "when": "site.tickets",
+   "when": "site.tickets and site.competitions",
    "version": 1,
    "change": "material",
    "effective": null,
@@ -3749,7 +3787,22 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "body": "- **Event information**, such as the events and options you register for, your participation choices and, for competitions, your division, role, placements and scores.\n",
-   "hash": "f0dacef9ac1aaf12"
+   "hash": "aec5512c883085cc"
+  },
+  {
+   "id": "categories-event",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 42,
+   "when": "site.tickets and not site.competitions",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Event information**, such as the events and options you register for, and your participation choices.\n",
+   "hash": "2e5fb7539c9e9ff2"
   },
   {
    "id": "categories-media",
@@ -4002,7 +4055,25 @@
    "doc": "privacy",
    "lang": "en",
    "order": 74,
-   "when": "site.tickets and audience.eu",
+   "when": "site.tickets and audience.eu and not site.competitions",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): performance of the contract with you, Article 6(1)(b) GDPR; statutory retention obligations, Article 6(1)(c) GDPR.\n",
+   "hash": "44db1f9fc9a893e2"
+  },
+  {
+   "id": "registration-basis-competition",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 74,
+   "when": "site.tickets and audience.eu and site.competitions",
    "version": 1,
    "change": "material",
    "effective": null,
@@ -4013,7 +4084,7 @@
    "reviewed_by": null,
    "reviewed_at": null,
    "body": "Legal basis (GDPR): performance of the contract with you, Article 6(1)(b) GDPR; statutory retention obligations, Article 6(1)(c) GDPR; publication of competition results: our legitimate interest and that of the dance community in transparent results, Article 6(1)(f) GDPR.\n",
-   "hash": "93c5fea8ba6f9b76"
+   "hash": "c521d33e5ea72008"
   },
   {
    "id": "payments",
@@ -4281,8 +4352,8 @@
    ],
    "reviewed_by": null,
    "reviewed_at": null,
-   "body": "## Other services we use\n\n{{#services_table:necessary}}\n\n{{#services_table:preferences}}\n",
-   "hash": "7098b0d74245f4a2"
+   "body": "## Other services we use\n\n{{#services_table:necessary,preferences}}\n",
+   "hash": "25c1614e70f695d1"
   },
   {
    "id": "other-services-basis",
@@ -4742,8 +4813,8 @@
    "jurisdiction": [],
    "reviewed_by": null,
    "reviewed_at": null,
-   "body": "Diese Nutzungsbedingungen gelten für die Nutzung von {{site.name}} ({{site.url}}), betrieben von {{entity.name}}, {{entity.address}} („wir“). Mit der Nutzung der Website erkennen Sie diese Bedingungen an.\n",
-   "hash": "feacd2a74cf3efe5"
+   "body": "Diese Nutzungsbedingungen gelten für die Nutzung von {{site.name}} ({{site.url}}), betrieben von {{entity.name}}, {{entity.address_line}} („wir“). Mit der Nutzung der Website erkennen Sie diese Bedingungen an.\n",
+   "hash": "95e5855c0ef4ef2d"
   },
   {
    "id": "events",
@@ -4911,8 +4982,8 @@
    ],
    "reviewed_by": null,
    "reviewed_at": null,
-   "body": "These Terms of Use apply to the use of {{site.name}} ({{site.url}}), operated by {{entity.name}}, {{entity.address}} (\"we\", \"us\"). By using the website you accept these terms. If you do not agree, please do not use the website.\n",
-   "hash": "dfaf4b7613dcf0c8"
+   "body": "These Terms of Use apply to the use of {{site.name}} ({{site.url}}), operated by {{entity.name}}, {{entity.address_line}} (\"we\", \"us\"). By using the website you accept these terms. If you do not agree, please do not use the website.\n",
+   "hash": "14b83442d7a7f84b"
   },
   {
    "id": "events",
