@@ -142,6 +142,13 @@ class Goo1_PP_Library {
 				update_option( self::STATE_OPTION, $state, false );
 				return false;
 			}
+			// The library can use features of a newer plugin version; such a
+			// feed waits until the plugin has been updated.
+			if ( ! empty( $data['requires_plugin'] ) && version_compare( GOO1_PP_VERSION, (string) $data['requires_plugin'], '<' ) ) {
+				$state['last_result'] = 'library ' . $data['version'] . ' needs plugin ' . $data['requires_plugin'];
+				update_option( self::STATE_OPTION, $state, false );
+				return false;
+			}
 			update_option( self::FEED_OPTION, $body, false );
 			$state['last_result'] = 'updated to ' . $data['version'];
 			$state['fetched_at']  = time();
