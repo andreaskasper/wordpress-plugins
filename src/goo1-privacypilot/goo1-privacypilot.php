@@ -3,7 +3,7 @@
  * Plugin Name: PrivacyPilot
  * Plugin URI:  https://github.com/andreaskasper/wordpress-plugins
  * Description: Privacy policy, cookie policy, terms and imprint generated from a questionnaire and a centrally maintained clause library, plus a consent banner with script blocking, Google Consent Mode v2, GPC support, a request form for privacy rights and Site Health checks. US and EU/UK, English and German.
- * Version:     0.9.261110
+ * Version:     0.9.261111
  * Author:      Andreas Kasper <andreas.kasper@goo1.de>
  * Author URI:  https://goo1.de
  * License:     GPL-2.0-or-later
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'GOO1_PP_VERSION', '0.9.261110' );
+define( 'GOO1_PP_VERSION', '0.9.261111' );
 define( 'GOO1_PP_FILE', __FILE__ );
 define( 'GOO1_PP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GOO1_PP_URL', plugin_dir_url( __FILE__ ) );

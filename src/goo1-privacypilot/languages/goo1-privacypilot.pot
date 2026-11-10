@@ -441,6 +441,18 @@ msgid ""
 msgstr ""
 
 #: admin/class-admin.php
+msgid "Strictly necessary on this site"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Selected services load without consent and are listed as necessary in the "
+"documents, e.g. reCAPTCHA when the forms cannot work without spam "
+"protection. Only choose this if the site really cannot work without the "
+"service; consent banners in the EU are checked for exactly this."
+msgstr ""
+
+#: admin/class-admin.php
 msgid ""
 "The legal entity part is approved on the hub. Approve here only the website-"
 "specific answers; the documents are published as soon as the hub approval "

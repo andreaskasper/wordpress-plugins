@@ -57,7 +57,9 @@
       "load": "Load content",
       "always": "Always allow %s",
       "open": "Open on the provider's site",
-      "privacy": "Provider privacy policy"
+      "privacy": "Provider privacy policy",
+      "form_gate": "This form uses %s to protect against spam. It can only be sent once you allow %s.",
+      "form_gate_allow": "Allow %s"
     },
     "form": {
       "type": "Your request",
@@ -162,7 +164,9 @@
       "load": "Inhalt laden",
       "always": "%s immer erlauben",
       "open": "Beim Anbieter öffnen",
-      "privacy": "Datenschutzerklärung des Anbieters"
+      "privacy": "Datenschutzerklärung des Anbieters",
+      "form_gate": "Dieses Formular nutzt %s zum Schutz vor Spam. Es kann erst gesendet werden, wenn Sie %s erlauben.",
+      "form_gate_allow": "%s erlauben"
     },
     "form": {
       "type": "Ihr Anliegen",

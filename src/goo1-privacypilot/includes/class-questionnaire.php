@@ -255,6 +255,13 @@ class Goo1_PP_Questionnaire {
 					$out[ $q['id'] ] = is_string( $raw ) ? sanitize_text_field( wp_unslash( $raw ) ) : '';
 			}
 		}
+		// Services the site owner treats as strictly necessary on this site
+		// (rendered below the services question, not a library question).
+		if ( 'site' === $scope && array_key_exists( 'services.used', $out ) ) {
+			$raw = $post[ self::field_name( 'services.necessary' ) ] ?? array();
+			$raw = is_array( $raw ) ? array_map( 'sanitize_key', $raw ) : array();
+			$out['services.necessary'] = array_values( array_intersect( $raw, (array) $out['services.used'] ) );
+		}
 		return $out;
 	}
 

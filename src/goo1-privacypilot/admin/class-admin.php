@@ -406,6 +406,9 @@ class Goo1_PP_Admin {
 				$fake[ Goo1_PP_Questionnaire::field_name( $q['id'] ) ] = is_array( $v ) ? $v : wp_slash( (string) $v );
 			}
 		}
+		if ( 'site' === $scope && isset( $answers['services.necessary'] ) && is_array( $answers['services.necessary'] ) ) {
+			$fake[ Goo1_PP_Questionnaire::field_name( 'services.necessary' ) ] = $answers['services.necessary'];
+		}
 		$clean = Goo1_PP_Questionnaire::sanitize_post( $scope, $fake );
 		return array_intersect_key( $clean, $answers );
 	}
@@ -734,6 +737,9 @@ class Goo1_PP_Admin {
 						echo '</div>';
 					}
 					echo '</div>';
+					if ( 'services.used' === $q['id'] && 'site' === $q['scope'] ) {
+						$this->render_necessary_override( (array) $value, $lang );
+					}
 					break;
 				case 'textarea':
 					echo '<textarea id="' . esc_attr( $name ) . '" name="' . esc_attr( $name ) . '" rows="3" class="large-text">' . esc_textarea( (string) $value ) . '</textarea>';
@@ -751,6 +757,28 @@ class Goo1_PP_Admin {
 			echo '</fieldset>';
 		}
 		echo '<p class="description">' . esc_html__( 'Questions that do not apply to your answers are hidden. Save to update the list.', 'goo1-privacypilot' ) . '</p>';
+	}
+
+	/**
+	 * Checkboxes below the services question: selected services the site
+	 * owner treats as strictly necessary on this site (no consent needed).
+	 */
+	private function render_necessary_override( array $used, $lang ) {
+		$current = (array) ( Goo1_PP_Questionnaire::site_answers()['services.necessary'] ?? array() );
+		$rows    = array();
+		foreach ( Goo1_PP_Library::services() as $svc ) {
+			$default = $svc['category_default'] ?? $svc['category'];
+			if ( ! in_array( $svc['id'], $used, true ) || in_array( $default, array( 'necessary', 'cmp' ), true ) ) {
+				continue;
+			}
+			$rows[] = '<label class="pp-check"><input type="checkbox" name="' . esc_attr( Goo1_PP_Questionnaire::field_name( 'services.necessary' ) ) . '[]" value="' . esc_attr( $svc['id'] ) . '"' . checked( in_array( $svc['id'], $current, true ), true, false ) . '> ' . esc_html( $svc['name'] ) . ' <small>(' . esc_html( $default ) . ')</small></label>';
+		}
+		if ( ! $rows ) {
+			return;
+		}
+		echo '<details class="pp-necessary-override"' . ( $current ? ' open' : '' ) . '><summary>' . esc_html__( 'Strictly necessary on this site', 'goo1-privacypilot' ) . '</summary>';
+		echo '<p class="description">' . esc_html__( 'Selected services load without consent and are listed as necessary in the documents, e.g. reCAPTCHA when the forms cannot work without spam protection. Only choose this if the site really cannot work without the service; consent banners in the EU are checked for exactly this.', 'goo1-privacypilot' ) . '</p>';
+		echo implode( '', $rows ) . '</details>';
 	}
 
 	/* ---------------------------------------------------------------- */

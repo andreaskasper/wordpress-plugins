@@ -1462,3 +1462,19 @@ msgstr "Hub"
 #: admin/class-admin.php
 msgid "client"
 msgstr "Client"
+
+#: admin/class-admin.php
+msgid "Strictly necessary on this site"
+msgstr "Auf dieser Website unbedingt erforderlich"
+
+#: admin/class-admin.php
+msgid ""
+"Selected services load without consent and are listed as necessary in the "
+"documents, e.g. reCAPTCHA when the forms cannot work without spam "
+"protection. Only choose this if the site really cannot work without the "
+"service; consent banners in the EU are checked for exactly this."
+msgstr ""
+"Ausgewählte Dienste laden ohne Einwilligung und erscheinen in den Dokumenten"
+" als erforderlich, z. B. reCAPTCHA, wenn die Formulare ohne Spamschutz nicht"
+" funktionieren. Nur wählen, wenn die Website ohne den Dienst wirklich nicht "
+"funktioniert; genau das wird bei Consent-Bannern in der EU geprüft."

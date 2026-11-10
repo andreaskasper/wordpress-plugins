@@ -199,6 +199,40 @@ class Goo1_PP_Blocker {
 				$count,
 				PREG_OFFSET_CAPTURE
 			);
+
+			// Elementor background videos (sections/containers): the video is
+			// removed from data-settings until consent, everything else of the
+			// element keeps working. No overlay - the background just stays
+			// static (colour/image fallback).
+			$html = preg_replace_callback(
+				'#<(div|section)\b([^>]*\bdata-settings="[^"]*background_video_link[^"]*"[^>]*)>#i',
+				function ( $m ) {
+					$attrs = $m[2];
+					if ( false !== stripos( $attrs, 'data-pp-settings' ) ) {
+						return $m[0];
+					}
+					$raw  = self::attr( $attrs, 'data-settings' );
+					$data = null === $raw ? null : json_decode( $raw, true );
+					if ( ! is_array( $data ) || empty( $data['background_video_link'] ) ) {
+						return $m[0];
+					}
+					$link   = (string) $data['background_video_link'];
+					$svc_id = preg_match( '/youtube\.com|youtu\.be/i', $link ) ? 'youtube' : ( preg_match( '/vimeo\.com/i', $link ) ? 'vimeo' : '' );
+					$svc    = $svc_id ? Goo1_PP_Library::service( $svc_id ) : null;
+					if ( ! $svc ) {
+						return $m[0];
+					}
+					$static = $data;
+					unset( $static['background_video_link'], $static['background_video_start'], $static['background_video_end'], $static['background_play_once'], $static['background_play_on_mobile'] );
+					if ( isset( $static['background_background'] ) && 'video' === $static['background_background'] ) {
+						$static['background_background'] = 'classic';
+					}
+					$attrs = self::remove_attr( $attrs, 'data-settings' );
+					$attrs = preg_replace( '/\sclass\s*=\s*"/i', ' class="pp-elementor-bg ', $attrs, 1 );
+					return '<' . $m[1] . $attrs . ' data-settings="' . esc_attr( wp_json_encode( $static ) ) . '" data-pp-settings="' . esc_attr( $raw ) . '" data-pp-service="' . esc_attr( $svc['id'] ) . '" data-pp-category="' . esc_attr( $svc['category'] ) . '">';
+				},
+				$html
+			);
 		} catch ( \Throwable $e ) {
 			return $html;
 		}
