@@ -10,6 +10,7 @@
  *   {{link.cookies}}         link to another document (title as text)
  *   {{#services_table:analytics}}  table of the selected services in a group
  *   {{#services_list:payments}}    list of the selected services in a group
+ *   {{#services_table:necessary,preferences}}  several groups/categories in one table
  *   {{#cookie_table}}        all cookies of the selected services
  *   {{#request_form}}        privacy request form (rendered on display)
  *   {{#settings_link}}       "privacy settings" button (rendered on display)
@@ -53,6 +54,11 @@ class Goo1_PP_Generator {
 			$ctx['site']['name'] = get_bloginfo( 'name' );
 		}
 		$ctx['lang'] = $lang;
+		// One-line address for use inside a sentence.
+		if ( ! empty( $ctx['entity']['address'] ) && is_string( $ctx['entity']['address'] ) ) {
+			$lines                          = array_filter( array_map( 'trim', preg_split( '/\R/', $ctx['entity']['address'] ) ) );
+			$ctx['entity']['address_line'] = implode( ', ', $lines );
+		}
 
 		// Selected services and their groups/categories.
 		$selected     = (array) Goo1_PP_Conditions::lookup( $ctx, 'services.used' );
@@ -147,7 +153,7 @@ class Goo1_PP_Generator {
 	private function fill( $html ) {
 		// Block helpers first (they stand alone in the markup).
 		$html = preg_replace_callback(
-			'/\{\{#\s*([a-z_]+)(?::([a-z0-9_\-]+))?\s*\}\}/i',
+			'/\{\{#\s*([a-z_]+)(?::([a-z0-9_,\-]+))?\s*\}\}/i',
 			function ( $m ) {
 				return $this->block( strtolower( $m[1] ), isset( $m[2] ) ? $m[2] : '' );
 			},
@@ -226,9 +232,11 @@ class Goo1_PP_Generator {
 				continue;
 			}
 			$svc_group = $svc['group'] ?? '';
-			// Newsletter tools sit in the marketing consent category but have
-			// their own section; they are not advertising services.
-			$by_cat = $svc['category'] === $group && ! ( 'marketing' === $group && 'newsletter' === $svc_group );
+			// Matching by consent category leaves out groups that have their
+			// own section in the documents (payments, shop, registration,
+			// newsletter), so they are not listed twice. Newsletter tools sit
+			// in the marketing category but are not advertising services.
+			$by_cat = $svc['category'] === $group && ! in_array( $svc_group, array( 'payments', 'shop', 'registration', 'newsletter' ), true );
 			if ( 'all' === $group || $svc_group === $group || $by_cat ) {
 				$out[] = $svc;
 			}
@@ -236,11 +244,22 @@ class Goo1_PP_Generator {
 		return $out;
 	}
 
+	/** Several groups or categories separated by commas, each service once. */
+	private function selected_services_multi( $arg ) {
+		$out = array();
+		foreach ( array_filter( array_map( 'trim', explode( ',', (string) $arg ) ) ) as $part ) {
+			foreach ( $this->selected_services( $part ) as $svc ) {
+				$out[ $svc['id'] ] = $svc;
+			}
+		}
+		return array_values( $out );
+	}
+
 	private function block( $name, $arg ) {
 		$ui = Goo1_PP_Library::ui( $this->lang );
 		switch ( $name ) {
 			case 'services_table':
-				$list = $this->selected_services( $arg ? $arg : 'all' );
+				$list = $this->selected_services_multi( $arg ? $arg : 'all' );
 				if ( ! $list ) {
 					return '';
 				}
@@ -254,7 +273,7 @@ class Goo1_PP_Generator {
 				return $html . '</tbody></table></div>';
 
 			case 'services_list':
-				$list = $this->selected_services( $arg ? $arg : 'all' );
+				$list = $this->selected_services_multi( $arg ? $arg : 'all' );
 				if ( ! $list ) {
 					return '';
 				}
