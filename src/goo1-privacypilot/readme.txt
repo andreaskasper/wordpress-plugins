@@ -4,7 +4,7 @@ Tags: privacy policy, cookie banner, gdpr, ccpa, consent
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.9.261109
+Stable tag: 0.9.261110
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,12 @@ PrivacyPilot is not legal advice. The site owner is responsible for the answers 
 Updates are delivered from GitHub and appear under Dashboard → Updates.
 
 == Changelog ==
+
+= 0.9.261110 =
+* Block helpers services_table and services_list accept several groups (necessary,preferences), so the privacy policy shows one table for other services.
+* New placeholder entity.address_line (address in one line) for sentences such as the introduction of the Terms of Use.
+* Library feeds can require a minimum plugin version (requires_plugin); older plugins keep their library until they are updated.
+* Library: Font Awesome and Zelle in the service catalogue; competition details only when the site runs competitions.
 
 = 0.9.261109 =
 * First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration.
