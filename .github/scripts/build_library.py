@@ -224,6 +224,8 @@ def main():
         "commit": git_sha(src),
         "content_hash": hashlib.sha256(canonical.encode("utf-8")).hexdigest(),
     }
+    if meta.get("requires_plugin"):
+        library["requires_plugin"] = str(meta["requires_plugin"])
     library.update(content)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
