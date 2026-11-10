@@ -1,0 +1,3 @@
+__pycache__/
+# compiled in the release workflow (see .github/plugins.json "prebuild")
+src/goo1-privacypilot/languages/*.mo

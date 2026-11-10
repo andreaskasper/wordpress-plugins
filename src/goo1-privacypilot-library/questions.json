@@ -1,0 +1,214 @@
+[
+  {
+    "id": "entity.name", "type": "text", "scope": "entity", "section": "entity", "required": true,
+    "label": { "en": "Legal name of the operator", "de": "Rechtlicher Name des Betreibers" },
+    "help": { "en": "Company, association or person responsible for the website, e.g. \"JL Productions Inc.\"", "de": "Firma, Verein oder Person, die für die Website verantwortlich ist, z. B. „Muster GmbH“." }
+  },
+  {
+    "id": "entity.type", "type": "select", "scope": "entity", "section": "entity", "required": true, "default": "company",
+    "label": { "en": "Type of operator", "de": "Art des Betreibers" },
+    "options": [
+      { "value": "company", "label": { "en": "Company", "de": "Unternehmen" } },
+      { "value": "nonprofit", "label": { "en": "Non-profit / association", "de": "Verein / gemeinnützige Organisation" } },
+      { "value": "individual", "label": { "en": "Individual / sole proprietor", "de": "Einzelperson / Einzelunternehmen" } }
+    ]
+  },
+  {
+    "id": "entity.address", "type": "textarea", "scope": "entity", "section": "entity", "required": true,
+    "label": { "en": "Postal address", "de": "Postanschrift" },
+    "help": { "en": "Street, ZIP code, city, country. No P.O. box for EU/German sites.", "de": "Straße, PLZ, Ort, Land. Kein Postfach (Impressumspflicht)." }
+  },
+  {
+    "id": "entity.country", "type": "select", "scope": "entity", "section": "entity", "required": true,
+    "label": { "en": "Country of the operator", "de": "Land des Betreibers" },
+    "options": [
+      { "value": "US", "label": { "en": "United States", "de": "USA" } },
+      { "value": "DE", "label": { "en": "Germany", "de": "Deutschland" } },
+      { "value": "AT", "label": { "en": "Austria", "de": "Österreich" } },
+      { "value": "CH", "label": { "en": "Switzerland", "de": "Schweiz" } },
+      { "value": "GB", "label": { "en": "United Kingdom", "de": "Vereinigtes Königreich" } },
+      { "value": "CA", "label": { "en": "Canada", "de": "Kanada" } },
+      { "value": "EU", "label": { "en": "Other EU/EEA country", "de": "Anderes EU/EWR-Land" } },
+      { "value": "other", "label": { "en": "Other country", "de": "Anderes Land" } }
+    ]
+  },
+  {
+    "id": "entity.state", "type": "text", "scope": "entity", "section": "entity", "when": "entity.country == 'US'",
+    "label": { "en": "US state of the operator", "de": "US-Bundesstaat des Betreibers" },
+    "placeholder": { "en": "e.g. Illinois", "de": "z. B. Illinois" }
+  },
+  {
+    "id": "entity.email", "type": "email", "scope": "entity", "section": "entity", "required": true,
+    "label": { "en": "E-mail address for privacy matters", "de": "E-Mail-Adresse für Datenschutzanfragen" }
+  },
+  {
+    "id": "entity.phone", "type": "text", "scope": "entity", "section": "entity",
+    "required": false,
+    "label": { "en": "Phone number", "de": "Telefonnummer" },
+    "help": { "en": "Required in the German imprint; optional otherwise.", "de": "Für das Impressum erforderlich (schnelle Kontaktaufnahme)." }
+  },
+  {
+    "id": "entity.representative", "type": "text", "scope": "entity", "section": "entity",
+    "when": "entity.type != 'individual'",
+    "label": { "en": "Represented by (managing director / board)", "de": "Vertreten durch (Geschäftsführung / Vorstand)" }
+  },
+  {
+    "id": "entity.register", "type": "text", "scope": "entity", "section": "impressum",
+    "when": "entity.country == 'DE' or entity.country == 'AT'",
+    "label": { "en": "Commercial / association register and number", "de": "Registergericht und Registernummer" },
+    "placeholder": { "en": "e.g. Amtsgericht Ulm, HRB 12345", "de": "z. B. Amtsgericht Ulm, HRB 12345 (leer lassen, wenn nicht eingetragen)" }
+  },
+  {
+    "id": "entity.vat_id", "type": "text", "scope": "entity", "section": "impressum",
+    "when": "entity.country == 'DE' or entity.country == 'AT' or entity.country == 'EU'",
+    "label": { "en": "VAT ID", "de": "Umsatzsteuer-Identifikationsnummer (§ 27a UStG)" }
+  },
+  {
+    "id": "entity.content_responsible", "type": "textarea", "scope": "entity", "section": "impressum",
+    "when": "entity.country == 'DE'",
+    "label": { "en": "Responsible for editorial content (§ 18(2) MStV)", "de": "Verantwortlich für journalistisch-redaktionelle Inhalte (§ 18 Abs. 2 MStV)" },
+    "help": { "en": "Only if the site has editorial content such as a blog or news. Name and address.", "de": "Nur bei journalistisch-redaktionellen Inhalten (Blog, News). Name und Anschrift." }
+  },
+  {
+    "id": "entity.dpo", "type": "bool", "scope": "entity", "section": "entity", "default": false,
+    "label": { "en": "Have you appointed a data protection officer?", "de": "Gibt es einen Datenschutzbeauftragten?" }
+  },
+  {
+    "id": "entity.dpo_contact", "type": "textarea", "scope": "entity", "section": "entity", "when": "entity.dpo", "required": true,
+    "label": { "en": "Contact of the data protection officer", "de": "Kontakt des Datenschutzbeauftragten" }
+  },
+  {
+    "id": "entity.eu_rep", "type": "bool", "scope": "entity", "section": "entity", "default": false,
+    "when": "audience.eu and entity.country != 'DE' and entity.country != 'AT' and entity.country != 'EU'",
+    "label": { "en": "Have you appointed a representative in the EU/UK (Art. 27 GDPR)?", "de": "Gibt es einen Vertreter in der EU/im UK (Art. 27 DSGVO)?" },
+    "help": { "en": "Operators outside the EU that offer goods or services to people in the EU may need one. Ask a lawyer if unsure.", "de": "Betreiber außerhalb der EU, die Personen in der EU Waren oder Dienstleistungen anbieten, brauchen unter Umständen einen." }
+  },
+  {
+    "id": "entity.eu_rep_contact", "type": "textarea", "scope": "entity", "section": "entity", "when": "entity.eu_rep", "required": true,
+    "label": { "en": "Name and address of the EU/UK representative", "de": "Name und Anschrift des Vertreters" }
+  },
+  {
+    "id": "entity.authority", "type": "text", "scope": "entity", "section": "entity",
+    "when": "entity.country == 'DE' or entity.country == 'AT' or entity.country == 'EU'",
+    "label": { "en": "Competent data protection authority (optional)", "de": "Zuständige Datenschutz-Aufsichtsbehörde (optional)" },
+    "placeholder": { "en": "e.g. Landesbeauftragter für Datenschutz Baden-Württemberg", "de": "z. B. Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg" }
+  },
+
+  {
+    "id": "audience.us", "type": "bool", "scope": "entity", "section": "audience", "default": true,
+    "label": { "en": "Do people from the United States use your website or services?", "de": "Nutzen Personen aus den USA Ihre Website oder Angebote?" },
+    "help": { "en": "Adds the disclosures required by US state privacy laws (California, Colorado, Connecticut, Virginia, Texas, …).", "de": "Ergänzt die Angaben, die US-Datenschutzgesetze (Kalifornien, Colorado, …) verlangen." }
+  },
+  {
+    "id": "audience.eu", "type": "bool", "scope": "entity", "section": "audience", "default": true,
+    "label": { "en": "Do you offer services to people in the EU/EEA, UK or Switzerland, or analyse their use of the site?", "de": "Richten Sie sich an Personen in der EU/im EWR, UK oder der Schweiz?" },
+    "help": { "en": "For example registrations from European dancers. Adds the information required by the GDPR.", "de": "Ergänzt die Pflichtangaben nach DSGVO." }
+  },
+  {
+    "id": "audience.children", "type": "select", "scope": "entity", "section": "audience", "default": "none", "required": true,
+    "label": { "en": "Do you collect personal information from minors?", "de": "Verarbeiten Sie Daten von Minderjährigen?" },
+    "help": { "en": "For example registrations for junior divisions.", "de": "Zum Beispiel Anmeldungen für Junior-Klassen." },
+    "options": [
+      { "value": "none", "label": { "en": "No, the site is not directed at minors", "de": "Nein, das Angebot richtet sich nicht an Minderjährige" } },
+      { "value": "teens", "label": { "en": "Yes, teenagers (13–17), with parental consent where required", "de": "Ja, Jugendliche (13–17), mit Zustimmung der Eltern, wo nötig" } },
+      { "value": "under13", "label": { "en": "Yes, also children under 13", "de": "Ja, auch Kinder unter 13" } }
+    ]
+  },
+
+  {
+    "id": "data.sells", "type": "bool", "scope": "entity", "section": "data", "default": false,
+    "label": { "en": "Do you sell personal information (give it to others for money or other value)?", "de": "Verkaufen Sie personenbezogene Daten (Weitergabe gegen Geld oder andere Gegenleistung)?" },
+    "help": { "en": "Under US state laws, handing a mailing list to a sponsor in exchange for a benefit can count as a sale.", "de": "Nach US-Recht kann schon die Weitergabe einer Adressliste an Sponsoren gegen eine Gegenleistung als Verkauf gelten." }
+  },
+  {
+    "id": "data.shares_ads", "type": "bool", "scope": "entity", "section": "data", "default": false,
+    "label": { "en": "Do you share personal information for targeted advertising across other websites?", "de": "Geben Sie Daten für personalisierte Werbung auf anderen Websites weiter?" },
+    "help": { "en": "For example the Meta (Facebook) pixel or Google Ads remarketing.", "de": "Zum Beispiel Meta-Pixel oder Google-Ads-Remarketing." }
+  },
+  {
+    "id": "data.sensitive", "type": "bool", "scope": "entity", "section": "data", "default": false,
+    "label": { "en": "Do you process sensitive information (health, disability, precise location, government ID numbers)?", "de": "Verarbeiten Sie besondere Kategorien von Daten (Gesundheit, Behinderung, genauer Standort, Ausweisnummern)?" }
+  },
+  {
+    "id": "data.sensitive_text", "type": "textarea", "scope": "entity", "section": "data", "when": "data.sensitive", "required": true,
+    "label": { "en": "Which sensitive information, and why?", "de": "Welche Daten und wofür?" },
+    "placeholder": { "en": "e.g. medical information voluntarily given for emergencies at the event", "de": "z. B. freiwillige Angaben zu Allergien für Notfälle während der Veranstaltung" }
+  },
+  {
+    "id": "data.retention", "type": "select", "scope": "entity", "section": "data", "default": "standard",
+    "label": { "en": "How long do you keep personal information?", "de": "Wie lange speichern Sie Daten?" },
+    "options": [
+      { "value": "standard", "label": { "en": "Standard wording (as long as needed, plus legal retention periods)", "de": "Standardformulierung (solange erforderlich, zzgl. gesetzlicher Fristen)" } },
+      { "value": "custom", "label": { "en": "Own wording", "de": "Eigene Formulierung" } }
+    ]
+  },
+  {
+    "id": "data.retention_text", "type": "textarea", "scope": "entity", "section": "data", "when": "data.retention == 'custom'", "required": true,
+    "label": { "en": "Retention periods", "de": "Speicherfristen" }
+  },
+
+  {
+    "id": "site.name", "type": "text", "scope": "site", "section": "site",
+    "label": { "en": "Name of this website or event", "de": "Name dieser Website / Veranstaltung" },
+    "help": { "en": "Leave empty to use the site title.", "de": "Leer lassen, um den Website-Titel zu verwenden." }
+  },
+  {
+    "id": "site.hosting_provider", "type": "text", "scope": "site", "section": "site", "required": true,
+    "label": { "en": "Hosting provider (name and country)", "de": "Hosting-Anbieter (Name und Land)" },
+    "placeholder": { "en": "e.g. Bluehost (Newfold Digital Inc., USA)", "de": "z. B. Hetzner Online GmbH, Deutschland" }
+  },
+  {
+    "id": "site.contact_form", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Is there a contact form, or can visitors write to you by e-mail?", "de": "Gibt es ein Kontaktformular oder Kontakt per E-Mail?" }
+  },
+  {
+    "id": "site.accounts", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Can visitors create an account or log in?", "de": "Können sich Besucher registrieren oder einloggen?" }
+  },
+  {
+    "id": "site.comments", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Can visitors post comments?", "de": "Können Besucher Kommentare schreiben?" }
+  },
+  {
+    "id": "site.tickets", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Do people register or buy tickets/passes for your events?", "de": "Kann man sich für Veranstaltungen anmelden oder Tickets kaufen?" }
+  },
+  {
+    "id": "site.ticketing_provider", "type": "text", "scope": "site", "section": "site", "when": "site.tickets",
+    "label": { "en": "Which registration or ticketing system do you use?", "de": "Welches Anmelde- oder Ticketsystem nutzen Sie?" },
+    "placeholder": { "en": "e.g. danceapp.net, scoring.dance, Eventbrite, own WooCommerce shop", "de": "z. B. danceapp.net, scoring.dance, Eventbrite" }
+  },
+  {
+    "id": "site.competitions", "type": "bool", "scope": "site", "section": "site", "default": false, "when": "site.tickets",
+    "label": { "en": "Do you run competitions and publish results?", "de": "Veranstalten Sie Wettbewerbe und veröffentlichen Ergebnisse?" },
+    "help": { "en": "Competitor names, placements and scores are published and may be passed to a points registry (e.g. WSDC).", "de": "Namen, Platzierungen und Wertungen werden veröffentlicht und ggf. an ein Punkteregister (z. B. WSDC) übermittelt." }
+  },
+  {
+    "id": "site.media", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Do you take photos or videos at your events and publish them?", "de": "Werden bei Veranstaltungen Fotos oder Videos gemacht und veröffentlicht?" }
+  },
+  {
+    "id": "site.newsletter", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Do you send a newsletter or e-mail updates?", "de": "Versenden Sie einen Newsletter?" }
+  },
+  {
+    "id": "site.social_pages", "type": "bool", "scope": "site", "section": "site", "default": false,
+    "label": { "en": "Do you run pages on social networks (Facebook, Instagram, YouTube, …)?", "de": "Betreiben Sie Seiten in sozialen Netzwerken (Facebook, Instagram, YouTube …)?" }
+  },
+  {
+    "id": "services.used", "type": "services", "scope": "site", "section": "services", "default": [],
+    "label": { "en": "Which services and tools does this website use?", "de": "Welche Dienste und Werkzeuge nutzt diese Website?" },
+    "help": { "en": "Services marked \"detected\" were found by the scanner. Only select what the site really uses.", "de": "Mit „erkannt“ markierte Dienste hat der Scanner gefunden. Nur auswählen, was wirklich genutzt wird." }
+  },
+  {
+    "id": "terms.governing_law", "type": "text", "scope": "site", "section": "terms",
+    "when": "'terms' in pp.documents",
+    "label": { "en": "Governing law for the Terms of Use", "de": "Anwendbares Recht für die Nutzungsbedingungen" },
+    "placeholder": { "en": "e.g. the State of Illinois, USA", "de": "z. B. Bundesrepublik Deutschland" }
+  },
+  {
+    "id": "terms.user_content", "type": "bool", "scope": "site", "section": "terms", "default": false,
+    "when": "'terms' in pp.documents",
+    "label": { "en": "Can users upload or post their own content (photos, texts, videos)?", "de": "Können Nutzer eigene Inhalte (Fotos, Texte, Videos) hochladen?" }
+  }
+]

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Update the Plugin-Update-Checker metadata JSON (distmeta/updater/goo1-mcp.json)
-from the plugin's own header and readme.txt.
+Update a Plugin-Update-Checker metadata JSON (distmeta/updater/<slug>.json)
+from the plugin's own header and readme.txt. Works for every plugin in this
+repo; plugin-specific settings come from the command line (see
+.github/plugins.json and the release workflow).
 
 Single source of truth:
   * version / requires / requires_php  -> plugin main file header
@@ -16,6 +18,7 @@ import argparse
 import datetime
 import html
 import json
+import os
 import re
 import sys
 from collections import OrderedDict
@@ -84,19 +87,9 @@ def upgrade_notice_from(entries):
     version, lines = entries[0]
     body = " ".join(lines).strip()
     if not body:
-        return "Update auf Version {}.".format(version)
+        return "Update to version {}.".format(version)
     notice = "Version {}: {}".format(version, body)
     return (notice[:497] + "...") if len(notice) > 500 else notice
-
-
-def reorder(meta):
-    """Cosmetic: keep new keys near logically related ones."""
-    out = OrderedDict()
-    for key in meta:
-        out[key] = meta[key]
-        if key == "name" and "slug" not in meta:
-            out["slug"] = None  # placeholder, filled by caller
-    return out
 
 
 def main():
@@ -108,6 +101,11 @@ def main():
     ap.add_argument("--repo", required=True)
     ap.add_argument("--tag", required=True)
     ap.add_argument("--slug", required=True)
+    ap.add_argument(
+        "--version-constant",
+        default=None,
+        help="Name of the PHP version constant to cross-check (e.g. GOO1_MCP_VERSION)",
+    )
     args = ap.parse_args()
 
     php = read(args.plugin_file)
@@ -128,13 +126,18 @@ def main():
     stable = header_field(readme, "Stable tag")
 
     # Consistency warnings (do not fail the build).
-    const_match = re.search(r"GOO1_MCP_VERSION['\"]\s*,\s*['\"]([^'\"]+)", php)
-    if const_match and const_match.group(1) != version:
-        print(
-            "::warning::GOO1_MCP_VERSION ({}) does not match header Version ({})".format(
-                const_match.group(1), version
-            )
+    if args.version_constant:
+        const_match = re.search(
+            re.escape(args.version_constant) + r"['\"]\s*,\s*['\"]([^'\"]+)", php
         )
+        if not const_match:
+            print("::warning::{} not found in plugin file".format(args.version_constant))
+        elif const_match.group(1) != version:
+            print(
+                "::warning::{} ({}) does not match header Version ({})".format(
+                    args.version_constant, const_match.group(1), version
+                )
+            )
     if stable and stable != version:
         print(
             "::warning::readme Stable tag ({}) does not match header Version ({})".format(
@@ -193,7 +196,6 @@ def main():
     print("Updated {} -> version {}, download_url {}".format(args.meta, version, download_url))
 
     # Expose version/tag to the GitHub Actions step if running in CI.
-    import os
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a", encoding="utf-8") as fh:

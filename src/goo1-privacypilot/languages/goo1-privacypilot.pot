@@ -1,0 +1,1366 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PrivacyPilot\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: goo1-privacypilot\n"
+
+#: admin/class-admin.php
+msgid "%d document version is waiting for your approval."
+msgid_plural "%d document versions are waiting for your approval."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-admin.php
+msgid "%d new question in the questionnaire."
+msgid_plural "%d new questions in the questionnaire."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-admin.php
+msgid "Settings"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Status"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Questionnaire"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Documents"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Banner"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Services & scan"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Requests"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Consent log"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Advanced"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "New client token – copy it now, it is shown only once:"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Copy"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Review"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Answer now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Not allowed."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Entity answers are managed by the hub on this site."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Answers saved. %d document draft(s) waiting for approval."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approved. Published: %s."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "nothing new"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Published."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Draft rejected. It stays unpublished until its content changes."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Documents rebuilt: %1$d unchanged, %2$d published, %3$d waiting for "
+"approval."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Document settings saved."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%d page(s) created."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Termageddon embed replaced. The old content is kept as a revision."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Nothing was replaced."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Banner settings saved."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Scan finished: %1$d page(s), %2$d service(s) found."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%d service(s) added to the questionnaire."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Saved."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Request updated."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Connected to the hub."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Saved, but the hub could not be reached: %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Mode saved."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Synced. Published: %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Profile created."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "The profile used by this site cannot be deleted."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Profile deleted."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Profile approved. Connected sites publish the new version at their next "
+"sync."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Client created."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Client revoked."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Library updated to %s."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "The import is not valid JSON."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Answers imported."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Unknown action."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"The clauses are checked and updated regularly, but PrivacyPilot is not legal"
+" advice. No liability is accepted for completeness or correctness. The site "
+"owner is responsible for the answers in the questionnaire and for the "
+"documents published on the site."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Do you like PrivacyPilot? It is free. Donations help to keep the clause "
+"library up to date and to pay for a legal review."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Support on Patreon"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "bundled"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "feed"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "standalone"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "hub"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "client"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%d open"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "complete"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Open questionnaire"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approval"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%d waiting"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "up to date"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "active"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "off (shadow mode)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "blocking on"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Banner settings"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Library"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Mode:"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "overdue"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Scan"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "not run yet"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%1$d services, %2$s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "undeclared services"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Rebuild documents now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Run scan"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Last rebuild: %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Document"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Language"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Published"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Draft"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Page"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "No documents enabled."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "none"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "rejected"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "waiting"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "effective %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Empty placeholders: %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "view"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "no page"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Preview"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Publish this version without the regular approval?"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Publish now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Reject"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "New version"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Published version"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Same clauses; answers or placeholders changed."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Legal entity"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "These answers are managed on the hub %1$s (profile \"%2$s\")."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Profile:"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Save entity answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "This website"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Save website answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "new"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "detected"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Questions that do not apply to your answers are hidden. Save to update the "
+"list."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"The legal entity part is approved on the hub. Approve here only the website-"
+"specific answers; the documents are published as soon as the hub approval "
+"matches."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub approval: %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Review the new versions below (Preview). Approving publishes every waiting "
+"document at once."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approve website answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approve and publish all"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Languages, documents and pages"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Languages"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Default:"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Pages"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Footer links"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Add links to all documents (and privacy settings) at the end of every page"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Alternatively place the shortcode [privacypilot_links] in your footer or "
+"menu. A menu item with the CSS class \"pp-open-settings\" opens the privacy "
+"settings."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Save"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Create missing pages"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Creates a page with the document shortcode for every document/language "
+"without a page."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Termageddon embeds"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "No page embeds Termageddon policies."
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"These pages still load their text from Termageddon. Replacing keeps the page"
+" and its URL; WordPress stores the old content as a revision."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Replace with"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "auto language"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Replace the Termageddon embed on this page?"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Replace"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Consent banner"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Show the consent banner"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Leave this off while you prepare the site (shadow mode). Documents work "
+"without the banner."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Blocking"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Block known scripts and embeds until consent"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Remove other consent tools (e.g. Usercentrics from Termageddon)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "No banner and no blocking for logged-in administrators"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Rules by region"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Mode"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "by country when it can be determined (Cloudflare), otherwise opt-in"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "opt-in everywhere"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "detect automatically"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "site is behind Cloudflare"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "not behind Cloudflare"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Opt-in (nothing before consent)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Opt-out (notice, objection possible)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "EU / EEA / UK / Switzerland"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "USA"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Other countries and unknown"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"If the country cannot be determined, the rule for \"other countries and "
+"unknown\" applies. Keep it on opt-in."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Signals"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Respect Global Privacy Control (GPC) as opt-out of sale/sharing"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Google Consent Mode v2 (defaults: denied)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Validity"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "days, then the banner asks again"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Look"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Position"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "bar at the bottom"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "dialog in the centre"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Accent"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Background"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Text"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Preview banner and run cookie audit"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Run scan now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Cookie audit in your browser"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Scan from %s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Service"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Category"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Found via"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Declared"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "No known third-party services found."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "other consent tool"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "not declared"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Add undeclared services to the questionnaire"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Cookie audit"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Not run yet. Open the audit link above in a browser where you are logged in;"
+" the result appears here."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%1$s on %2$s"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Service catalogue"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Maintained centrally with the clause library. Scanner and blocker use the "
+"same list."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "%d services"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Recipient"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Receives every request from the form [privacypilot_request_form]."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Confirmation"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Send a receipt to the requester"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Retention"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "days after closing"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Received"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Type"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Requester"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Due"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "No requests yet."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Internal note / reason"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Update"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"GDPR/UK GDPR: answer within one month. US state laws: usually 45 days. If "
+"you reject a request, give reasons and explain how the person can appeal."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Last 30 days"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Action"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Rule"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Count"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Look up a consent"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Search"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"The consent id is shown to visitors in the privacy settings and stored in "
+"their pp_consent cookie. No IP addresses are stored."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Time (UTC)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Categories"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Country"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Versions"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Not found."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "days"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Standalone – this site keeps its own answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub – this site manages answers for several sites"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Client – legal entity answers come from a hub"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub URL"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Client token"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "(stored – leave empty to keep)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Save mode"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Connection"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Profile"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Last sync"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub approval"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Hub library / this site"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Error"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Sync now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Profiles (legal entities)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Clients"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "this site"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Edit answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "approved"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "needs approval"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approve the current answers of this profile for all connected sites?"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Approve"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Use for this site"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Delete this profile?"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Delete"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Legal entity name, e.g. JL Productions Inc."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Add profile"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"The approval covers the legal entity answers at the current library version."
+" After approving, connected sites publish at their next sync (daily, or "
+"\"Sync now\" on the client)."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Connected sites"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Label"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Last seen"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "ago"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Revoke this token? The site stops receiving updates."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Revoke"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Site, e.g. libertyswing.com"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Create client token"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Clause library"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "In use"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Bundled with the plugin"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Signing key"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "configured"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "not configured – feed updates disabled"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Last feed check"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Check feed now"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Feed"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Fetch library updates daily (signed)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Deadlines"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Publish a waiting version automatically on the effective date of a legal "
+"change, unless it was rejected"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Uninstall"
+msgstr ""
+
+#: admin/class-admin.php
+msgid ""
+"Delete all PrivacyPilot data when the plugin is deleted (including the "
+"consent log)"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Off by default: the consent log is your proof of consent."
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Export / import answers"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Overwrite the answers with the import?"
+msgstr ""
+
+#: admin/class-admin.php
+msgid "Import"
+msgstr ""
+
+#: includes/class-documents.php
+msgid ""
+"No published version of this document yet. Complete the questionnaire and "
+"approve the document under Settings → PrivacyPilot."
+msgstr ""
+
+#: includes/class-documents.php
+msgid "Legal"
+msgstr ""
+
+#: includes/class-questionnaire.php
+msgid ""
+"You use advertising services (%s) but answered that you do not share "
+"personal information for targeted advertising. Under US state privacy laws "
+"tracking pixels usually count as \"sharing\", so the documents disclose it "
+"anyway. Please correct the answer under \"Handling of data\"."
+msgstr ""
+
+#: includes/class-questionnaire.php
+msgid ""
+"Visitors can register or buy tickets, but no registration or ticketing "
+"system is named. The privacy policy cannot say who processes registrations."
+msgstr ""
+
+#: includes/class-questionnaire.php
+msgid ""
+"You send a newsletter but no newsletter service is selected under \"Services"
+" and tools\"."
+msgstr ""
+
+#: includes/class-questionnaire.php
+msgid ""
+"Payment or shop services are selected, but the question about registrations "
+"and ticket sales is answered with \"no\"."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "%d question in the PrivacyPilot questionnaire is open"
+msgid_plural "%d questions in the PrivacyPilot questionnaire are open"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-site-health.php
+msgid "%d request is past its answer deadline."
+msgid_plural "%d requests are past their answer deadline."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-site-health.php
+msgid "Privacy"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Open PrivacyPilot"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "All privacy documents are published"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"Every document configured in PrivacyPilot has a published version and a "
+"public page."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Some privacy documents are not published"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Not published or without a page: %s."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "WordPress uses the PrivacyPilot privacy page"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"The privacy page set under Settings → Privacy is the PrivacyPilot document."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "WordPress privacy page is not the PrivacyPilot document"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"Settings → Privacy points to a different page. Login and registration forms "
+"link to that page."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No document versions waiting for approval"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "The published documents match the current clause library and answers."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "New document versions are waiting for approval"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Waiting: %s."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Some PrivacyPilot answers contradict each other"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "The PrivacyPilot questionnaire is complete"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "All required questions are answered."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No imprint required by PrivacyPilot settings"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "The site is not operated from Germany according to the questionnaire."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Imprint (Impressum) is published"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "German law (§ 5 DDG) requires an imprint; it is published."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Imprint (Impressum) is missing"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"The site is operated from Germany. § 5 DDG requires an easily reachable "
+"imprint. Enable the document \"Impressum\" for German."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No recipient for privacy requests"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Set an e-mail address that receives privacy requests from the form."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Privacy requests are overdue"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Privacy requests are handled"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Requests go to %s. No request is overdue."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot hub connection"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "This site is not a hub client."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot hub is in sync"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Last sync with the hub: %s ago."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot cannot reach its hub"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Last successful sync: %1$s. Error: %2$s"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "never"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot clause library missing"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"Neither a bundled nor a downloaded clause library is available. Reinstall "
+"the plugin."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Library %1$s (%2$s). %3$d clauses without a legal review note."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot library feed has a problem"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Last feed error: %s"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot clause library is available"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No cookie audit yet"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"Run the browser audit once (PrivacyPilot → Services & scan) to check which "
+"cookies are set before consent."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Cookies are set before consent"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "The last audit (%1$s) found cookies before consent: %2$s"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No cookies before consent"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Last audit: %s."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "No Termageddon embeds left"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Termageddon embeds are still in use"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid ""
+"%d page(s) still load policies from Termageddon. Replace them under "
+"PrivacyPilot → Documents."
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "services found but not declared in the questionnaire: %s"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "another consent tool is active: %s"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot scan found differences"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "PrivacyPilot scan matches the questionnaire"
+msgstr ""
+
+#: includes/class-site-health.php
+msgid "Scanned %1$d page(s) on %2$s."
+msgstr ""

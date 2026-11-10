@@ -1,0 +1,32 @@
+[
+  {
+    "id": "privacy",
+    "title": { "en": "Privacy Policy", "de": "Datenschutzerklärung" },
+    "short_title": { "en": "Privacy", "de": "Datenschutz" },
+    "slug": { "en": "privacy-policy", "de": "datenschutz" }
+  },
+  {
+    "id": "cookies",
+    "title": { "en": "Cookie Policy", "de": "Cookie-Richtlinie" },
+    "short_title": { "en": "Cookies", "de": "Cookies" },
+    "slug": { "en": "cookie-policy", "de": "cookie-richtlinie" }
+  },
+  {
+    "id": "terms",
+    "title": { "en": "Terms of Use", "de": "Nutzungsbedingungen" },
+    "short_title": { "en": "Terms", "de": "Nutzungsbedingungen" },
+    "slug": { "en": "terms", "de": "nutzungsbedingungen" }
+  },
+  {
+    "id": "choices",
+    "title": { "en": "Your Privacy Choices", "de": "Ihre Datenschutzrechte" },
+    "short_title": { "en": "Your Privacy Choices", "de": "Ihre Rechte" },
+    "slug": { "en": "privacy-choices", "de": "datenschutzrechte" }
+  },
+  {
+    "id": "impressum",
+    "title": { "en": "Legal Notice (Imprint)", "de": "Impressum" },
+    "short_title": { "en": "Imprint", "de": "Impressum" },
+    "slug": { "en": "imprint", "de": "impressum" }
+  }
+]

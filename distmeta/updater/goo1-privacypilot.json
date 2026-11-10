@@ -1,0 +1,18 @@
+{
+    "name": "PrivacyPilot",
+    "slug": "goo1-privacypilot",
+    "version": "0.9.261109",
+    "download_url": "https://github.com/andreaskasper/wordpress-plugins/releases/download/goo1-privacypilot-v0.9.261109/goo1-privacypilot.zip",
+    "homepage": "https://github.com/andreaskasper/wordpress-plugins",
+    "requires": "6.0",
+    "requires_php": "7.4",
+    "tested": "7.1",
+    "last_updated": "2026-11-10 00:00:00",
+    "author": "Andreas Kasper",
+    "author_homepage": "https://goo1.de/",
+    "sections": {
+        "description": "<p>Privacy policy, cookie policy, terms and imprint generated from a questionnaire and a centrally maintained, signed clause library, plus a consent banner with script blocking, Google Consent Mode v2, GPC support, a request form and Site Health checks. US and EU/UK, English and German.</p><p>PrivacyPilot is not legal advice.</p>",
+        "installation": "<p>Download the ZIP from the GitHub releases page and upload it under Plugins → Add New → Upload Plugin. Then open Settings → PrivacyPilot.</p>"
+    },
+    "translations": []
+}

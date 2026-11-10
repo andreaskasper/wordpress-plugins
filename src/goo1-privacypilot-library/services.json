@@ -1,0 +1,1075 @@
+[
+  {
+    "id": "google-analytics",
+    "name": "Google Analytics",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Statistics about visits and use of the website.",
+      "de": "Statistiken über Besuche und die Nutzung der Website."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [
+      {
+        "name": "_ga",
+        "duration": {
+          "en": "2 years",
+          "de": "2 Jahre"
+        },
+        "purpose": {
+          "en": "Distinguishes visitors.",
+          "de": "Unterscheidet Besucher."
+        }
+      },
+      {
+        "name": "_ga_*",
+        "pattern": "^_ga_",
+        "duration": {
+          "en": "2 years",
+          "de": "2 Jahre"
+        },
+        "purpose": {
+          "en": "Keeps the session state.",
+          "de": "Speichert den Sitzungsstatus."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "googletagmanager\\.com/gtag/js\\?id=G-",
+        "google-analytics\\.com/(analytics|ga)\\.js"
+      ],
+      "inline": [
+        "gtag\\(\\s*['\"]config['\"]\\s*,\\s*['\"]G-",
+        "GoogleAnalyticsObject",
+        "googletagmanager\\.com/gtag/js\\?id=G-"
+      ]
+    },
+    "plugins": [
+      "google-site-kit/google-site-kit.php",
+      "google-analytics-for-wordpress/googleanalytics.php",
+      "ga-google-analytics/ga-google-analytics.php"
+    ]
+  },
+  {
+    "id": "google-tag-manager",
+    "name": "Google Tag Manager",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Loads analytics and marketing tags.",
+      "de": "Lädt Analyse- und Marketing-Tags."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "googletagmanager\\.com/gtm\\.js"
+      ],
+      "inline": [
+        "googletagmanager\\.com/gtm\\.js",
+        "\\(window,document,'script','dataLayer','GTM-"
+      ],
+      "iframe": [
+        "googletagmanager\\.com/ns\\.html"
+      ]
+    },
+    "plugins": [
+      "duracelltomi-google-tag-manager/duracelltomi-google-tag-manager-for-wordpress.php"
+    ]
+  },
+  {
+    "id": "google-ads",
+    "name": "Google Ads",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "marketing",
+    "group": "marketing",
+    "purpose": {
+      "en": "Conversion measurement and remarketing for ads.",
+      "de": "Conversion-Messung und Remarketing für Anzeigen."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [
+      {
+        "name": "_gcl_au",
+        "duration": {
+          "en": "90 days",
+          "de": "90 Tage"
+        },
+        "purpose": {
+          "en": "Ad conversions.",
+          "de": "Anzeigen-Conversions."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "googletagmanager\\.com/gtag/js\\?id=AW-",
+        "googleadservices\\.com/pagead/conversion"
+      ],
+      "inline": [
+        "gtag\\(\\s*['\"]config['\"]\\s*,\\s*['\"]AW-"
+      ]
+    }
+  },
+  {
+    "id": "meta-pixel",
+    "name": "Meta Pixel",
+    "provider": "Meta Platforms Ireland Ltd. / Meta Platforms Inc.",
+    "country": "US",
+    "category": "marketing",
+    "group": "marketing",
+    "purpose": {
+      "en": "Measures the effect of ads on Facebook and Instagram and builds audiences.",
+      "de": "Misst den Erfolg von Anzeigen auf Facebook und Instagram und bildet Zielgruppen."
+    },
+    "privacy_url": "https://www.facebook.com/privacy/policy/",
+    "cookies": [
+      {
+        "name": "_fbp",
+        "duration": {
+          "en": "3 months",
+          "de": "3 Monate"
+        },
+        "purpose": {
+          "en": "Identifies the browser for ads.",
+          "de": "Erkennt den Browser für Werbung."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "connect\\.facebook\\.net/[^\"']*/fbevents\\.js"
+      ],
+      "inline": [
+        "fbq\\(\\s*['\"]init['\"]",
+        "connect\\.facebook\\.net/[^\"']*/fbevents\\.js"
+      ]
+    },
+    "plugins": [
+      "official-facebook-pixel/facebook-for-wordpress.php",
+      "pixelyoursite/facebook-pixel-master.php"
+    ]
+  },
+  {
+    "id": "tiktok-pixel",
+    "name": "TikTok Pixel",
+    "provider": "TikTok Technology Ltd.",
+    "country": "CN",
+    "category": "marketing",
+    "group": "marketing",
+    "purpose": {
+      "en": "Measures the effect of ads on TikTok.",
+      "de": "Misst den Erfolg von Anzeigen auf TikTok."
+    },
+    "privacy_url": "https://www.tiktok.com/legal/privacy-policy-eea",
+    "cookies": [
+      {
+        "name": "_ttp",
+        "duration": {
+          "en": "13 months",
+          "de": "13 Monate"
+        },
+        "purpose": {
+          "en": "Ad measurement.",
+          "de": "Anzeigenmessung."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "analytics\\.tiktok\\.com"
+      ],
+      "inline": [
+        "analytics\\.tiktok\\.com/i18n/pixel",
+        "ttq\\.load\\("
+      ]
+    }
+  },
+  {
+    "id": "linkedin-insight",
+    "name": "LinkedIn Insight Tag",
+    "provider": "LinkedIn Ireland Unlimited Company",
+    "country": "US",
+    "category": "marketing",
+    "group": "marketing",
+    "purpose": {
+      "en": "Ad measurement on LinkedIn.",
+      "de": "Anzeigenmessung auf LinkedIn."
+    },
+    "privacy_url": "https://www.linkedin.com/legal/privacy-policy",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "snap\\.licdn\\.com/li\\.lms-analytics"
+      ],
+      "inline": [
+        "_linkedin_partner_id"
+      ]
+    }
+  },
+  {
+    "id": "hotjar",
+    "name": "Hotjar",
+    "provider": "Hotjar Ltd.",
+    "country": "MT",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Heatmaps and usage analysis.",
+      "de": "Heatmaps und Nutzungsanalyse."
+    },
+    "privacy_url": "https://www.hotjar.com/legal/policies/privacy/",
+    "cookies": [
+      {
+        "name": "_hj*",
+        "pattern": "^_hj",
+        "duration": {
+          "en": "up to 1 year",
+          "de": "bis zu 1 Jahr"
+        },
+        "purpose": {
+          "en": "Usage analysis.",
+          "de": "Nutzungsanalyse."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "static\\.hotjar\\.com"
+      ],
+      "inline": [
+        "static\\.hotjar\\.com",
+        "hjid\\s*:"
+      ]
+    }
+  },
+  {
+    "id": "microsoft-clarity",
+    "name": "Microsoft Clarity",
+    "provider": "Microsoft Corporation",
+    "country": "US",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Session recordings and heatmaps.",
+      "de": "Sitzungsaufzeichnungen und Heatmaps."
+    },
+    "privacy_url": "https://privacy.microsoft.com/privacystatement",
+    "cookies": [
+      {
+        "name": "_clck",
+        "duration": {
+          "en": "1 year",
+          "de": "1 Jahr"
+        },
+        "purpose": {
+          "en": "Identifies the visitor.",
+          "de": "Erkennt den Besucher."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "clarity\\.ms/tag"
+      ],
+      "inline": [
+        "clarity\\.ms/tag"
+      ]
+    }
+  },
+  {
+    "id": "jetpack-stats",
+    "name": "Jetpack Stats",
+    "provider": "Automattic Inc.",
+    "country": "US",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Visitor statistics.",
+      "de": "Besucherstatistiken."
+    },
+    "privacy_url": "https://automattic.com/privacy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "stats\\.wp\\.com/e-"
+      ]
+    },
+    "plugins": [
+      "jetpack/jetpack.php"
+    ]
+  },
+  {
+    "id": "matomo",
+    "name": "Matomo",
+    "provider": "operator / InnoCraft Ltd.",
+    "country": "NZ",
+    "category": "analytics",
+    "group": "analytics",
+    "purpose": {
+      "en": "Visitor statistics.",
+      "de": "Besucherstatistiken."
+    },
+    "privacy_url": "https://matomo.org/privacy-policy/",
+    "cookies": [
+      {
+        "name": "_pk_*",
+        "pattern": "^_pk_",
+        "duration": {
+          "en": "up to 13 months",
+          "de": "bis zu 13 Monate"
+        },
+        "purpose": {
+          "en": "Statistics.",
+          "de": "Statistik."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "matomo\\.js",
+        "piwik\\.js"
+      ],
+      "inline": [
+        "_paq\\.push"
+      ]
+    },
+    "plugins": [
+      "matomo/matomo.php",
+      "wp-piwik/wp-piwik.php"
+    ]
+  },
+  {
+    "id": "youtube",
+    "name": "YouTube",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded videos.",
+      "de": "Eingebettete Videos."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [
+      {
+        "name": "VISITOR_INFO1_LIVE",
+        "duration": {
+          "en": "6 months",
+          "de": "6 Monate"
+        },
+        "purpose": {
+          "en": "Video playback and preferences.",
+          "de": "Videowiedergabe und Einstellungen."
+        }
+      }
+    ],
+    "patterns": {
+      "iframe": [
+        "youtube(-nocookie)?\\.com/embed",
+        "youtube\\.com/watch"
+      ],
+      "script": [
+        "youtube\\.com/iframe_api",
+        "youtube\\.com/player_api"
+      ]
+    }
+  },
+  {
+    "id": "vimeo",
+    "name": "Vimeo",
+    "provider": "Vimeo.com Inc.",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded videos.",
+      "de": "Eingebettete Videos."
+    },
+    "privacy_url": "https://vimeo.com/privacy",
+    "cookies": [
+      {
+        "name": "vuid",
+        "duration": {
+          "en": "2 years",
+          "de": "2 Jahre"
+        },
+        "purpose": {
+          "en": "Video statistics.",
+          "de": "Videostatistik."
+        }
+      }
+    ],
+    "patterns": {
+      "iframe": [
+        "player\\.vimeo\\.com/video"
+      ],
+      "script": [
+        "player\\.vimeo\\.com/api/player\\.js"
+      ]
+    }
+  },
+  {
+    "id": "dailymotion",
+    "name": "Dailymotion",
+    "provider": "Dailymotion SA",
+    "country": "FR",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded videos.",
+      "de": "Eingebettete Videos."
+    },
+    "privacy_url": "https://legal.dailymotion.com/en/privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "dailymotion\\.com/embed"
+      ]
+    }
+  },
+  {
+    "id": "google-maps",
+    "name": "Google Maps",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded maps (e.g. venue location).",
+      "de": "Eingebettete Karten (z. B. Veranstaltungsort)."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "google\\.[a-z.]+/maps",
+        "maps\\.google\\."
+      ],
+      "script": [
+        "maps\\.googleapis\\.com/maps/api/js"
+      ]
+    }
+  },
+  {
+    "id": "spotify",
+    "name": "Spotify",
+    "provider": "Spotify AB",
+    "country": "SE",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded music player.",
+      "de": "Eingebetteter Musikplayer."
+    },
+    "privacy_url": "https://www.spotify.com/legal/privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "open\\.spotify\\.com/embed"
+      ]
+    }
+  },
+  {
+    "id": "soundcloud",
+    "name": "SoundCloud",
+    "provider": "SoundCloud Global Ltd. & Co. KG",
+    "country": "DE",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded audio player.",
+      "de": "Eingebetteter Audioplayer."
+    },
+    "privacy_url": "https://soundcloud.com/pages/privacy",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "w\\.soundcloud\\.com/player"
+      ]
+    }
+  },
+  {
+    "id": "instagram-embed",
+    "name": "Instagram (embedded posts)",
+    "provider": "Meta Platforms Ireland Ltd.",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded Instagram posts.",
+      "de": "Eingebettete Instagram-Beiträge."
+    },
+    "privacy_url": "https://privacycenter.instagram.com/policy",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "instagram\\.com/(p|reel)/[^\"']+/embed"
+      ],
+      "script": [
+        "instagram\\.com/embed\\.js"
+      ]
+    }
+  },
+  {
+    "id": "facebook-embed",
+    "name": "Facebook (embedded content)",
+    "provider": "Meta Platforms Ireland Ltd.",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded posts, videos and page plugins.",
+      "de": "Eingebettete Beiträge, Videos und Seiten-Plugins."
+    },
+    "privacy_url": "https://www.facebook.com/privacy/policy/",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "facebook\\.com/plugins/"
+      ],
+      "script": [
+        "connect\\.facebook\\.net/[^\"']*/sdk\\.js"
+      ]
+    }
+  },
+  {
+    "id": "x-twitter",
+    "name": "X (Twitter) embeds",
+    "provider": "X Corp.",
+    "country": "US",
+    "category": "media",
+    "group": "media",
+    "purpose": {
+      "en": "Embedded posts.",
+      "de": "Eingebettete Beiträge."
+    },
+    "privacy_url": "https://x.com/en/privacy",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "platform\\.twitter\\.com/widgets\\.js"
+      ],
+      "iframe": [
+        "platform\\.twitter\\.com/embed"
+      ]
+    }
+  },
+  {
+    "id": "recaptcha",
+    "name": "Google reCAPTCHA",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "preferences",
+    "group": "security",
+    "purpose": {
+      "en": "Protects forms against spam and abuse.",
+      "de": "Schützt Formulare vor Spam und Missbrauch."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [
+      {
+        "name": "_GRECAPTCHA",
+        "duration": {
+          "en": "6 months",
+          "de": "6 Monate"
+        },
+        "purpose": {
+          "en": "Risk analysis.",
+          "de": "Risikoanalyse."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "google\\.com/recaptcha/(api|enterprise)\\.js",
+        "gstatic\\.com/recaptcha"
+      ]
+    }
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare",
+    "provider": "Cloudflare Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "security",
+    "purpose": {
+      "en": "Content delivery network and protection against attacks.",
+      "de": "Content-Delivery-Netzwerk und Schutz vor Angriffen."
+    },
+    "privacy_url": "https://www.cloudflare.com/privacypolicy/",
+    "cookies": [
+      {
+        "name": "__cf_bm",
+        "duration": {
+          "en": "30 minutes",
+          "de": "30 Minuten"
+        },
+        "purpose": {
+          "en": "Bot protection.",
+          "de": "Schutz vor Bots."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "static\\.cloudflareinsights\\.com",
+        "challenges\\.cloudflare\\.com/turnstile"
+      ]
+    }
+  },
+  {
+    "id": "wordfence",
+    "name": "Wordfence",
+    "provider": "Defiant Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "security",
+    "purpose": {
+      "en": "Firewall and protection against attacks.",
+      "de": "Firewall und Schutz vor Angriffen."
+    },
+    "privacy_url": "https://www.wordfence.com/privacy-policy/",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "wordfence/wordfence.php"
+    ]
+  },
+  {
+    "id": "google-fonts",
+    "name": "Google Fonts (loaded from Google)",
+    "provider": "Google Ireland Ltd. / Google LLC",
+    "country": "US",
+    "category": "necessary",
+    "group": "fonts",
+    "purpose": {
+      "en": "Web fonts. The browser connects to Google servers.",
+      "de": "Schriftarten. Der Browser verbindet sich mit Servern von Google."
+    },
+    "privacy_url": "https://policies.google.com/privacy",
+    "cookies": [],
+    "patterns": {
+      "link": [
+        "fonts\\.googleapis\\.com"
+      ]
+    }
+  },
+  {
+    "id": "gravatar",
+    "name": "Gravatar",
+    "provider": "Automattic Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "comments",
+    "purpose": {
+      "en": "Profile pictures next to comments.",
+      "de": "Profilbilder neben Kommentaren."
+    },
+    "privacy_url": "https://automattic.com/privacy/",
+    "cookies": [],
+    "patterns": {}
+  },
+  {
+    "id": "akismet",
+    "name": "Akismet",
+    "provider": "Automattic Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "comments",
+    "purpose": {
+      "en": "Spam filter for comments and forms.",
+      "de": "Spamfilter für Kommentare und Formulare."
+    },
+    "privacy_url": "https://automattic.com/privacy/",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "akismet/akismet.php"
+    ]
+  },
+  {
+    "id": "stripe",
+    "name": "Stripe",
+    "provider": "Stripe Payments Europe Ltd. / Stripe Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "payments",
+    "purpose": {
+      "en": "Payment processing and fraud prevention.",
+      "de": "Zahlungsabwicklung und Betrugsprävention."
+    },
+    "privacy_url": "https://stripe.com/privacy",
+    "cookies": [
+      {
+        "name": "__stripe_mid",
+        "duration": {
+          "en": "1 year",
+          "de": "1 Jahr"
+        },
+        "purpose": {
+          "en": "Fraud prevention.",
+          "de": "Betrugsprävention."
+        }
+      }
+    ],
+    "patterns": {
+      "script": [
+        "js\\.stripe\\.com"
+      ]
+    },
+    "plugins": [
+      "woocommerce-gateway-stripe/woocommerce-gateway-stripe.php"
+    ]
+  },
+  {
+    "id": "paypal",
+    "name": "PayPal",
+    "provider": "PayPal (Europe) S.à r.l. et Cie, S.C.A. / PayPal Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "payments",
+    "purpose": {
+      "en": "Payment processing.",
+      "de": "Zahlungsabwicklung."
+    },
+    "privacy_url": "https://www.paypal.com/privacy",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "paypal\\.com/sdk/js",
+        "paypalobjects\\.com/api/checkout"
+      ]
+    },
+    "plugins": [
+      "woocommerce-paypal-payments/woocommerce-paypal-payments.php"
+    ]
+  },
+  {
+    "id": "woocommerce",
+    "name": "WooCommerce (shop on this site)",
+    "provider": "operator (self-hosted)",
+    "country": "",
+    "category": "necessary",
+    "group": "shop",
+    "purpose": {
+      "en": "Online shop: cart, checkout and orders.",
+      "de": "Onlineshop: Warenkorb, Bestellung."
+    },
+    "privacy_url": "",
+    "cookies": [
+      {
+        "name": "woocommerce_*",
+        "pattern": "^(woocommerce_|wp_woocommerce_session_)",
+        "duration": {
+          "en": "session / 2 days",
+          "de": "Sitzung / 2 Tage"
+        },
+        "purpose": {
+          "en": "Cart and checkout.",
+          "de": "Warenkorb und Bestellung."
+        }
+      }
+    ],
+    "patterns": {},
+    "plugins": [
+      "woocommerce/woocommerce.php"
+    ]
+  },
+  {
+    "id": "danceapp",
+    "name": "danceapp.net",
+    "provider": "danceapp.net, Andreas Kasper",
+    "country": "DE",
+    "category": "necessary",
+    "group": "registration",
+    "purpose": {
+      "en": "Event registration, tickets and event app.",
+      "de": "Anmeldung, Tickets und Event-App."
+    },
+    "privacy_url": "",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "danceapp\\.net/"
+      ],
+      "iframe": [
+        "danceapp\\.net/"
+      ]
+    }
+  },
+  {
+    "id": "scoring-dance",
+    "name": "scoring.dance",
+    "provider": "scoring.dance, Andreas Kasper",
+    "country": "DE",
+    "category": "necessary",
+    "group": "registration",
+    "purpose": {
+      "en": "Competition registration, scoring and results.",
+      "de": "Wettbewerbsanmeldung, Wertung und Ergebnisse."
+    },
+    "privacy_url": "",
+    "cookies": [],
+    "patterns": {
+      "iframe": [
+        "scoring\\.dance/"
+      ],
+      "script": [
+        "scoring\\.dance/"
+      ]
+    }
+  },
+  {
+    "id": "eventbrite",
+    "name": "Eventbrite",
+    "provider": "Eventbrite Inc.",
+    "country": "US",
+    "category": "necessary",
+    "group": "registration",
+    "purpose": {
+      "en": "Ticket sales.",
+      "de": "Ticketverkauf."
+    },
+    "privacy_url": "https://www.eventbrite.com/help/en-us/articles/460838/eventbrite-privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "eventbrite\\.[a-z.]+/static/widgets"
+      ],
+      "iframe": [
+        "eventbrite\\.[a-z.]+/"
+      ]
+    }
+  },
+  {
+    "id": "elementor-forms",
+    "name": "Elementor forms (stored on this site)",
+    "provider": "operator (self-hosted)",
+    "country": "",
+    "category": "necessary",
+    "group": "forms",
+    "purpose": {
+      "en": "Contact and registration forms.",
+      "de": "Kontakt- und Anmeldeformulare."
+    },
+    "privacy_url": "",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "elementor-pro/elementor-pro.php"
+    ]
+  },
+  {
+    "id": "contact-form-7",
+    "name": "Contact Form 7",
+    "provider": "operator (self-hosted)",
+    "country": "",
+    "category": "necessary",
+    "group": "forms",
+    "purpose": {
+      "en": "Contact forms; messages are sent by e-mail.",
+      "de": "Kontaktformulare; Nachrichten werden per E-Mail versendet."
+    },
+    "privacy_url": "",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "contact-form-7/wp-contact-form-7.php"
+    ]
+  },
+  {
+    "id": "wpforms",
+    "name": "WPForms",
+    "provider": "operator (self-hosted)",
+    "country": "",
+    "category": "necessary",
+    "group": "forms",
+    "purpose": {
+      "en": "Contact and registration forms.",
+      "de": "Kontakt- und Anmeldeformulare."
+    },
+    "privacy_url": "",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "wpforms-lite/wpforms.php",
+      "wpforms/wpforms.php"
+    ]
+  },
+  {
+    "id": "mailchimp",
+    "name": "Mailchimp",
+    "provider": "Intuit Inc. (The Rocket Science Group LLC)",
+    "country": "US",
+    "category": "marketing",
+    "group": "newsletter",
+    "purpose": {
+      "en": "Newsletter delivery and sign-up forms, including open and click statistics.",
+      "de": "Newsletterversand und Anmeldeformulare, einschließlich Öffnungs- und Klickstatistiken."
+    },
+    "privacy_url": "https://www.intuit.com/privacy/statement/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "chimpstatic\\.com",
+        "list-manage\\.com"
+      ]
+    },
+    "plugins": [
+      "mailchimp-for-wp/mailchimp-for-wp.php"
+    ]
+  },
+  {
+    "id": "brevo",
+    "name": "Brevo (Sendinblue)",
+    "provider": "Sendinblue SAS",
+    "country": "FR",
+    "category": "marketing",
+    "group": "newsletter",
+    "purpose": {
+      "en": "Newsletter delivery and sign-up forms.",
+      "de": "Newsletterversand und Anmeldeformulare."
+    },
+    "privacy_url": "https://www.brevo.com/legal/privacypolicy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "sibforms\\.com",
+        "sendinblue\\.com"
+      ]
+    },
+    "plugins": [
+      "mailin/sendinblue.php"
+    ]
+  },
+  {
+    "id": "constant-contact",
+    "name": "Constant Contact",
+    "provider": "Constant Contact Inc.",
+    "country": "US",
+    "category": "marketing",
+    "group": "newsletter",
+    "purpose": {
+      "en": "Newsletter delivery and sign-up forms.",
+      "de": "Newsletterversand und Anmeldeformulare."
+    },
+    "privacy_url": "https://www.constantcontact.com/legal/privacy-center",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "ctctcdn\\.com"
+      ]
+    }
+  },
+  {
+    "id": "mailpoet",
+    "name": "MailPoet (on this site)",
+    "provider": "operator (self-hosted) / Automattic Inc. for delivery",
+    "country": "US",
+    "category": "necessary",
+    "group": "newsletter",
+    "purpose": {
+      "en": "Newsletter sign-up and delivery.",
+      "de": "Newsletter-Anmeldung und -Versand."
+    },
+    "privacy_url": "https://automattic.com/privacy/",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "mailpoet/mailpoet.php"
+    ]
+  },
+  {
+    "id": "usercentrics",
+    "name": "Usercentrics (other consent tool)",
+    "provider": "Usercentrics GmbH",
+    "country": "DE",
+    "category": "cmp",
+    "group": "cmp",
+    "purpose": {
+      "en": "Consent management.",
+      "de": "Einwilligungsverwaltung."
+    },
+    "privacy_url": "https://usercentrics.com/privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "usercentrics\\.eu",
+        "privacy-proxy\\.usercentrics"
+      ]
+    },
+    "plugins": [
+      "termageddon-usercentrics/termageddon-usercentrics.php"
+    ]
+  },
+  {
+    "id": "cookiebot",
+    "name": "Cookiebot (other consent tool)",
+    "provider": "Usercentrics A/S",
+    "country": "DK",
+    "category": "cmp",
+    "group": "cmp",
+    "purpose": {
+      "en": "Consent management.",
+      "de": "Einwilligungsverwaltung."
+    },
+    "privacy_url": "https://www.cookiebot.com/en/privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "consent\\.cookiebot\\.com"
+      ]
+    },
+    "plugins": [
+      "cookiebot/cookiebot.php"
+    ]
+  },
+  {
+    "id": "cookieyes",
+    "name": "CookieYes (other consent tool)",
+    "provider": "CookieYes Ltd.",
+    "country": "GB",
+    "category": "cmp",
+    "group": "cmp",
+    "purpose": {
+      "en": "Consent management.",
+      "de": "Einwilligungsverwaltung."
+    },
+    "privacy_url": "https://www.cookieyes.com/privacy-policy/",
+    "cookies": [],
+    "patterns": {
+      "script": [
+        "cdn-cookieyes\\.com"
+      ]
+    },
+    "plugins": [
+      "cookie-law-info/cookie-law-info.php"
+    ]
+  },
+  {
+    "id": "complianz",
+    "name": "Complianz (other consent tool)",
+    "provider": "Complianz B.V.",
+    "country": "NL",
+    "category": "cmp",
+    "group": "cmp",
+    "purpose": {
+      "en": "Consent management.",
+      "de": "Einwilligungsverwaltung."
+    },
+    "privacy_url": "https://complianz.io/legal/privacy-statement/",
+    "cookies": [],
+    "patterns": {},
+    "plugins": [
+      "complianz-gdpr/complianz-gpdr.php"
+    ]
+  }
+]
