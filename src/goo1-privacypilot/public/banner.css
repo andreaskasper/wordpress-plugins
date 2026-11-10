@@ -1,0 +1,137 @@
+/* PrivacyPilot consent banner. Colours come from --pp-* variables (settings). */
+.pp-banner {
+	--pp-radius: 10px;
+	position: fixed;
+	z-index: 2147483000;
+	box-sizing: border-box;
+	color: var(--pp-text, #16181d);
+	background: var(--pp-bg, #fff);
+	font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+	border-radius: var(--pp-radius);
+}
+.pp-banner *, .pp-banner *::before, .pp-banner *::after { box-sizing: border-box; }
+.pp-banner.pp-pos-bottom {
+	left: 16px;
+	right: 16px;
+	bottom: 16px;
+	max-width: 1100px;
+	margin: 0 auto;
+}
+.pp-banner.pp-pos-center {
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: min(640px, calc(100vw - 32px));
+	max-height: calc(100vh - 32px);
+	overflow: auto;
+}
+.pp-modal-open body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, .45);
+	z-index: 2147482999;
+}
+.pp-banner .pp-inner { padding: 20px 22px; }
+.pp-banner .pp-title { margin: 0 0 6px; font-size: 18px; line-height: 1.3; font-weight: 700; color: inherit; }
+.pp-banner .pp-text, .pp-banner .pp-gpc, .pp-banner .pp-cat-desc { margin: 0 0 10px; }
+.pp-banner .pp-gpc { font-size: 13px; padding: 8px 10px; border-left: 3px solid var(--pp-primary, #1f4fd1); background: rgba(0, 0, 0, .04); }
+.pp-banner .pp-links { margin: 0 0 14px; font-size: 13px; }
+.pp-banner a { color: var(--pp-primary, #1f4fd1); text-decoration: underline; }
+.pp-banner .pp-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pp-banner .pp-btn {
+	appearance: none;
+	cursor: pointer;
+	border: 2px solid var(--pp-primary, #1f4fd1);
+	background: transparent;
+	color: var(--pp-primary, #1f4fd1);
+	padding: 9px 16px;
+	border-radius: 6px;
+	font: inherit;
+	font-weight: 600;
+	line-height: 1.2;
+	min-height: 44px;
+}
+.pp-banner .pp-btn-primary { background: var(--pp-primary, #1f4fd1); color: #fff; }
+.pp-banner .pp-btn-link { border-color: transparent; text-decoration: underline; padding-left: 6px; padding-right: 6px; }
+.pp-banner .pp-btn:focus-visible, .pp-banner a:focus-visible, .pp-banner input:focus-visible, .pp-banner summary:focus-visible { outline: 3px solid var(--pp-primary, #1f4fd1); outline-offset: 2px; }
+.pp-banner.pp-notice .pp-inner { padding: 14px 18px; }
+.pp-banner.pp-notice .pp-title { font-size: 16px; }
+.pp-banner .pp-cats { margin: 10px 0 12px; border-top: 1px solid rgba(0, 0, 0, .1); }
+.pp-banner .pp-cat { padding: 10px 0; border-bottom: 1px solid rgba(0, 0, 0, .1); }
+.pp-banner .pp-cat-label { display: flex; gap: 10px; align-items: center; font-weight: 600; cursor: pointer; }
+.pp-banner .pp-cat-label input, .pp-banner .pp-svc input { width: 18px; height: 18px; accent-color: var(--pp-primary, #1f4fd1); }
+.pp-banner .pp-cat-desc { font-size: 13px; margin: 4px 0 0 28px; }
+.pp-banner .pp-svcs { margin: 6px 0 0 28px; font-size: 13px; }
+.pp-banner .pp-svcs summary { cursor: pointer; }
+.pp-banner .pp-svc { padding: 6px 0; }
+.pp-banner .pp-svc label { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pp-banner .pp-svc p { margin: 2px 0 2px 26px; }
+.pp-banner .pp-svc a { margin-left: 26px; }
+.pp-banner .pp-consent-id { font-size: 12px; opacity: .75; word-break: break-all; }
+@media (max-width: 600px) {
+	.pp-banner.pp-pos-bottom { left: 8px; right: 8px; bottom: 8px; }
+	.pp-banner .pp-actions .pp-btn { flex: 1 1 100%; }
+}
+@media (prefers-reduced-motion: no-preference) {
+	.pp-banner { animation: pp-in .2s ease-out; }
+	@keyframes pp-in { from { opacity: 0; } to { opacity: 1; } }
+}
+
+/* Blocked embeds */
+.pp-embed, .pp-elementor-video { position: relative; }
+.pp-embed {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 220px;
+	background: #f2f3f5;
+	border: 1px solid #d9dce1;
+	border-radius: 8px;
+	color: #16181d;
+	font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+	text-align: center;
+}
+.pp-elementor-video > .pp-embed-overlay {
+	position: absolute;
+	inset: 0;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f2f3f5;
+	color: #16181d;
+	text-align: center;
+	font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.pp-elementor-video { min-height: 220px; }
+.pp-embed-inner { padding: 16px; max-width: 480px; }
+.pp-embed-inner p { margin: 0 0 8px; }
+.pp-embed-load {
+	cursor: pointer;
+	border: 0;
+	border-radius: 6px;
+	padding: 10px 16px;
+	min-height: 44px;
+	background: var(--pp-primary, #1f4fd1);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+}
+.pp-embed-always { display: inline-flex; gap: 6px; align-items: center; margin-left: 8px; font-size: 13px; }
+.pp-embed-link a, .pp-embed-privacy a { font-size: 13px; color: inherit; }
+
+.pp-audit-result {
+	position: fixed;
+	z-index: 2147483001;
+	top: 16px;
+	right: 16px;
+	max-width: 420px;
+	padding: 12px 16px;
+	background: #16181d;
+	color: #fff;
+	border-radius: 8px;
+	font: 14px/1.4 system-ui, sans-serif;
+}

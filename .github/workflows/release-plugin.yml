@@ -1,46 +1,140 @@
-name: Build & Release goo1-mcp plugin
+name: Build & Release plugins
 
-# Builds a distributable ZIP of the goo1-mcp WordPress plugin (with the
-# Plugin Update Checker library bundled), publishes it as a GitHub Release
-# asset, and syncs the updater metadata JSON that the plugin polls.
+# Builds distributable ZIPs of the WordPress plugins in src/ (with the Plugin
+# Update Checker library bundled), publishes them as GitHub Release assets and
+# syncs the updater metadata JSON each plugin polls. Plugins are configured in
+# .github/plugins.json (directory, metadata file, PUC version, extras).
 #
-# Trigger: any push to main that touches the plugin source, plus manual runs.
-# The metadata JSON lives under distmeta/** which is intentionally NOT in the
-# path filter, so the workflow's own metadata commit never re-triggers it.
-# (Pushes made with GITHUB_TOKEN also don't trigger workflows, belt + braces.)
+# goo1-privacypilot additionally has a clause library: it is built into one
+# JSON file, signed with Ed25519 (secret PRIVACYPILOT_SIGNING_KEY) and
+# published under distmeta/privacypilot/ as the live feed; a copy is bundled
+# into the plugin ZIP as offline fallback.
+#
+# Trigger: pushes to main that touch src/** or the plugin config, plus manual
+# runs. Metadata lives under distmeta/** which is outside the path filter, so
+# the workflow's own commits never re-trigger it.
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/goo1-mcp/**'
+      - 'src/**'
+      - '.github/plugins.json'
   workflow_dispatch:
+    inputs:
+      plugin:
+        description: 'Plugin slug to release (empty = all plugins)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-goo1-mcp
+  group: release-plugins
   cancel-in-progress: false
 
-env:
-  PLUGIN_SLUG: goo1-mcp
-  PLUGIN_DIR: src/goo1-mcp
-  META_FILE: distmeta/updater/goo1-mcp.json
-  PUC_VERSION: v4.13   # last v4.x release that ships the Puc_v4_Factory class
-
 jobs:
-  release:
+  plan:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      any: ${{ steps.plan.outputs.any }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out which plugins changed
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          ONLY: ${{ github.event.inputs.plugin }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess
+          cfg = json.load(open(".github/plugins.json"))
+          event, before, after, only = (os.environ.get(k, "") for k in ("EVENT", "BEFORE", "AFTER", "ONLY"))
+          changed = None
+          if event == "push" and before and set(before) != {"0"}:
+              try:
+                  out = subprocess.check_output(["git", "diff", "--name-only", before, after]).decode()
+                  changed = [l for l in out.splitlines() if l]
+              except subprocess.CalledProcessError:
+                  changed = None
+          config_changed = changed is not None and ".github/plugins.json" in changed
+          items = []
+          for slug, c in cfg.items():
+              if only and slug != only:
+                  continue
+              lib = c.get("library") or {}
+              if changed is None or event != "push":
+                  rel, libc = True, bool(lib)
+              else:
+                  rel = config_changed or any(p.startswith(c["dir"] + "/") for p in changed)
+                  libc = bool(lib) and (config_changed or any(p.startswith(lib["src"] + "/") for p in changed))
+              if rel or libc:
+                  items.append({"slug": slug, "release": rel, "library": libc})
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("matrix=" + json.dumps({"include": items}) + "\n")
+              fh.write("any=" + ("true" if items else "false") + "\n")
+          print(json.dumps(items, indent=2))
+          PY
+
+  release:
+    needs: plan
+    if: needs.plan.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      # One plugin at a time: every job commits metadata back to main.
+      max-parallel: 1
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load plugin config
+        id: cfg
+        env:
+          SLUG: ${{ matrix.slug }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          slug = os.environ["SLUG"]
+          c = json.load(open(".github/plugins.json"))[slug]
+          lib = c.get("library") or {}
+          out = {
+              "dir": c["dir"],
+              "meta": c["meta"],
+              "puc": c["puc"],
+              "version_constant": c.get("version_constant", ""),
+              "strip": " ".join(c.get("strip", [])),
+              "lib_src": lib.get("src", ""),
+              "lib_out": lib.get("out", ""),
+              "lib_bundle": lib.get("bundle_as", ""),
+              "prebuild": c.get("prebuild", ""),
+          }
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              for k, v in out.items():
+                  fh.write("{}={}\n".format(k, v))
+          PY
 
       - name: Read plugin version from header
         id: ver
+        env:
+          DIR: ${{ steps.cfg.outputs.dir }}
+          SLUG: ${{ matrix.slug }}
         run: |
           set -euo pipefail
-          FILE="${PLUGIN_DIR}/${PLUGIN_SLUG}.php"
+          FILE="${DIR}/${SLUG}.php"
           VERSION=$(grep -iE '^[[:space:]/*#]*Version:' "$FILE" | head -1 \
                     | sed -E 's/.*[Vv]ersion:[[:space:]]*//' | tr -d '[:space:]')
           if [ -z "$VERSION" ]; then
@@ -48,68 +142,120 @@ jobs:
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION"   >> "$GITHUB_OUTPUT"
-          echo "Detected plugin version: $VERSION"
+          echo "tag=${SLUG}-v$VERSION" >> "$GITHUB_OUTPUT"
+          # goo1-mcp keeps its historic tag scheme (v<version>) so existing
+          # download URLs and releases stay valid.
+          if [ "$SLUG" = "goo1-mcp" ]; then echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"; fi
+          echo "Detected $SLUG version: $VERSION"
 
-      - name: Build plugin ZIP (bundling Plugin Update Checker)
+      - name: Build and sign library feed
+        if: steps.cfg.outputs.lib_src != ''
+        env:
+          LIB_SRC: ${{ steps.cfg.outputs.lib_src }}
+          LIB_OUT: ${{ steps.cfg.outputs.lib_out }}
+          PRIVACYPILOT_SIGNING_KEY: ${{ secrets.PRIVACYPILOT_SIGNING_KEY }}
         run: |
           set -euo pipefail
-          BUILD="build/${PLUGIN_SLUG}"
-          rm -rf build *.zip puc.zip puc-src
+          python3 .github/scripts/build_library.py --src "$LIB_SRC" --out "$LIB_OUT"
+          if [ -n "${PRIVACYPILOT_SIGNING_KEY:-}" ]; then
+            php .github/scripts/sign_library.php sign "$LIB_OUT"
+          else
+            echo "::warning::PRIVACYPILOT_SIGNING_KEY is not set - the live feed stays unsigned and sites keep using their bundled library."
+            rm -f "${LIB_OUT}.sig"
+          fi
+
+      - name: Build plugin ZIP (bundling Plugin Update Checker)
+        if: matrix.release
+        env:
+          SLUG: ${{ matrix.slug }}
+          DIR: ${{ steps.cfg.outputs.dir }}
+          PUC_VERSION: ${{ steps.cfg.outputs.puc }}
+          STRIP: ${{ steps.cfg.outputs.strip }}
+          LIB_OUT: ${{ steps.cfg.outputs.lib_out }}
+          LIB_BUNDLE: ${{ steps.cfg.outputs.lib_bundle }}
+          PREBUILD: ${{ steps.cfg.outputs.prebuild }}
+        run: |
+          set -euo pipefail
+          # Generated files that are not committed (e.g. PrivacyPilot's .mo translations).
+          if [ -n "$PREBUILD" ]; then bash -c "$PREBUILD"; fi
+          BUILD="build/${SLUG}"
+          rm -rf build *.zip puc-src
           mkdir -p build
-          cp -a "${PLUGIN_DIR}" "$BUILD"
+          cp -a "${DIR}" "$BUILD"
 
           # Strip dev-only files from the distributed copy.
-          rm -f "$BUILD/CLAUDE.md"
+          for f in $STRIP; do rm -rf "$BUILD/$f"; done
           find "$BUILD" -name '.DS_Store' -delete
 
           # Vendor the Plugin Update Checker library into the plugin.
-          curl -fsSL \
-            "https://github.com/YahnisElsts/plugin-update-checker/archive/refs/tags/${PUC_VERSION}.zip" \
-            -o puc.zip
-          unzip -q puc.zip -d puc-src
-          PUC_EXTRACT="$(find puc-src -maxdepth 1 -mindepth 1 -type d | head -1)"
+          git clone -q --depth 1 --branch "${PUC_VERSION}" \
+            https://github.com/YahnisElsts/plugin-update-checker.git puc-src
+          rm -rf puc-src/.git
           mkdir -p "$BUILD/plugin-update-checker"
-          cp -a "$PUC_EXTRACT"/. "$BUILD/plugin-update-checker/"
-
-          # Fail loudly if the entry file the plugin require()s is missing.
+          cp -a puc-src/. "$BUILD/plugin-update-checker/"
           if [ ! -f "$BUILD/plugin-update-checker/plugin-update-checker.php" ]; then
-            echo "::error::Plugin Update Checker entry file missing after vendoring (check PUC_VERSION)"
+            echo "::error::Plugin Update Checker entry file missing after vendoring (check PUC version)"
             exit 1
           fi
 
-          # Build the ZIP with a single top-level folder == plugin slug.
-          ( cd build && zip -qr "../${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}" )
-          echo "Built ${PLUGIN_SLUG}.zip ($(stat -c%s "${PLUGIN_SLUG}.zip") bytes)"
+          # Bundle the library (offline fallback, trusted as part of the code).
+          if [ -n "$LIB_BUNDLE" ]; then
+            mkdir -p "$(dirname "$BUILD/$LIB_BUNDLE")"
+            cp "$LIB_OUT" "$BUILD/$LIB_BUNDLE"
+          fi
+
+          ( cd build && zip -qr "../${SLUG}.zip" "${SLUG}" )
+          echo "Built ${SLUG}.zip ($(stat -c%s "${SLUG}.zip") bytes)"
 
       - name: Sync updater metadata JSON
+        if: matrix.release
+        env:
+          SLUG: ${{ matrix.slug }}
+          DIR: ${{ steps.cfg.outputs.dir }}
+          META: ${{ steps.cfg.outputs.meta }}
+          CONST: ${{ steps.cfg.outputs.version_constant }}
         run: |
           set -euo pipefail
           python3 .github/scripts/update_meta.py \
-            --plugin-file "${PLUGIN_DIR}/${PLUGIN_SLUG}.php" \
-            --readme "${PLUGIN_DIR}/readme.txt" \
-            --meta "${META_FILE}" \
+            --plugin-file "${DIR}/${SLUG}.php" \
+            --readme "${DIR}/readme.txt" \
+            --meta "${META}" \
             --owner "${{ github.repository_owner }}" \
             --repo "${{ github.event.repository.name }}" \
             --tag "${{ steps.ver.outputs.tag }}" \
-            --slug "${PLUGIN_SLUG}"
+            --slug "${SLUG}" \
+            ${CONST:+--version-constant "$CONST"}
 
-      - name: Commit metadata changes
+      - name: Commit metadata / library feed
+        env:
+          META: ${{ steps.cfg.outputs.meta }}
+          LIB_OUT: ${{ steps.cfg.outputs.lib_out }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- "${META_FILE}"; then
-            echo "Metadata already up to date; nothing to commit."
-          else
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add "${META_FILE}"
-            git commit -m "chore(release): sync updater metadata for ${{ steps.ver.outputs.version }} [skip ci]"
-            git push
+          FILES="$META"
+          if [ -n "$LIB_OUT" ]; then FILES="$FILES $LIB_OUT"; [ -f "${LIB_OUT}.sig" ] && FILES="$FILES ${LIB_OUT}.sig"; fi
+          git add -A -- $FILES
+          if [ -n "$LIB_OUT" ] && [ ! -f "${LIB_OUT}.sig" ]; then git rm -q --cached --ignore-unmatch "${LIB_OUT}.sig"; fi
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
           fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(release): sync ${{ matrix.slug }} metadata ${{ steps.ver.outputs.version }} [skip ci]"
+          # Another job may have pushed in the meantime: rebase and retry.
+          for i in 1 2 3; do
+            if git pull --rebase -q origin main && git push -q origin HEAD:main; then exit 0; fi
+            sleep $((i * 5))
+          done
+          echo "::error::Could not push metadata after 3 attempts"
+          exit 1
 
       - name: Publish GitHub Release and upload asset
+        if: matrix.release
         env:
           GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ matrix.slug }}
         run: |
           set -euo pipefail
           TAG="${{ steps.ver.outputs.tag }}"
@@ -119,8 +265,8 @@ jobs:
           else
             gh release create "$TAG" \
               --target "$TARGET" \
-              --title "$TAG" \
-              --notes "Automated release of ${PLUGIN_SLUG} ${{ steps.ver.outputs.version }}."
+              --title "${SLUG} ${{ steps.ver.outputs.version }}" \
+              --notes "Automated release of ${SLUG} ${{ steps.ver.outputs.version }}."
           fi
-          gh release upload "$TAG" "${PLUGIN_SLUG}.zip" --clobber
-          echo "Asset URL: https://github.com/${{ github.repository }}/releases/download/$TAG/${PLUGIN_SLUG}.zip"
+          gh release upload "$TAG" "${SLUG}.zip" --clobber
+          echo "Asset URL: https://github.com/${{ github.repository }}/releases/download/$TAG/${SLUG}.zip"

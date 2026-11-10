@@ -27,8 +27,8 @@ wp.org plugin would.
 
 - **Language:** PHP (WordPress plugin APIs)
 - **Distribution:** GitHub Releases (ZIP asset per version)
-- **Update channel:** [Plugin Update Checker][puc] v4 polling a metadata JSON
-- **Automation:** a single GitHub Action builds, releases and syncs metadata
+- **Update channel:** [Plugin Update Checker][puc] (v4 or v5, per plugin) polling a metadata JSON
+- **Automation:** one GitHub Action builds, releases and syncs metadata for every plugin listed in `.github/plugins.json`
 
 ## Plugins
 
@@ -59,6 +59,32 @@ list and changelog.
 > for WordPress plugins. MIT is GPL-compatible, so the bundled distribution
 > stays consistent.
 
+### PrivacyPilot — `src/goo1-privacypilot/`
+
+Privacy policy, cookie policy, terms of use, "Your Privacy Choices" and imprint
+for US and EU/UK sites, in English and German, generated from a questionnaire
+and a centrally maintained clause library — a self-hosted replacement for
+services like Termageddon. Admin under **Settings → PrivacyPilot**.
+
+**Highlights:**
+- Clause library in [`src/goo1-privacypilot-library/`](src/goo1-privacypilot-library)
+  (Markdown clauses with conditions), shipped inside every ZIP and distributed
+  as an **Ed25519-signed feed** (`distmeta/privacypilot/library.json`)
+- Approval workflow: editorial changes publish automatically, material changes
+  wait for approval (preview + clause diff), optional publication on the
+  effective date of a legal change
+- **Hub mode:** one site keeps the answers per legal entity and approves,
+  connected sites follow
+- Consent banner: opt-in for EU/EEA/UK/CH, opt-out with "Do Not Sell or Share"
+  for the US (country via Cloudflare), Global Privacy Control, Google Consent
+  Mode v2, blocking of known scripts and embeds (Elementor video widgets too)
+- Scanner, browser cookie audit, request form with deadlines, consent log
+  without IP addresses, Site Health tests, Termageddon migration
+- Admin in English and German
+
+PrivacyPilot is not legal advice. See
+[`src/goo1-privacypilot/readme.txt`](src/goo1-privacypilot/readme.txt).
+
 ## How updates work
 
 Each plugin's main file registers the update checker against a metadata JSON
@@ -71,6 +97,9 @@ $myUpdateChecker = Puc_v4_Factory::buildUpdateChecker(
     'goo1-mcp'
 );
 ```
+
+PrivacyPilot uses PUC v5 the same way (`YahnisElsts\PluginUpdateChecker\v5\PucFactory`)
+with `distmeta/updater/goo1-privacypilot.json`.
 
 The flow end to end:
 
@@ -94,39 +123,43 @@ it is fully self-contained.
 ## Release automation
 
 [`.github/workflows/release-plugin.yml`](.github/workflows/release-plugin.yml)
-runs on every push to `main` under `src/goo1-mcp/**` (and via manual
-**Run workflow**). For each run it:
+runs on every push to `main` that touches `src/**` or `.github/plugins.json` (and
+via manual **Run workflow**, optionally for one plugin). A `plan` job finds the
+changed plugins; a matrix job then releases them one after another. The
+per-plugin settings live in [`.github/plugins.json`](.github/plugins.json):
+source dir, PUC tag, version constant, files to strip and, for PrivacyPilot,
+the clause library. For each plugin it:
 
 1. Reads the version from the plugin header (the **single source of truth**).
-2. Builds `goo1-mcp.zip` — copies `src/goo1-mcp/`, strips dev-only files
-   (`CLAUDE.md`), and vendors the Plugin Update Checker (`PUC_VERSION`, pinned
-   to a v4 release that provides `Puc_v4_Factory`).
-3. Rewrites `distmeta/updater/goo1-mcp.json` via
-   [`.github/scripts/update_meta.py`](.github/scripts/update_meta.py):
-   `version`, `download_url` (→ the new Release asset), `last_updated`,
-   `requires` / `requires_php` (from the header), `tested` (from `readme.txt`),
-   and `changelog` (rendered from the readme's `== Changelog ==` section).
-4. Commits the updated JSON back to `main` (`[skip ci]`, and the metadata lives
-   under `distmeta/**` which is outside the trigger path — so it never loops).
-5. Creates/updates the GitHub Release `v<version>` and uploads the ZIP asset.
+2. For PrivacyPilot: builds the clause library with
+   [`build_library.py`](.github/scripts/build_library.py) (validates every
+   clause, question and service pattern), signs it with
+   [`sign_library.php`](.github/scripts/sign_library.php) using the secret
+   `PRIVACYPILOT_SIGNING_KEY`, bundles it into the ZIP and publishes it as the
+   feed under `distmeta/privacypilot/`. Without the secret the feed is not
+   updated (the bundled copy still ships).
+3. Builds `<slug>.zip` — copies the source, strips dev-only files (`CLAUDE.md`,
+   `tests/`), and vendors the pinned Plugin Update Checker.
+4. Rewrites `distmeta/updater/<slug>.json` via
+   [`update_meta.py`](.github/scripts/update_meta.py): `version`,
+   `download_url`, `last_updated`, `requires` / `requires_php`, `tested` and
+   `changelog` (from the readme's `== Changelog ==`).
+5. Commits the metadata back to `main` (`[skip ci]`, with rebase-and-retry so
+   parallel releases do not collide).
+6. Creates/updates the GitHub Release and uploads the ZIP. Tags: `v<version>`
+   for goo1-mcp, `<slug>-v<version>` for every other plugin.
 
 ### Cutting a release
 
-Bump the version in **one** place and push:
-
-```text
-src/goo1-mcp/goo1-mcp.php   → Version:  +  GOO1_MCP_VERSION constant
-src/goo1-mcp/readme.txt     → Stable tag:  +  a new == Changelog == entry
-```
-
-The version scheme is `1.<minor>.<YYMMDD>` (e.g. `1.3.260629`). Push to `main`
-and the Action does the rest. The script emits a warning (without failing the
-build) if the header version, the `GOO1_MCP_VERSION` constant and the readme
-`Stable tag` ever drift apart.
+Bump the version in the plugin header, the version constant and the readme
+`Stable tag`, add a changelog entry, push to `main`. The script warns (without
+failing) if the three drift apart.
 
 > Requirements on the repo side: **Settings → Actions → General → Workflow
-> permissions** set to *Read and write*, and `main` not blocking the bot's
-> metadata commit (or supply a PAT if the branch is protected).
+> permissions** set to *Read and write*, `main` not blocking the bot's
+> metadata commit, and for PrivacyPilot the Actions secret
+> `PRIVACYPILOT_SIGNING_KEY` (Ed25519 secret key; the public half is in
+> `src/goo1-privacypilot/includes/class-signature.php`).
 
 ## Installing a plugin
 
@@ -140,36 +173,34 @@ build) if the header version, the `GOO1_MCP_VERSION` constant and the readme
 ```
 .
 ├── .github/
+│   ├── plugins.json                # per-plugin release settings
 │   ├── workflows/
-│   │   └── release-plugin.yml      # build → release → sync metadata
+│   │   └── release-plugin.yml      # plan → build → release → sync metadata
 │   └── scripts/
-│       └── update_meta.py          # rewrites the updater JSON from header+readme
+│       ├── update_meta.py          # rewrites the updater JSON from header+readme
+│       ├── build_library.py        # PrivacyPilot clause library → library.json
+│       ├── sign_library.php        # Ed25519 keygen / sign / verify
+│       ├── build_local.sh          # build a plugin ZIP locally like the Action
+│       └── i18n.py                 # PrivacyPilot .pot/.po/.mo
 ├── distmeta/
-│   └── updater/
-│       └── goo1-mcp.json           # update metadata PUC polls (icons/banners
-│                                   # referenced from here can live alongside it)
+│   ├── updater/                    # update metadata PUC polls, one JSON per plugin
+│   └── privacypilot/               # signed clause library feed
 ├── src/
-│   └── goo1-mcp/                   # the plugin source
-│       ├── goo1-mcp.php            # main file (header version = source of truth)
-│       ├── readme.txt              # WP readme + changelog
-│       ├── uninstall.php
-│       ├── mcp-server.json
-│       ├── includes/               # auth, permissions, rate limiter, audit, oauth
-│       ├── rest/                   # REST controllers (posts, users, db, mcp, …)
-│       └── admin/                  # admin UI
+│   ├── goo1-mcp/                   # goo1 MCP WP Claude Bridge
+│   ├── goo1-privacypilot/          # PrivacyPilot plugin
+│   └── goo1-privacypilot-library/  # PrivacyPilot clauses, questions, services
 ├── LICENSE
 └── README.md
 ```
 
-The built ZIP and the bundled `plugin-update-checker/` library are produced by
+The built ZIPs and the bundled `plugin-update-checker/` library are produced by
 the Action at release time and are **not** committed to the repo.
 
 ## Adding another plugin
 
-The current workflow is scoped to `goo1-mcp`. To onboard a second plugin, drop
-it under `src/<slug>/`, add a `distmeta/updater/<slug>.json`, and either copy
-the workflow or parameterize it over a small plugin matrix — the build and the
-metadata script are already slug-driven via their arguments.
+Drop it under `src/<slug>/`, add an entry to `.github/plugins.json` and a
+`distmeta/updater/<slug>.json`, and point the plugin's update checker at that
+JSON.
 
 ## 🤝 Contributing
 
@@ -179,7 +210,7 @@ welcome. Feel free to open an [issue][issues].
 ## 📝 License
 
 [MIT](LICENSE) for the repository tooling. Individual plugins may carry their
-own license header (`goo1-mcp`: `GPL-2.0-or-later`).
+own license header (`goo1-mcp`, `goo1-privacypilot`: `GPL-2.0-or-later`).
 
 ## 💰 Support the project
 

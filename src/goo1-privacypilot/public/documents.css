@@ -1,0 +1,17 @@
+/* PrivacyPilot documents, links and request form. Kept minimal so the theme's typography wins. */
+.pp-doc-meta { font-size: .9em; opacity: .75; }
+.pp-doc-archived { padding: .6em .9em; border-left: 4px solid #d98200; background: rgba(217, 130, 0, .08); }
+.pp-doc .pp-table-wrap { overflow-x: auto; margin: 0 0 1.2em; }
+.pp-doc .pp-table { width: 100%; border-collapse: collapse; font-size: .92em; }
+.pp-doc .pp-table th, .pp-doc .pp-table td { padding: .45em .6em; border: 1px solid rgba(0, 0, 0, .15); text-align: left; vertical-align: top; }
+.pp-doc .pp-table th { background: rgba(0, 0, 0, .04); }
+.pp-doc-history { margin-top: 2em; font-size: .9em; }
+.pp-links { font-size: .9em; }
+.pp-footer-links { text-align: center; padding: 1em; }
+.pp-button-link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+.pp-request-form label { display: block; font-weight: 600; margin-bottom: .25em; }
+.pp-request-form input[type="text"], .pp-request-form input[type="email"], .pp-request-form select, .pp-request-form textarea { width: 100%; max-width: 560px; }
+.pp-request-form .pp-request-consent label { font-weight: normal; display: flex; gap: .5em; align-items: flex-start; }
+.pp-request-form .pp-hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; }
+.pp-request-status:empty { display: none; }
+.pp-request-status { padding: .6em .9em; border-left: 4px solid currentColor; }

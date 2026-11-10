@@ -1,0 +1,23 @@
+{
+  "goo1-mcp": {
+    "dir": "src/goo1-mcp",
+    "meta": "distmeta/updater/goo1-mcp.json",
+    "puc": "v4.13",
+    "version_constant": "GOO1_MCP_VERSION",
+    "strip": ["CLAUDE.md"]
+  },
+  "goo1-privacypilot": {
+    "dir": "src/goo1-privacypilot",
+    "meta": "distmeta/updater/goo1-privacypilot.json",
+    "puc": "v5.7",
+    "version_constant": "GOO1_PP_VERSION",
+    "strip": ["CLAUDE.md", "tests"],
+    "library": {
+      "src": "src/goo1-privacypilot-library",
+      "out": "distmeta/privacypilot/library.json",
+      "bundle_as": "library/library.json",
+      "signing_secret": "PRIVACYPILOT_SIGNING_KEY"
+    },
+    "prebuild": "python3 -m venv /tmp/pp-i18n && /tmp/pp-i18n/bin/pip install -q polib && /tmp/pp-i18n/bin/python .github/scripts/i18n.py compile"
+  }
+}
