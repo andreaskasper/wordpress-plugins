@@ -7,12 +7,14 @@
     "requires": "6.0",
     "requires_php": "7.4",
     "tested": "7.1",
-    "last_updated": "2026-11-10 00:00:00",
+    "last_updated": "2026-11-10 06:32:06",
     "author": "Andreas Kasper",
     "author_homepage": "https://goo1.de/",
     "sections": {
         "description": "<p>Privacy policy, cookie policy, terms and imprint generated from a questionnaire and a centrally maintained, signed clause library, plus a consent banner with script blocking, Google Consent Mode v2, GPC support, a request form and Site Health checks. US and EU/UK, English and German.</p><p>PrivacyPilot is not legal advice.</p>",
-        "installation": "<p>Download the ZIP from the GitHub releases page and upload it under Plugins → Add New → Upload Plugin. Then open Settings → PrivacyPilot.</p>"
+        "installation": "<p>Download the ZIP from the GitHub releases page and upload it under Plugins → Add New → Upload Plugin. Then open Settings → PrivacyPilot.</p>",
+        "changelog": "<h2>Changelog</h2><h4>0.9.261109</h4><ul><li>First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration.</li><li>Admin in English and German.</li><li>Signed library feed (Ed25519, key 1).</li><li>Warnings when answers contradict the services in use (e.g. an advertising pixel without &quot;sharing&quot;).</li><li>Asset URLs carry the file time, so CDNs never serve an outdated banner script.</li></ul>"
     },
-    "translations": []
+    "translations": [],
+    "upgrade_notice": "Version 0.9.261109: First version: documents EN/DE from the clause library, questionnaire, approval workflow, hub/client, consent banner with geo rules, GPC and Consent Mode v2, script and embed blocking, scanner, cookie audit, request form, consent log, Site Health tests, Termageddon migration. Admin in English and German. Signed library feed (Ed25519, key 1). Warnings when answers contradict the services in use (e.g. an advertising pixel without \"sharing\"). Asset URLs carry the file time, s..."
 }

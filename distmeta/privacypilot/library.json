@@ -1,0 +1,5120 @@
+{
+ "name": "PrivacyPilot clause library",
+ "schema": 1,
+ "version": "2026.11.10.0631",
+ "commit": "5ae75f9",
+ "content_hash": "35999985147bd61ce09f9ff90cc03bdf2b70459a3ffa86a015f545458096a2e6",
+ "documents": [
+  {
+   "id": "privacy",
+   "title": {
+    "en": "Privacy Policy",
+    "de": "Datenschutzerklärung"
+   },
+   "short_title": {
+    "en": "Privacy",
+    "de": "Datenschutz"
+   },
+   "slug": {
+    "en": "privacy-policy",
+    "de": "datenschutz"
+   }
+  },
+  {
+   "id": "cookies",
+   "title": {
+    "en": "Cookie Policy",
+    "de": "Cookie-Richtlinie"
+   },
+   "short_title": {
+    "en": "Cookies",
+    "de": "Cookies"
+   },
+   "slug": {
+    "en": "cookie-policy",
+    "de": "cookie-richtlinie"
+   }
+  },
+  {
+   "id": "terms",
+   "title": {
+    "en": "Terms of Use",
+    "de": "Nutzungsbedingungen"
+   },
+   "short_title": {
+    "en": "Terms",
+    "de": "Nutzungsbedingungen"
+   },
+   "slug": {
+    "en": "terms",
+    "de": "nutzungsbedingungen"
+   }
+  },
+  {
+   "id": "choices",
+   "title": {
+    "en": "Your Privacy Choices",
+    "de": "Ihre Datenschutzrechte"
+   },
+   "short_title": {
+    "en": "Your Privacy Choices",
+    "de": "Ihre Rechte"
+   },
+   "slug": {
+    "en": "privacy-choices",
+    "de": "datenschutzrechte"
+   }
+  },
+  {
+   "id": "impressum",
+   "title": {
+    "en": "Legal Notice (Imprint)",
+    "de": "Impressum"
+   },
+   "short_title": {
+    "en": "Imprint",
+    "de": "Impressum"
+   },
+   "slug": {
+    "en": "imprint",
+    "de": "impressum"
+   }
+  }
+ ],
+ "questions": [
+  {
+   "id": "entity.name",
+   "type": "text",
+   "scope": "entity",
+   "section": "entity",
+   "required": true,
+   "label": {
+    "en": "Legal name of the operator",
+    "de": "Rechtlicher Name des Betreibers"
+   },
+   "help": {
+    "en": "Company, association or person responsible for the website, e.g. \"JL Productions Inc.\"",
+    "de": "Firma, Verein oder Person, die für die Website verantwortlich ist, z. B. „Muster GmbH“."
+   }
+  },
+  {
+   "id": "entity.type",
+   "type": "select",
+   "scope": "entity",
+   "section": "entity",
+   "required": true,
+   "default": "company",
+   "label": {
+    "en": "Type of operator",
+    "de": "Art des Betreibers"
+   },
+   "options": [
+    {
+     "value": "company",
+     "label": {
+      "en": "Company",
+      "de": "Unternehmen"
+     }
+    },
+    {
+     "value": "nonprofit",
+     "label": {
+      "en": "Non-profit / association",
+      "de": "Verein / gemeinnützige Organisation"
+     }
+    },
+    {
+     "value": "individual",
+     "label": {
+      "en": "Individual / sole proprietor",
+      "de": "Einzelperson / Einzelunternehmen"
+     }
+    }
+   ]
+  },
+  {
+   "id": "entity.address",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "entity",
+   "required": true,
+   "label": {
+    "en": "Postal address",
+    "de": "Postanschrift"
+   },
+   "help": {
+    "en": "Street, ZIP code, city, country. No P.O. box for EU/German sites.",
+    "de": "Straße, PLZ, Ort, Land. Kein Postfach (Impressumspflicht)."
+   }
+  },
+  {
+   "id": "entity.country",
+   "type": "select",
+   "scope": "entity",
+   "section": "entity",
+   "required": true,
+   "label": {
+    "en": "Country of the operator",
+    "de": "Land des Betreibers"
+   },
+   "options": [
+    {
+     "value": "US",
+     "label": {
+      "en": "United States",
+      "de": "USA"
+     }
+    },
+    {
+     "value": "DE",
+     "label": {
+      "en": "Germany",
+      "de": "Deutschland"
+     }
+    },
+    {
+     "value": "AT",
+     "label": {
+      "en": "Austria",
+      "de": "Österreich"
+     }
+    },
+    {
+     "value": "CH",
+     "label": {
+      "en": "Switzerland",
+      "de": "Schweiz"
+     }
+    },
+    {
+     "value": "GB",
+     "label": {
+      "en": "United Kingdom",
+      "de": "Vereinigtes Königreich"
+     }
+    },
+    {
+     "value": "CA",
+     "label": {
+      "en": "Canada",
+      "de": "Kanada"
+     }
+    },
+    {
+     "value": "EU",
+     "label": {
+      "en": "Other EU/EEA country",
+      "de": "Anderes EU/EWR-Land"
+     }
+    },
+    {
+     "value": "other",
+     "label": {
+      "en": "Other country",
+      "de": "Anderes Land"
+     }
+    }
+   ]
+  },
+  {
+   "id": "entity.state",
+   "type": "text",
+   "scope": "entity",
+   "section": "entity",
+   "when": "entity.country == 'US'",
+   "label": {
+    "en": "US state of the operator",
+    "de": "US-Bundesstaat des Betreibers"
+   },
+   "placeholder": {
+    "en": "e.g. Illinois",
+    "de": "z. B. Illinois"
+   }
+  },
+  {
+   "id": "entity.email",
+   "type": "email",
+   "scope": "entity",
+   "section": "entity",
+   "required": true,
+   "label": {
+    "en": "E-mail address for privacy matters",
+    "de": "E-Mail-Adresse für Datenschutzanfragen"
+   }
+  },
+  {
+   "id": "entity.phone",
+   "type": "text",
+   "scope": "entity",
+   "section": "entity",
+   "required": false,
+   "label": {
+    "en": "Phone number",
+    "de": "Telefonnummer"
+   },
+   "help": {
+    "en": "Required in the German imprint; optional otherwise.",
+    "de": "Für das Impressum erforderlich (schnelle Kontaktaufnahme)."
+   }
+  },
+  {
+   "id": "entity.representative",
+   "type": "text",
+   "scope": "entity",
+   "section": "entity",
+   "when": "entity.type != 'individual'",
+   "label": {
+    "en": "Represented by (managing director / board)",
+    "de": "Vertreten durch (Geschäftsführung / Vorstand)"
+   }
+  },
+  {
+   "id": "entity.register",
+   "type": "text",
+   "scope": "entity",
+   "section": "impressum",
+   "when": "entity.country == 'DE' or entity.country == 'AT'",
+   "label": {
+    "en": "Commercial / association register and number",
+    "de": "Registergericht und Registernummer"
+   },
+   "placeholder": {
+    "en": "e.g. Amtsgericht Ulm, HRB 12345",
+    "de": "z. B. Amtsgericht Ulm, HRB 12345 (leer lassen, wenn nicht eingetragen)"
+   }
+  },
+  {
+   "id": "entity.vat_id",
+   "type": "text",
+   "scope": "entity",
+   "section": "impressum",
+   "when": "entity.country == 'DE' or entity.country == 'AT' or entity.country == 'EU'",
+   "label": {
+    "en": "VAT ID",
+    "de": "Umsatzsteuer-Identifikationsnummer (§ 27a UStG)"
+   }
+  },
+  {
+   "id": "entity.content_responsible",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "impressum",
+   "when": "entity.country == 'DE'",
+   "label": {
+    "en": "Responsible for editorial content (§ 18(2) MStV)",
+    "de": "Verantwortlich für journalistisch-redaktionelle Inhalte (§ 18 Abs. 2 MStV)"
+   },
+   "help": {
+    "en": "Only if the site has editorial content such as a blog or news. Name and address.",
+    "de": "Nur bei journalistisch-redaktionellen Inhalten (Blog, News). Name und Anschrift."
+   }
+  },
+  {
+   "id": "entity.dpo",
+   "type": "bool",
+   "scope": "entity",
+   "section": "entity",
+   "default": false,
+   "label": {
+    "en": "Have you appointed a data protection officer?",
+    "de": "Gibt es einen Datenschutzbeauftragten?"
+   }
+  },
+  {
+   "id": "entity.dpo_contact",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "entity",
+   "when": "entity.dpo",
+   "required": true,
+   "label": {
+    "en": "Contact of the data protection officer",
+    "de": "Kontakt des Datenschutzbeauftragten"
+   }
+  },
+  {
+   "id": "entity.eu_rep",
+   "type": "bool",
+   "scope": "entity",
+   "section": "entity",
+   "default": false,
+   "when": "audience.eu and entity.country != 'DE' and entity.country != 'AT' and entity.country != 'EU'",
+   "label": {
+    "en": "Have you appointed a representative in the EU/UK (Art. 27 GDPR)?",
+    "de": "Gibt es einen Vertreter in der EU/im UK (Art. 27 DSGVO)?"
+   },
+   "help": {
+    "en": "Operators outside the EU that offer goods or services to people in the EU may need one. Ask a lawyer if unsure.",
+    "de": "Betreiber außerhalb der EU, die Personen in der EU Waren oder Dienstleistungen anbieten, brauchen unter Umständen einen."
+   }
+  },
+  {
+   "id": "entity.eu_rep_contact",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "entity",
+   "when": "entity.eu_rep",
+   "required": true,
+   "label": {
+    "en": "Name and address of the EU/UK representative",
+    "de": "Name und Anschrift des Vertreters"
+   }
+  },
+  {
+   "id": "entity.authority",
+   "type": "text",
+   "scope": "entity",
+   "section": "entity",
+   "when": "entity.country == 'DE' or entity.country == 'AT' or entity.country == 'EU'",
+   "label": {
+    "en": "Competent data protection authority (optional)",
+    "de": "Zuständige Datenschutz-Aufsichtsbehörde (optional)"
+   },
+   "placeholder": {
+    "en": "e.g. Landesbeauftragter für Datenschutz Baden-Württemberg",
+    "de": "z. B. Der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg"
+   }
+  },
+  {
+   "id": "audience.us",
+   "type": "bool",
+   "scope": "entity",
+   "section": "audience",
+   "default": true,
+   "label": {
+    "en": "Do people from the United States use your website or services?",
+    "de": "Nutzen Personen aus den USA Ihre Website oder Angebote?"
+   },
+   "help": {
+    "en": "Adds the disclosures required by US state privacy laws (California, Colorado, Connecticut, Virginia, Texas, …).",
+    "de": "Ergänzt die Angaben, die US-Datenschutzgesetze (Kalifornien, Colorado, …) verlangen."
+   }
+  },
+  {
+   "id": "audience.eu",
+   "type": "bool",
+   "scope": "entity",
+   "section": "audience",
+   "default": true,
+   "label": {
+    "en": "Do you offer services to people in the EU/EEA, UK or Switzerland, or analyse their use of the site?",
+    "de": "Richten Sie sich an Personen in der EU/im EWR, UK oder der Schweiz?"
+   },
+   "help": {
+    "en": "For example registrations from European dancers. Adds the information required by the GDPR.",
+    "de": "Ergänzt die Pflichtangaben nach DSGVO."
+   }
+  },
+  {
+   "id": "audience.children",
+   "type": "select",
+   "scope": "entity",
+   "section": "audience",
+   "default": "none",
+   "required": true,
+   "label": {
+    "en": "Do you collect personal information from minors?",
+    "de": "Verarbeiten Sie Daten von Minderjährigen?"
+   },
+   "help": {
+    "en": "For example registrations for junior divisions.",
+    "de": "Zum Beispiel Anmeldungen für Junior-Klassen."
+   },
+   "options": [
+    {
+     "value": "none",
+     "label": {
+      "en": "No, the site is not directed at minors",
+      "de": "Nein, das Angebot richtet sich nicht an Minderjährige"
+     }
+    },
+    {
+     "value": "teens",
+     "label": {
+      "en": "Yes, teenagers (13–17), with parental consent where required",
+      "de": "Ja, Jugendliche (13–17), mit Zustimmung der Eltern, wo nötig"
+     }
+    },
+    {
+     "value": "under13",
+     "label": {
+      "en": "Yes, also children under 13",
+      "de": "Ja, auch Kinder unter 13"
+     }
+    }
+   ]
+  },
+  {
+   "id": "data.sells",
+   "type": "bool",
+   "scope": "entity",
+   "section": "data",
+   "default": false,
+   "label": {
+    "en": "Do you sell personal information (give it to others for money or other value)?",
+    "de": "Verkaufen Sie personenbezogene Daten (Weitergabe gegen Geld oder andere Gegenleistung)?"
+   },
+   "help": {
+    "en": "Under US state laws, handing a mailing list to a sponsor in exchange for a benefit can count as a sale.",
+    "de": "Nach US-Recht kann schon die Weitergabe einer Adressliste an Sponsoren gegen eine Gegenleistung als Verkauf gelten."
+   }
+  },
+  {
+   "id": "data.shares_ads",
+   "type": "bool",
+   "scope": "entity",
+   "section": "data",
+   "default": false,
+   "label": {
+    "en": "Do you share personal information for targeted advertising across other websites?",
+    "de": "Geben Sie Daten für personalisierte Werbung auf anderen Websites weiter?"
+   },
+   "help": {
+    "en": "For example the Meta (Facebook) pixel or Google Ads remarketing.",
+    "de": "Zum Beispiel Meta-Pixel oder Google-Ads-Remarketing."
+   }
+  },
+  {
+   "id": "data.sensitive",
+   "type": "bool",
+   "scope": "entity",
+   "section": "data",
+   "default": false,
+   "label": {
+    "en": "Do you process sensitive information (health, disability, precise location, government ID numbers)?",
+    "de": "Verarbeiten Sie besondere Kategorien von Daten (Gesundheit, Behinderung, genauer Standort, Ausweisnummern)?"
+   }
+  },
+  {
+   "id": "data.sensitive_text",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "data",
+   "when": "data.sensitive",
+   "required": true,
+   "label": {
+    "en": "Which sensitive information, and why?",
+    "de": "Welche Daten und wofür?"
+   },
+   "placeholder": {
+    "en": "e.g. medical information voluntarily given for emergencies at the event",
+    "de": "z. B. freiwillige Angaben zu Allergien für Notfälle während der Veranstaltung"
+   }
+  },
+  {
+   "id": "data.retention",
+   "type": "select",
+   "scope": "entity",
+   "section": "data",
+   "default": "standard",
+   "label": {
+    "en": "How long do you keep personal information?",
+    "de": "Wie lange speichern Sie Daten?"
+   },
+   "options": [
+    {
+     "value": "standard",
+     "label": {
+      "en": "Standard wording (as long as needed, plus legal retention periods)",
+      "de": "Standardformulierung (solange erforderlich, zzgl. gesetzlicher Fristen)"
+     }
+    },
+    {
+     "value": "custom",
+     "label": {
+      "en": "Own wording",
+      "de": "Eigene Formulierung"
+     }
+    }
+   ]
+  },
+  {
+   "id": "data.retention_text",
+   "type": "textarea",
+   "scope": "entity",
+   "section": "data",
+   "when": "data.retention == 'custom'",
+   "required": true,
+   "label": {
+    "en": "Retention periods",
+    "de": "Speicherfristen"
+   }
+  },
+  {
+   "id": "site.name",
+   "type": "text",
+   "scope": "site",
+   "section": "site",
+   "label": {
+    "en": "Name of this website or event",
+    "de": "Name dieser Website / Veranstaltung"
+   },
+   "help": {
+    "en": "Leave empty to use the site title.",
+    "de": "Leer lassen, um den Website-Titel zu verwenden."
+   }
+  },
+  {
+   "id": "site.hosting_provider",
+   "type": "text",
+   "scope": "site",
+   "section": "site",
+   "required": true,
+   "label": {
+    "en": "Hosting provider (name and country)",
+    "de": "Hosting-Anbieter (Name und Land)"
+   },
+   "placeholder": {
+    "en": "e.g. Bluehost (Newfold Digital Inc., USA)",
+    "de": "z. B. Hetzner Online GmbH, Deutschland"
+   }
+  },
+  {
+   "id": "site.contact_form",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Is there a contact form, or can visitors write to you by e-mail?",
+    "de": "Gibt es ein Kontaktformular oder Kontakt per E-Mail?"
+   }
+  },
+  {
+   "id": "site.accounts",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Can visitors create an account or log in?",
+    "de": "Können sich Besucher registrieren oder einloggen?"
+   }
+  },
+  {
+   "id": "site.comments",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Can visitors post comments?",
+    "de": "Können Besucher Kommentare schreiben?"
+   }
+  },
+  {
+   "id": "site.tickets",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Do people register or buy tickets/passes for your events?",
+    "de": "Kann man sich für Veranstaltungen anmelden oder Tickets kaufen?"
+   }
+  },
+  {
+   "id": "site.ticketing_provider",
+   "type": "text",
+   "scope": "site",
+   "section": "site",
+   "when": "site.tickets",
+   "label": {
+    "en": "Which registration or ticketing system do you use?",
+    "de": "Welches Anmelde- oder Ticketsystem nutzen Sie?"
+   },
+   "placeholder": {
+    "en": "e.g. danceapp.net, scoring.dance, Eventbrite, own WooCommerce shop",
+    "de": "z. B. danceapp.net, scoring.dance, Eventbrite"
+   }
+  },
+  {
+   "id": "site.competitions",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "when": "site.tickets",
+   "label": {
+    "en": "Do you run competitions and publish results?",
+    "de": "Veranstalten Sie Wettbewerbe und veröffentlichen Ergebnisse?"
+   },
+   "help": {
+    "en": "Competitor names, placements and scores are published and may be passed to a points registry (e.g. WSDC).",
+    "de": "Namen, Platzierungen und Wertungen werden veröffentlicht und ggf. an ein Punkteregister (z. B. WSDC) übermittelt."
+   }
+  },
+  {
+   "id": "site.media",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Do you take photos or videos at your events and publish them?",
+    "de": "Werden bei Veranstaltungen Fotos oder Videos gemacht und veröffentlicht?"
+   }
+  },
+  {
+   "id": "site.newsletter",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Do you send a newsletter or e-mail updates?",
+    "de": "Versenden Sie einen Newsletter?"
+   }
+  },
+  {
+   "id": "site.social_pages",
+   "type": "bool",
+   "scope": "site",
+   "section": "site",
+   "default": false,
+   "label": {
+    "en": "Do you run pages on social networks (Facebook, Instagram, YouTube, …)?",
+    "de": "Betreiben Sie Seiten in sozialen Netzwerken (Facebook, Instagram, YouTube …)?"
+   }
+  },
+  {
+   "id": "services.used",
+   "type": "services",
+   "scope": "site",
+   "section": "services",
+   "default": [],
+   "label": {
+    "en": "Which services and tools does this website use?",
+    "de": "Welche Dienste und Werkzeuge nutzt diese Website?"
+   },
+   "help": {
+    "en": "Services marked \"detected\" were found by the scanner. Only select what the site really uses.",
+    "de": "Mit „erkannt“ markierte Dienste hat der Scanner gefunden. Nur auswählen, was wirklich genutzt wird."
+   }
+  },
+  {
+   "id": "terms.governing_law",
+   "type": "text",
+   "scope": "site",
+   "section": "terms",
+   "when": "'terms' in pp.documents",
+   "label": {
+    "en": "Governing law for the Terms of Use",
+    "de": "Anwendbares Recht für die Nutzungsbedingungen"
+   },
+   "placeholder": {
+    "en": "e.g. the State of Illinois, USA",
+    "de": "z. B. Bundesrepublik Deutschland"
+   }
+  },
+  {
+   "id": "terms.user_content",
+   "type": "bool",
+   "scope": "site",
+   "section": "terms",
+   "default": false,
+   "when": "'terms' in pp.documents",
+   "label": {
+    "en": "Can users upload or post their own content (photos, texts, videos)?",
+    "de": "Können Nutzer eigene Inhalte (Fotos, Texte, Videos) hochladen?"
+   }
+  }
+ ],
+ "services": [
+  {
+   "id": "google-analytics",
+   "name": "Google Analytics",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Statistics about visits and use of the website.",
+    "de": "Statistiken über Besuche und die Nutzung der Website."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [
+    {
+     "name": "_ga",
+     "duration": {
+      "en": "2 years",
+      "de": "2 Jahre"
+     },
+     "purpose": {
+      "en": "Distinguishes visitors.",
+      "de": "Unterscheidet Besucher."
+     }
+    },
+    {
+     "name": "_ga_*",
+     "pattern": "^_ga_",
+     "duration": {
+      "en": "2 years",
+      "de": "2 Jahre"
+     },
+     "purpose": {
+      "en": "Keeps the session state.",
+      "de": "Speichert den Sitzungsstatus."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "googletagmanager\\.com/gtag/js\\?id=G-",
+     "google-analytics\\.com/(analytics|ga)\\.js"
+    ],
+    "inline": [
+     "gtag\\(\\s*['\"]config['\"]\\s*,\\s*['\"]G-",
+     "GoogleAnalyticsObject",
+     "googletagmanager\\.com/gtag/js\\?id=G-"
+    ]
+   },
+   "plugins": [
+    "google-site-kit/google-site-kit.php",
+    "google-analytics-for-wordpress/googleanalytics.php",
+    "ga-google-analytics/ga-google-analytics.php"
+   ]
+  },
+  {
+   "id": "google-tag-manager",
+   "name": "Google Tag Manager",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Loads analytics and marketing tags.",
+    "de": "Lädt Analyse- und Marketing-Tags."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "googletagmanager\\.com/gtm\\.js"
+    ],
+    "inline": [
+     "googletagmanager\\.com/gtm\\.js",
+     "\\(window,document,'script','dataLayer','GTM-"
+    ],
+    "iframe": [
+     "googletagmanager\\.com/ns\\.html"
+    ]
+   },
+   "plugins": [
+    "duracelltomi-google-tag-manager/duracelltomi-google-tag-manager-for-wordpress.php"
+   ]
+  },
+  {
+   "id": "google-ads",
+   "name": "Google Ads",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "marketing",
+   "group": "marketing",
+   "purpose": {
+    "en": "Conversion measurement and remarketing for ads.",
+    "de": "Conversion-Messung und Remarketing für Anzeigen."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [
+    {
+     "name": "_gcl_au",
+     "duration": {
+      "en": "90 days",
+      "de": "90 Tage"
+     },
+     "purpose": {
+      "en": "Ad conversions.",
+      "de": "Anzeigen-Conversions."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "googletagmanager\\.com/gtag/js\\?id=AW-",
+     "googleadservices\\.com/pagead/conversion"
+    ],
+    "inline": [
+     "gtag\\(\\s*['\"]config['\"]\\s*,\\s*['\"]AW-"
+    ]
+   }
+  },
+  {
+   "id": "meta-pixel",
+   "name": "Meta Pixel",
+   "provider": "Meta Platforms Ireland Ltd. / Meta Platforms Inc.",
+   "country": "US",
+   "category": "marketing",
+   "group": "marketing",
+   "purpose": {
+    "en": "Measures the effect of ads on Facebook and Instagram and builds audiences.",
+    "de": "Misst den Erfolg von Anzeigen auf Facebook und Instagram und bildet Zielgruppen."
+   },
+   "privacy_url": "https://www.facebook.com/privacy/policy/",
+   "cookies": [
+    {
+     "name": "_fbp",
+     "duration": {
+      "en": "3 months",
+      "de": "3 Monate"
+     },
+     "purpose": {
+      "en": "Identifies the browser for ads.",
+      "de": "Erkennt den Browser für Werbung."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "connect\\.facebook\\.net/[^\"']*/fbevents\\.js"
+    ],
+    "inline": [
+     "fbq\\(\\s*['\"]init['\"]",
+     "connect\\.facebook\\.net/[^\"']*/fbevents\\.js"
+    ]
+   },
+   "plugins": [
+    "official-facebook-pixel/facebook-for-wordpress.php",
+    "pixelyoursite/facebook-pixel-master.php"
+   ]
+  },
+  {
+   "id": "tiktok-pixel",
+   "name": "TikTok Pixel",
+   "provider": "TikTok Technology Ltd.",
+   "country": "CN",
+   "category": "marketing",
+   "group": "marketing",
+   "purpose": {
+    "en": "Measures the effect of ads on TikTok.",
+    "de": "Misst den Erfolg von Anzeigen auf TikTok."
+   },
+   "privacy_url": "https://www.tiktok.com/legal/privacy-policy-eea",
+   "cookies": [
+    {
+     "name": "_ttp",
+     "duration": {
+      "en": "13 months",
+      "de": "13 Monate"
+     },
+     "purpose": {
+      "en": "Ad measurement.",
+      "de": "Anzeigenmessung."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "analytics\\.tiktok\\.com"
+    ],
+    "inline": [
+     "analytics\\.tiktok\\.com/i18n/pixel",
+     "ttq\\.load\\("
+    ]
+   }
+  },
+  {
+   "id": "linkedin-insight",
+   "name": "LinkedIn Insight Tag",
+   "provider": "LinkedIn Ireland Unlimited Company",
+   "country": "US",
+   "category": "marketing",
+   "group": "marketing",
+   "purpose": {
+    "en": "Ad measurement on LinkedIn.",
+    "de": "Anzeigenmessung auf LinkedIn."
+   },
+   "privacy_url": "https://www.linkedin.com/legal/privacy-policy",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "snap\\.licdn\\.com/li\\.lms-analytics"
+    ],
+    "inline": [
+     "_linkedin_partner_id"
+    ]
+   }
+  },
+  {
+   "id": "hotjar",
+   "name": "Hotjar",
+   "provider": "Hotjar Ltd.",
+   "country": "MT",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Heatmaps and usage analysis.",
+    "de": "Heatmaps und Nutzungsanalyse."
+   },
+   "privacy_url": "https://www.hotjar.com/legal/policies/privacy/",
+   "cookies": [
+    {
+     "name": "_hj*",
+     "pattern": "^_hj",
+     "duration": {
+      "en": "up to 1 year",
+      "de": "bis zu 1 Jahr"
+     },
+     "purpose": {
+      "en": "Usage analysis.",
+      "de": "Nutzungsanalyse."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "static\\.hotjar\\.com"
+    ],
+    "inline": [
+     "static\\.hotjar\\.com",
+     "hjid\\s*:"
+    ]
+   }
+  },
+  {
+   "id": "microsoft-clarity",
+   "name": "Microsoft Clarity",
+   "provider": "Microsoft Corporation",
+   "country": "US",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Session recordings and heatmaps.",
+    "de": "Sitzungsaufzeichnungen und Heatmaps."
+   },
+   "privacy_url": "https://privacy.microsoft.com/privacystatement",
+   "cookies": [
+    {
+     "name": "_clck",
+     "duration": {
+      "en": "1 year",
+      "de": "1 Jahr"
+     },
+     "purpose": {
+      "en": "Identifies the visitor.",
+      "de": "Erkennt den Besucher."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "clarity\\.ms/tag"
+    ],
+    "inline": [
+     "clarity\\.ms/tag"
+    ]
+   }
+  },
+  {
+   "id": "jetpack-stats",
+   "name": "Jetpack Stats",
+   "provider": "Automattic Inc.",
+   "country": "US",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Visitor statistics.",
+    "de": "Besucherstatistiken."
+   },
+   "privacy_url": "https://automattic.com/privacy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "stats\\.wp\\.com/e-"
+    ]
+   },
+   "plugins": [
+    "jetpack/jetpack.php"
+   ]
+  },
+  {
+   "id": "matomo",
+   "name": "Matomo",
+   "provider": "operator / InnoCraft Ltd.",
+   "country": "NZ",
+   "category": "analytics",
+   "group": "analytics",
+   "purpose": {
+    "en": "Visitor statistics.",
+    "de": "Besucherstatistiken."
+   },
+   "privacy_url": "https://matomo.org/privacy-policy/",
+   "cookies": [
+    {
+     "name": "_pk_*",
+     "pattern": "^_pk_",
+     "duration": {
+      "en": "up to 13 months",
+      "de": "bis zu 13 Monate"
+     },
+     "purpose": {
+      "en": "Statistics.",
+      "de": "Statistik."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "matomo\\.js",
+     "piwik\\.js"
+    ],
+    "inline": [
+     "_paq\\.push"
+    ]
+   },
+   "plugins": [
+    "matomo/matomo.php",
+    "wp-piwik/wp-piwik.php"
+   ]
+  },
+  {
+   "id": "youtube",
+   "name": "YouTube",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded videos.",
+    "de": "Eingebettete Videos."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [
+    {
+     "name": "VISITOR_INFO1_LIVE",
+     "duration": {
+      "en": "6 months",
+      "de": "6 Monate"
+     },
+     "purpose": {
+      "en": "Video playback and preferences.",
+      "de": "Videowiedergabe und Einstellungen."
+     }
+    }
+   ],
+   "patterns": {
+    "iframe": [
+     "youtube(-nocookie)?\\.com/embed",
+     "youtube\\.com/watch"
+    ],
+    "script": [
+     "youtube\\.com/iframe_api",
+     "youtube\\.com/player_api"
+    ]
+   }
+  },
+  {
+   "id": "vimeo",
+   "name": "Vimeo",
+   "provider": "Vimeo.com Inc.",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded videos.",
+    "de": "Eingebettete Videos."
+   },
+   "privacy_url": "https://vimeo.com/privacy",
+   "cookies": [
+    {
+     "name": "vuid",
+     "duration": {
+      "en": "2 years",
+      "de": "2 Jahre"
+     },
+     "purpose": {
+      "en": "Video statistics.",
+      "de": "Videostatistik."
+     }
+    }
+   ],
+   "patterns": {
+    "iframe": [
+     "player\\.vimeo\\.com/video"
+    ],
+    "script": [
+     "player\\.vimeo\\.com/api/player\\.js"
+    ]
+   }
+  },
+  {
+   "id": "dailymotion",
+   "name": "Dailymotion",
+   "provider": "Dailymotion SA",
+   "country": "FR",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded videos.",
+    "de": "Eingebettete Videos."
+   },
+   "privacy_url": "https://legal.dailymotion.com/en/privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "dailymotion\\.com/embed"
+    ]
+   }
+  },
+  {
+   "id": "google-maps",
+   "name": "Google Maps",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded maps (e.g. venue location).",
+    "de": "Eingebettete Karten (z. B. Veranstaltungsort)."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "google\\.[a-z.]+/maps",
+     "maps\\.google\\."
+    ],
+    "script": [
+     "maps\\.googleapis\\.com/maps/api/js"
+    ]
+   }
+  },
+  {
+   "id": "spotify",
+   "name": "Spotify",
+   "provider": "Spotify AB",
+   "country": "SE",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded music player.",
+    "de": "Eingebetteter Musikplayer."
+   },
+   "privacy_url": "https://www.spotify.com/legal/privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "open\\.spotify\\.com/embed"
+    ]
+   }
+  },
+  {
+   "id": "soundcloud",
+   "name": "SoundCloud",
+   "provider": "SoundCloud Global Ltd. & Co. KG",
+   "country": "DE",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded audio player.",
+    "de": "Eingebetteter Audioplayer."
+   },
+   "privacy_url": "https://soundcloud.com/pages/privacy",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "w\\.soundcloud\\.com/player"
+    ]
+   }
+  },
+  {
+   "id": "instagram-embed",
+   "name": "Instagram (embedded posts)",
+   "provider": "Meta Platforms Ireland Ltd.",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded Instagram posts.",
+    "de": "Eingebettete Instagram-Beiträge."
+   },
+   "privacy_url": "https://privacycenter.instagram.com/policy",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "instagram\\.com/(p|reel)/[^\"']+/embed"
+    ],
+    "script": [
+     "instagram\\.com/embed\\.js"
+    ]
+   }
+  },
+  {
+   "id": "facebook-embed",
+   "name": "Facebook (embedded content)",
+   "provider": "Meta Platforms Ireland Ltd.",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded posts, videos and page plugins.",
+    "de": "Eingebettete Beiträge, Videos und Seiten-Plugins."
+   },
+   "privacy_url": "https://www.facebook.com/privacy/policy/",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "facebook\\.com/plugins/"
+    ],
+    "script": [
+     "connect\\.facebook\\.net/[^\"']*/sdk\\.js"
+    ]
+   }
+  },
+  {
+   "id": "x-twitter",
+   "name": "X (Twitter) embeds",
+   "provider": "X Corp.",
+   "country": "US",
+   "category": "media",
+   "group": "media",
+   "purpose": {
+    "en": "Embedded posts.",
+    "de": "Eingebettete Beiträge."
+   },
+   "privacy_url": "https://x.com/en/privacy",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "platform\\.twitter\\.com/widgets\\.js"
+    ],
+    "iframe": [
+     "platform\\.twitter\\.com/embed"
+    ]
+   }
+  },
+  {
+   "id": "recaptcha",
+   "name": "Google reCAPTCHA",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "preferences",
+   "group": "security",
+   "purpose": {
+    "en": "Protects forms against spam and abuse.",
+    "de": "Schützt Formulare vor Spam und Missbrauch."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [
+    {
+     "name": "_GRECAPTCHA",
+     "duration": {
+      "en": "6 months",
+      "de": "6 Monate"
+     },
+     "purpose": {
+      "en": "Risk analysis.",
+      "de": "Risikoanalyse."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "google\\.com/recaptcha/(api|enterprise)\\.js",
+     "gstatic\\.com/recaptcha"
+    ]
+   }
+  },
+  {
+   "id": "cloudflare",
+   "name": "Cloudflare",
+   "provider": "Cloudflare Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "security",
+   "purpose": {
+    "en": "Content delivery network and protection against attacks.",
+    "de": "Content-Delivery-Netzwerk und Schutz vor Angriffen."
+   },
+   "privacy_url": "https://www.cloudflare.com/privacypolicy/",
+   "cookies": [
+    {
+     "name": "__cf_bm",
+     "duration": {
+      "en": "30 minutes",
+      "de": "30 Minuten"
+     },
+     "purpose": {
+      "en": "Bot protection.",
+      "de": "Schutz vor Bots."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "static\\.cloudflareinsights\\.com",
+     "challenges\\.cloudflare\\.com/turnstile"
+    ]
+   }
+  },
+  {
+   "id": "wordfence",
+   "name": "Wordfence",
+   "provider": "Defiant Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "security",
+   "purpose": {
+    "en": "Firewall and protection against attacks.",
+    "de": "Firewall und Schutz vor Angriffen."
+   },
+   "privacy_url": "https://www.wordfence.com/privacy-policy/",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "wordfence/wordfence.php"
+   ]
+  },
+  {
+   "id": "google-fonts",
+   "name": "Google Fonts (loaded from Google)",
+   "provider": "Google Ireland Ltd. / Google LLC",
+   "country": "US",
+   "category": "necessary",
+   "group": "fonts",
+   "purpose": {
+    "en": "Web fonts. The browser connects to Google servers.",
+    "de": "Schriftarten. Der Browser verbindet sich mit Servern von Google."
+   },
+   "privacy_url": "https://policies.google.com/privacy",
+   "cookies": [],
+   "patterns": {
+    "link": [
+     "fonts\\.googleapis\\.com"
+    ]
+   }
+  },
+  {
+   "id": "gravatar",
+   "name": "Gravatar",
+   "provider": "Automattic Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "comments",
+   "purpose": {
+    "en": "Profile pictures next to comments.",
+    "de": "Profilbilder neben Kommentaren."
+   },
+   "privacy_url": "https://automattic.com/privacy/",
+   "cookies": [],
+   "patterns": {}
+  },
+  {
+   "id": "akismet",
+   "name": "Akismet",
+   "provider": "Automattic Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "comments",
+   "purpose": {
+    "en": "Spam filter for comments and forms.",
+    "de": "Spamfilter für Kommentare und Formulare."
+   },
+   "privacy_url": "https://automattic.com/privacy/",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "akismet/akismet.php"
+   ]
+  },
+  {
+   "id": "stripe",
+   "name": "Stripe",
+   "provider": "Stripe Payments Europe Ltd. / Stripe Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "payments",
+   "purpose": {
+    "en": "Payment processing and fraud prevention.",
+    "de": "Zahlungsabwicklung und Betrugsprävention."
+   },
+   "privacy_url": "https://stripe.com/privacy",
+   "cookies": [
+    {
+     "name": "__stripe_mid",
+     "duration": {
+      "en": "1 year",
+      "de": "1 Jahr"
+     },
+     "purpose": {
+      "en": "Fraud prevention.",
+      "de": "Betrugsprävention."
+     }
+    }
+   ],
+   "patterns": {
+    "script": [
+     "js\\.stripe\\.com"
+    ]
+   },
+   "plugins": [
+    "woocommerce-gateway-stripe/woocommerce-gateway-stripe.php"
+   ]
+  },
+  {
+   "id": "paypal",
+   "name": "PayPal",
+   "provider": "PayPal (Europe) S.à r.l. et Cie, S.C.A. / PayPal Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "payments",
+   "purpose": {
+    "en": "Payment processing.",
+    "de": "Zahlungsabwicklung."
+   },
+   "privacy_url": "https://www.paypal.com/privacy",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "paypal\\.com/sdk/js",
+     "paypalobjects\\.com/api/checkout"
+    ]
+   },
+   "plugins": [
+    "woocommerce-paypal-payments/woocommerce-paypal-payments.php"
+   ]
+  },
+  {
+   "id": "woocommerce",
+   "name": "WooCommerce (shop on this site)",
+   "provider": "operator (self-hosted)",
+   "country": "",
+   "category": "necessary",
+   "group": "shop",
+   "purpose": {
+    "en": "Online shop: cart, checkout and orders.",
+    "de": "Onlineshop: Warenkorb, Bestellung."
+   },
+   "privacy_url": "",
+   "cookies": [
+    {
+     "name": "woocommerce_*",
+     "pattern": "^(woocommerce_|wp_woocommerce_session_)",
+     "duration": {
+      "en": "session / 2 days",
+      "de": "Sitzung / 2 Tage"
+     },
+     "purpose": {
+      "en": "Cart and checkout.",
+      "de": "Warenkorb und Bestellung."
+     }
+    }
+   ],
+   "patterns": {},
+   "plugins": [
+    "woocommerce/woocommerce.php"
+   ]
+  },
+  {
+   "id": "danceapp",
+   "name": "danceapp.net",
+   "provider": "danceapp.net, Andreas Kasper",
+   "country": "DE",
+   "category": "necessary",
+   "group": "registration",
+   "purpose": {
+    "en": "Event registration, tickets and event app.",
+    "de": "Anmeldung, Tickets und Event-App."
+   },
+   "privacy_url": "",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "danceapp\\.net/"
+    ],
+    "iframe": [
+     "danceapp\\.net/"
+    ]
+   }
+  },
+  {
+   "id": "scoring-dance",
+   "name": "scoring.dance",
+   "provider": "scoring.dance, Andreas Kasper",
+   "country": "DE",
+   "category": "necessary",
+   "group": "registration",
+   "purpose": {
+    "en": "Competition registration, scoring and results.",
+    "de": "Wettbewerbsanmeldung, Wertung und Ergebnisse."
+   },
+   "privacy_url": "",
+   "cookies": [],
+   "patterns": {
+    "iframe": [
+     "scoring\\.dance/"
+    ],
+    "script": [
+     "scoring\\.dance/"
+    ]
+   }
+  },
+  {
+   "id": "eventbrite",
+   "name": "Eventbrite",
+   "provider": "Eventbrite Inc.",
+   "country": "US",
+   "category": "necessary",
+   "group": "registration",
+   "purpose": {
+    "en": "Ticket sales.",
+    "de": "Ticketverkauf."
+   },
+   "privacy_url": "https://www.eventbrite.com/help/en-us/articles/460838/eventbrite-privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "eventbrite\\.[a-z.]+/static/widgets"
+    ],
+    "iframe": [
+     "eventbrite\\.[a-z.]+/"
+    ]
+   }
+  },
+  {
+   "id": "elementor-forms",
+   "name": "Elementor forms (stored on this site)",
+   "provider": "operator (self-hosted)",
+   "country": "",
+   "category": "necessary",
+   "group": "forms",
+   "purpose": {
+    "en": "Contact and registration forms.",
+    "de": "Kontakt- und Anmeldeformulare."
+   },
+   "privacy_url": "",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "elementor-pro/elementor-pro.php"
+   ]
+  },
+  {
+   "id": "contact-form-7",
+   "name": "Contact Form 7",
+   "provider": "operator (self-hosted)",
+   "country": "",
+   "category": "necessary",
+   "group": "forms",
+   "purpose": {
+    "en": "Contact forms; messages are sent by e-mail.",
+    "de": "Kontaktformulare; Nachrichten werden per E-Mail versendet."
+   },
+   "privacy_url": "",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "contact-form-7/wp-contact-form-7.php"
+   ]
+  },
+  {
+   "id": "wpforms",
+   "name": "WPForms",
+   "provider": "operator (self-hosted)",
+   "country": "",
+   "category": "necessary",
+   "group": "forms",
+   "purpose": {
+    "en": "Contact and registration forms.",
+    "de": "Kontakt- und Anmeldeformulare."
+   },
+   "privacy_url": "",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "wpforms-lite/wpforms.php",
+    "wpforms/wpforms.php"
+   ]
+  },
+  {
+   "id": "mailchimp",
+   "name": "Mailchimp",
+   "provider": "Intuit Inc. (The Rocket Science Group LLC)",
+   "country": "US",
+   "category": "marketing",
+   "group": "newsletter",
+   "purpose": {
+    "en": "Newsletter delivery and sign-up forms, including open and click statistics.",
+    "de": "Newsletterversand und Anmeldeformulare, einschließlich Öffnungs- und Klickstatistiken."
+   },
+   "privacy_url": "https://www.intuit.com/privacy/statement/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "chimpstatic\\.com",
+     "list-manage\\.com"
+    ]
+   },
+   "plugins": [
+    "mailchimp-for-wp/mailchimp-for-wp.php"
+   ]
+  },
+  {
+   "id": "brevo",
+   "name": "Brevo (Sendinblue)",
+   "provider": "Sendinblue SAS",
+   "country": "FR",
+   "category": "marketing",
+   "group": "newsletter",
+   "purpose": {
+    "en": "Newsletter delivery and sign-up forms.",
+    "de": "Newsletterversand und Anmeldeformulare."
+   },
+   "privacy_url": "https://www.brevo.com/legal/privacypolicy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "sibforms\\.com",
+     "sendinblue\\.com"
+    ]
+   },
+   "plugins": [
+    "mailin/sendinblue.php"
+   ]
+  },
+  {
+   "id": "constant-contact",
+   "name": "Constant Contact",
+   "provider": "Constant Contact Inc.",
+   "country": "US",
+   "category": "marketing",
+   "group": "newsletter",
+   "purpose": {
+    "en": "Newsletter delivery and sign-up forms.",
+    "de": "Newsletterversand und Anmeldeformulare."
+   },
+   "privacy_url": "https://www.constantcontact.com/legal/privacy-center",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "ctctcdn\\.com"
+    ]
+   }
+  },
+  {
+   "id": "mailpoet",
+   "name": "MailPoet (on this site)",
+   "provider": "operator (self-hosted) / Automattic Inc. for delivery",
+   "country": "US",
+   "category": "necessary",
+   "group": "newsletter",
+   "purpose": {
+    "en": "Newsletter sign-up and delivery.",
+    "de": "Newsletter-Anmeldung und -Versand."
+   },
+   "privacy_url": "https://automattic.com/privacy/",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "mailpoet/mailpoet.php"
+   ]
+  },
+  {
+   "id": "usercentrics",
+   "name": "Usercentrics (other consent tool)",
+   "provider": "Usercentrics GmbH",
+   "country": "DE",
+   "category": "cmp",
+   "group": "cmp",
+   "purpose": {
+    "en": "Consent management.",
+    "de": "Einwilligungsverwaltung."
+   },
+   "privacy_url": "https://usercentrics.com/privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "usercentrics\\.eu",
+     "privacy-proxy\\.usercentrics"
+    ]
+   },
+   "plugins": [
+    "termageddon-usercentrics/termageddon-usercentrics.php"
+   ]
+  },
+  {
+   "id": "cookiebot",
+   "name": "Cookiebot (other consent tool)",
+   "provider": "Usercentrics A/S",
+   "country": "DK",
+   "category": "cmp",
+   "group": "cmp",
+   "purpose": {
+    "en": "Consent management.",
+    "de": "Einwilligungsverwaltung."
+   },
+   "privacy_url": "https://www.cookiebot.com/en/privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "consent\\.cookiebot\\.com"
+    ]
+   },
+   "plugins": [
+    "cookiebot/cookiebot.php"
+   ]
+  },
+  {
+   "id": "cookieyes",
+   "name": "CookieYes (other consent tool)",
+   "provider": "CookieYes Ltd.",
+   "country": "GB",
+   "category": "cmp",
+   "group": "cmp",
+   "purpose": {
+    "en": "Consent management.",
+    "de": "Einwilligungsverwaltung."
+   },
+   "privacy_url": "https://www.cookieyes.com/privacy-policy/",
+   "cookies": [],
+   "patterns": {
+    "script": [
+     "cdn-cookieyes\\.com"
+    ]
+   },
+   "plugins": [
+    "cookie-law-info/cookie-law-info.php"
+   ]
+  },
+  {
+   "id": "complianz",
+   "name": "Complianz (other consent tool)",
+   "provider": "Complianz B.V.",
+   "country": "NL",
+   "category": "cmp",
+   "group": "cmp",
+   "purpose": {
+    "en": "Consent management.",
+    "de": "Einwilligungsverwaltung."
+   },
+   "privacy_url": "https://complianz.io/legal/privacy-statement/",
+   "cookies": [],
+   "patterns": {},
+   "plugins": [
+    "complianz-gdpr/complianz-gpdr.php"
+   ]
+  }
+ ],
+ "ui": {
+  "en": {
+   "sections": {
+    "entity": "Operator",
+    "audience": "Visitors and regions",
+    "data": "Data practices",
+    "impressum": "Imprint details (Germany/Austria)",
+    "site": "This website",
+    "services": "Services and tools",
+    "terms": "Terms of Use"
+   },
+   "groups": {
+    "analytics": "Analytics",
+    "marketing": "Advertising",
+    "media": "Embedded media",
+    "security": "Security",
+    "fonts": "Fonts",
+    "comments": "Comments",
+    "payments": "Payments",
+    "shop": "Shop",
+    "registration": "Registration & tickets",
+    "forms": "Forms",
+    "newsletter": "Newsletter",
+    "other": "Other"
+   },
+   "categories": {
+    "necessary": {
+     "label": "Necessary",
+     "description": "Required for the website to work and to remember your privacy choices. Always active."
+    },
+    "preferences": {
+     "label": "Functional",
+     "description": "Extra functions such as spam protection for forms."
+    },
+    "analytics": {
+     "label": "Statistics",
+     "description": "Help us understand how visitors use the website, so we can improve it."
+    },
+    "marketing": {
+     "label": "Marketing",
+     "description": "Used to measure and personalise advertising, also on other websites."
+    },
+    "media": {
+     "label": "External media",
+     "description": "Videos, maps and posts from other platforms. When loaded, the provider receives your data."
+    }
+   },
+   "banner": {
+    "title": "Your privacy",
+    "text": "We use cookies and similar technologies. Some are necessary for the website to work. Others, such as statistics, external media and marketing, are only used with your consent. You can change your choice at any time under \"Privacy settings\".",
+    "accept": "Accept all",
+    "reject": "Reject all",
+    "settings": "Settings",
+    "settings_title": "Privacy settings",
+    "settings_text": "Choose which categories you allow. You can change this at any time.",
+    "save": "Save selection",
+    "back": "Back",
+    "close": "Close",
+    "notice_title": "Your privacy choices",
+    "notice_text": "We use cookies and similar technologies for statistics, external media and, where applicable, advertising. You can opt out of the sale or sharing of your personal information and of targeted advertising at any time.",
+    "ok": "OK",
+    "dnss": "Do Not Sell or Share My Personal Information",
+    "gpc_note": "Your browser sends a Global Privacy Control signal. We treat it as your request to opt out of the sale or sharing of your personal information and of targeted advertising.",
+    "services_label": "Services",
+    "consent_id": "Your consent ID",
+    "privacy_link": "Privacy policy",
+    "cookies_link": "Cookie policy",
+    "impressum_link": "Imprint"
+   },
+   "placeholder": {
+    "text": "This content is provided by %s. Loading it sends data such as your IP address to the provider.",
+    "load": "Load content",
+    "always": "Always allow %s",
+    "open": "Open on the provider's site",
+    "privacy": "Provider privacy policy"
+   },
+   "form": {
+    "type": "Your request",
+    "name": "Name",
+    "email": "E-mail address",
+    "region": "Where do you live?",
+    "message": "Details (optional)",
+    "confirm": "I confirm that this request concerns my own personal information, or that I am authorised to act for the person concerned.",
+    "submit": "Send request",
+    "ok": "Thank you. We have received your request and will answer by e-mail.",
+    "error": "Your request could not be sent. Please try again later or contact us by e-mail.",
+    "types": {
+     "access": "Access / know what data you hold about me",
+     "delete": "Delete my data",
+     "correct": "Correct my data",
+     "portability": "Get a copy of my data (portability)",
+     "optout": "Opt out of sale, sharing or targeted advertising",
+     "restrict": "Restrict processing",
+     "object": "Object to processing",
+     "withdraw": "Withdraw consent",
+     "appeal": "Appeal a decision on an earlier request",
+     "other": "Other question"
+    },
+    "regions": {
+     "us": "United States",
+     "eu": "EU / EEA / Switzerland",
+     "uk": "United Kingdom",
+     "other": "Other country"
+    },
+    "mail_subject": "%s: we received your privacy request",
+    "mail_body": "Hello %1$s,\n\nwe have received your request (reference #%2$d) and will reply within %3$d days. If we need to confirm your identity, we will contact you at this address.\n\n%4$s"
+   },
+   "table": {
+    "service": "Service",
+    "provider": "Provider",
+    "purpose": "Purpose",
+    "more": "Privacy policy",
+    "cookie": "Name",
+    "duration": "Duration",
+    "category": "Category"
+   },
+   "own_cookie_purpose": "Stores your privacy choices (consent ID, categories, date).",
+   "days": "%d days",
+   "doc_unavailable": "This document is currently being updated.",
+   "last_updated": "Last updated: %s",
+   "version": "Version %d",
+   "previous_versions": "Previous versions",
+   "archived_notice": "You are viewing an earlier version of this document.",
+   "current_version": "Current version",
+   "settings_link": "Privacy settings"
+  },
+  "de": {
+   "sections": {
+    "entity": "Betreiber",
+    "audience": "Besucher und Regionen",
+    "data": "Umgang mit Daten",
+    "impressum": "Angaben fürs Impressum (Deutschland/Österreich)",
+    "site": "Diese Website",
+    "services": "Dienste und Werkzeuge",
+    "terms": "Nutzungsbedingungen"
+   },
+   "groups": {
+    "analytics": "Statistik",
+    "marketing": "Werbung",
+    "media": "Eingebettete Medien",
+    "security": "Sicherheit",
+    "fonts": "Schriftarten",
+    "comments": "Kommentare",
+    "payments": "Zahlung",
+    "shop": "Shop",
+    "registration": "Anmeldung & Tickets",
+    "forms": "Formulare",
+    "newsletter": "Newsletter",
+    "other": "Sonstiges"
+   },
+   "categories": {
+    "necessary": {
+     "label": "Notwendig",
+     "description": "Für den Betrieb der Website und zum Speichern Ihrer Datenschutz-Einstellungen erforderlich. Immer aktiv."
+    },
+    "preferences": {
+     "label": "Funktional",
+     "description": "Zusätzliche Funktionen, etwa Spamschutz für Formulare."
+    },
+    "analytics": {
+     "label": "Statistik",
+     "description": "Helfen uns zu verstehen, wie Besucher die Website nutzen, damit wir sie verbessern können."
+    },
+    "marketing": {
+     "label": "Marketing",
+     "description": "Dienen dazu, Werbung zu messen und zu personalisieren, auch auf anderen Websites."
+    },
+    "media": {
+     "label": "Externe Medien",
+     "description": "Videos, Karten und Beiträge anderer Plattformen. Beim Laden erhält der Anbieter Ihre Daten."
+    }
+   },
+   "banner": {
+    "title": "Ihre Privatsphäre",
+    "text": "Wir verwenden Cookies und ähnliche Technologien. Einige sind für den Betrieb der Website notwendig. Andere, etwa für Statistik, externe Medien und Marketing, setzen wir nur mit Ihrer Einwilligung ein. Sie können Ihre Auswahl jederzeit unter „Datenschutz-Einstellungen“ ändern.",
+    "accept": "Alle akzeptieren",
+    "reject": "Alle ablehnen",
+    "settings": "Einstellungen",
+    "settings_title": "Datenschutz-Einstellungen",
+    "settings_text": "Wählen Sie, welche Kategorien Sie erlauben. Sie können das jederzeit ändern.",
+    "save": "Auswahl speichern",
+    "back": "Zurück",
+    "close": "Schließen",
+    "notice_title": "Ihre Datenschutz-Optionen",
+    "notice_text": "Wir verwenden Cookies und ähnliche Technologien für Statistik, externe Medien und gegebenenfalls Werbung. Sie können dem Verkauf oder der Weitergabe Ihrer Daten und personalisierter Werbung jederzeit widersprechen.",
+    "ok": "OK",
+    "dnss": "Meine Daten nicht verkaufen oder weitergeben",
+    "gpc_note": "Ihr Browser sendet ein Global-Privacy-Control-Signal. Wir behandeln es als Widerspruch gegen den Verkauf oder die Weitergabe Ihrer Daten und gegen personalisierte Werbung.",
+    "services_label": "Dienste",
+    "consent_id": "Ihre Einwilligungs-ID",
+    "privacy_link": "Datenschutzerklärung",
+    "cookies_link": "Cookie-Richtlinie",
+    "impressum_link": "Impressum"
+   },
+   "placeholder": {
+    "text": "Dieser Inhalt wird von %s bereitgestellt. Beim Laden werden Daten wie Ihre IP-Adresse an den Anbieter übertragen.",
+    "load": "Inhalt laden",
+    "always": "%s immer erlauben",
+    "open": "Beim Anbieter öffnen",
+    "privacy": "Datenschutzerklärung des Anbieters"
+   },
+   "form": {
+    "type": "Ihr Anliegen",
+    "name": "Name",
+    "email": "E-Mail-Adresse",
+    "region": "Wo wohnen Sie?",
+    "message": "Details (optional)",
+    "confirm": "Ich bestätige, dass die Anfrage meine eigenen Daten betrifft oder dass ich berechtigt bin, für die betroffene Person zu handeln.",
+    "submit": "Anfrage senden",
+    "ok": "Vielen Dank. Wir haben Ihre Anfrage erhalten und antworten per E-Mail.",
+    "error": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es später erneut oder schreiben Sie uns eine E-Mail.",
+    "types": {
+     "access": "Auskunft über meine Daten",
+     "delete": "Löschung meiner Daten",
+     "correct": "Berichtigung meiner Daten",
+     "portability": "Kopie meiner Daten (Datenübertragbarkeit)",
+     "optout": "Widerspruch gegen Verkauf, Weitergabe oder personalisierte Werbung",
+     "restrict": "Einschränkung der Verarbeitung",
+     "object": "Widerspruch gegen die Verarbeitung",
+     "withdraw": "Widerruf einer Einwilligung",
+     "appeal": "Einspruch gegen die Entscheidung über eine frühere Anfrage",
+     "other": "Sonstige Frage"
+    },
+    "regions": {
+     "us": "USA",
+     "eu": "EU / EWR / Schweiz",
+     "uk": "Vereinigtes Königreich",
+     "other": "Anderes Land"
+    },
+    "mail_subject": "%s: Wir haben Ihre Datenschutzanfrage erhalten",
+    "mail_body": "Hallo %1$s,\n\nwir haben Ihre Anfrage (Vorgang #%2$d) erhalten und antworten innerhalb von %3$d Tagen. Falls wir Ihre Identität bestätigen müssen, melden wir uns unter dieser Adresse.\n\n%4$s"
+   },
+   "table": {
+    "service": "Dienst",
+    "provider": "Anbieter",
+    "purpose": "Zweck",
+    "more": "Datenschutzerklärung",
+    "cookie": "Name",
+    "duration": "Laufzeit",
+    "category": "Kategorie"
+   },
+   "own_cookie_purpose": "Speichert Ihre Datenschutz-Einstellungen (Einwilligungs-ID, Kategorien, Datum).",
+   "days": "%d Tage",
+   "doc_unavailable": "Dieses Dokument wird gerade aktualisiert.",
+   "last_updated": "Stand: %s",
+   "version": "Version %d",
+   "previous_versions": "Frühere Fassungen",
+   "archived_notice": "Sie sehen eine frühere Fassung dieses Dokuments.",
+   "current_version": "Aktuelle Fassung",
+   "settings_link": "Datenschutz-Einstellungen"
+  }
+ },
+ "clauses": [
+  {
+   "id": "intro",
+   "doc": "choices",
+   "lang": "de",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Auf dieser Seite können Sie Ihre Datenschutzrechte gegenüber {{entity.name}} wahrnehmen. Welche Rechte Sie haben, erläutert unsere {{link.privacy}}.\n",
+   "hash": "0f097aad47766fdf"
+  },
+  {
+   "id": "settings",
+   "doc": "choices",
+   "lang": "de",
+   "order": 20,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookie-Einstellungen\n\nWelche Cookies und Dienste Sie auf dieser Website erlauben, können Sie jederzeit ändern:\n\n{{#settings_link}}\n",
+   "hash": "22f97449a1a7a581"
+  },
+  {
+   "id": "optout",
+   "doc": "choices",
+   "lang": "de",
+   "order": 30,
+   "when": "audience.us",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Verkauf und Weitergabe meiner Daten widersprechen (USA)\n\nWenn Sie in den USA leben, können Sie dem Verkauf Ihrer personenbezogenen Daten, der Weitergabe für zielgerichtete Werbung und dem Profiling widersprechen („Do Not Sell or Share My Personal Information“). Wählen Sie dazu im Formular unten „Widerspruch gegen Verkauf, Weitergabe oder personalisierte Werbung“.\n",
+   "hash": "a8992a33db5e8026"
+  },
+  {
+   "id": "optout-banner",
+   "doc": "choices",
+   "lang": "de",
+   "order": 31,
+   "when": "audience.us and pp.banner",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Für Cookies und Tracking auf dieser Website geht das auch in den Datenschutz-Einstellungen oben: Schalten Sie „Marketing“ (und auf Wunsch „Statistik“) aus. Das Global-Privacy-Control-Signal Ihres Browsers beachten wir automatisch als Widerspruch.\n",
+   "hash": "9c7e98f91edc18cd"
+  },
+  {
+   "id": "optout-none",
+   "doc": "choices",
+   "lang": "de",
+   "order": 35,
+   "when": "audience.us and not data.sells and not data.shares_ads and not group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Derzeit verkaufen wir keine personenbezogenen Daten und geben sie nicht für zielgerichtete Werbung weiter. Sie können trotzdem einen Widerspruch einreichen; wir vermerken ihn und beachten ihn, falls sich unsere Praxis ändert.\n",
+   "hash": "fb282613cfbdeb0b"
+  },
+  {
+   "id": "request",
+   "doc": "choices",
+   "lang": "de",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Anfrage stellen\n\nMit diesem Formular können Sie Auskunft, Berichtigung oder Löschung Ihrer Daten, eine Kopie Ihrer Daten oder die Einschränkung der Verarbeitung verlangen, der Verarbeitung widersprechen, eine Einwilligung widerrufen oder gegen die Entscheidung über eine frühere Anfrage Einspruch einlegen.\n\n{{#request_form}}\n\nSie können uns auch an {{entity.email}} schreiben.\n",
+   "hash": "126907a4aadacf3c"
+  },
+  {
+   "id": "process",
+   "doc": "choices",
+   "lang": "de",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Wie es weitergeht\n\nWir bestätigen den Eingang und antworten innerhalb eines Monats (Art. 12 Abs. 3 DSGVO); bei Anfragen nach US-Recht innerhalb von 45 Tagen. Bevor wir Daten herausgeben oder löschen, prüfen wir, ob die Anfrage von Ihnen stammt, in der Regel per E-Mail an die bei uns hinterlegte Adresse. Die Bearbeitung ist unentgeltlich, außer bei offenkundig unbegründeten oder exzessiven Anfragen. Lehnen wir eine Anfrage ab, begründen wir das und weisen auf Ihr Beschwerderecht bei einer Aufsichtsbehörde hin.\n",
+   "hash": "1e1b5269d23e9c76"
+  },
+  {
+   "id": "intro",
+   "doc": "choices",
+   "lang": "en",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "On this page you can exercise your privacy rights and choices with {{entity.name}}. Which rights you have depends on where you live; they are described in our {{link.privacy}}.\n",
+   "hash": "2ae09c8c46dd2961"
+  },
+  {
+   "id": "settings",
+   "doc": "choices",
+   "lang": "en",
+   "order": 20,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookie and tracking choices\n\nYou can change which cookies and services you allow on this website at any time:\n\n{{#settings_link}}\n",
+   "hash": "b99b32b56de182d1"
+  },
+  {
+   "id": "optout",
+   "doc": "choices",
+   "lang": "en",
+   "order": 30,
+   "when": "audience.us",
+   "version": 2,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Do Not Sell or Share My Personal Information\n\nYou can opt out of the sale of your personal information, of sharing for targeted advertising and of profiling. To do so, choose \"Opt out of sale, sharing or targeted advertising\" in the form below.\n",
+   "hash": "98e2645c64592bb8"
+  },
+  {
+   "id": "optout-banner",
+   "doc": "choices",
+   "lang": "en",
+   "order": 31,
+   "when": "audience.us and pp.banner",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "For cookies and tracking on this website you can also opt out in the privacy settings above: switch off \"Marketing\" (and \"Statistics\" if you like). Your browser's Global Privacy Control signal is honoured automatically as an opt-out.\n",
+   "hash": "f207dbf4be6d4f1d"
+  },
+  {
+   "id": "optout-none",
+   "doc": "choices",
+   "lang": "en",
+   "order": 35,
+   "when": "audience.us and not data.sells and not data.shares_ads and not group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "We currently do not sell personal information or share it for targeted advertising. You can still send an opt-out request; we will record it and honour it should our practices change.\n",
+   "hash": "7220442c184012f9"
+  },
+  {
+   "id": "request",
+   "doc": "choices",
+   "lang": "en",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Make a privacy request\n\nUse this form to ask for access to, correction or deletion of your personal information, a copy of your data, to object to or restrict processing, to withdraw consent or to appeal a decision on an earlier request.\n\n{{#request_form}}\n\nYou can also write to {{entity.email}}.\n",
+   "hash": "afde402225e317a0"
+  },
+  {
+   "id": "process",
+   "doc": "choices",
+   "lang": "en",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## What happens next\n\nWe confirm receipt and answer within one month (EU, EEA, UK, Switzerland) or 45 days (US states). Before we disclose or delete data we verify that the request comes from you, usually by e-mail to the address we have on file. You can use an authorised agent; we may ask for proof of authorisation. We do not charge for requests unless they are manifestly unfounded or excessive. If we decline a request, we explain why and how you can appeal or complain to a supervisory authority or your state's Attorney General.\n",
+   "hash": "e0c92ef292e444f4"
+  },
+  {
+   "id": "intro",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Diese Cookie-Richtlinie erläutert, welche Cookies und ähnlichen Technologien {{entity.name}} auf {{site.name}} ({{site.url}}) einsetzt, wozu sie dienen und wie Sie sie steuern können. Weitere Informationen finden Sie in unserer {{link.privacy}}.\n",
+   "hash": "9d1fde2f07969dc6"
+  },
+  {
+   "id": "what",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Was Cookies sind\n\nCookies sind kleine Textdateien, die eine Website in Ihrem Browser speichert. Ähnliche Technologien sind etwa Local Storage, Pixel und Skripte, die Informationen von Ihrem Gerät auslesen. Manche setzen wir selbst, andere die Anbieter eingebundener Dienste.\n",
+   "hash": "9067e13b86fc3c6d"
+  },
+  {
+   "id": "categories",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 30,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kategorien und Rechtsgrundlagen\n\n- **Notwendig**: für den Betrieb und die Sicherheit der Website und zum Speichern Ihrer Datenschutz-Einstellungen erforderlich. Rechtsgrundlage: § 25 Abs. 2 Nr. 2 TDDDG, Art. 6 Abs. 1 lit. f DSGVO. Diese Cookies lassen sich nicht abwählen.\n- **Funktional**: zusätzliche Funktionen, etwa Spamschutz für Formulare.\n- **Statistik**: helfen uns zu verstehen, wie die Website genutzt wird.\n- **Marketing**: dienen der Messung und Personalisierung von Werbung.\n- **Externe Medien**: Inhalte anderer Plattformen wie Videos und Karten.\n\nAlle Kategorien außer „Notwendig“ setzen wir nur mit Ihrer Einwilligung ein (§ 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO). Ihre Einwilligung gilt {{pp.consent_days}} Tage; danach fragen wir erneut.\n",
+   "hash": "1603e8b40635091c"
+  },
+  {
+   "id": "optout",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 36,
+   "when": "audience.us and pp.us_optout",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Für Besucher aus den USA gilt abweichend: Statistik-Cookies können ohne vorherige Einwilligung aktiv sein. Sie können ihnen sowie dem Verkauf, der Weitergabe und personalisierter Werbung jederzeit in den Datenschutz-Einstellungen oder auf unserer Seite {{link.choices}} widersprechen.\n",
+   "hash": "67c9c3c80c446226"
+  },
+  {
+   "id": "gpc",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 37,
+   "when": "audience.us and pp.gpc",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Global-Privacy-Control-Signale behandeln wir als Widerspruch gegen Verkauf, Weitergabe und personalisierte Werbung.\n",
+   "hash": "d877051d59e07efd"
+  },
+  {
+   "id": "list",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookies auf dieser Website\n\n{{#cookie_table}}\n\nAnbieter können ihre Cookies ändern. Die Liste beruht auf den Diensten, die diese Website nutzt, und wird regelmäßig aktualisiert.\n",
+   "hash": "99f466516a947758"
+  },
+  {
+   "id": "services",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 50,
+   "when": "cat.analytics or cat.marketing or cat.media or cat.preferences",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Dienste, die Cookies setzen oder auf Ihr Gerät zugreifen können\n\n{{#services_table:all}}\n",
+   "hash": "be02552c748ab984"
+  },
+  {
+   "id": "control",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Einstellungen ändern\n\nSie können Ihre Auswahl jederzeit in den Datenschutz-Einstellungen dieser Website ändern oder widerrufen. Außerdem können Sie Cookies in Ihrem Browser löschen und blockieren; ohne notwendige Cookies funktionieren Teile der Website möglicherweise nicht.\n",
+   "hash": "54767800ad18747c"
+  },
+  {
+   "id": "control-link",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 61,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "{{#settings_link}}\n",
+   "hash": "63b1817f021af16b"
+  },
+  {
+   "id": "contact",
+   "doc": "cookies",
+   "lang": "de",
+   "order": 70,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kontakt\n\nFragen zu Cookies: {{entity.email}}\n",
+   "hash": "696073c75ffef2fb"
+  },
+  {
+   "id": "intro",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "This Cookie Policy explains which cookies and similar technologies {{entity.name}} uses on {{site.name}} ({{site.url}}), what they are for and how you can control them. More about how we handle personal information is in our {{link.privacy}}.\n",
+   "hash": "c0b32e5fb986c20e"
+  },
+  {
+   "id": "what",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## What cookies are\n\nCookies are small text files that a website stores in your browser. Similar technologies include local storage, pixels and scripts that read information from your device. Some are set by us (\"first-party\"), others by the providers of services we embed (\"third-party\").\n",
+   "hash": "da248d4c6bf43c5e"
+  },
+  {
+   "id": "categories",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 30,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Categories\n\n- **Necessary**: needed for the website to work, for security and to remember your privacy choices. These cannot be switched off.\n- **Functional**: extra functions, such as spam protection for forms.\n- **Statistics**: help us understand how the website is used.\n- **Marketing**: measure and personalise advertising.\n- **External media**: content from other platforms, such as videos and maps.\n",
+   "hash": "d2b3e96d3a580af5"
+  },
+  {
+   "id": "consent",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 35,
+   "when": "audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Visitors from the EU, the EEA, the UK and Switzerland: we only use cookies and similar technologies that are not strictly necessary after you have given your consent (Article 5(3) ePrivacy Directive and national laws such as § 25 TDDDG in Germany and PECR in the UK).\n",
+   "hash": "e2e2fe4fc4878501"
+  },
+  {
+   "id": "optout",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 36,
+   "when": "audience.us and pp.us_optout",
+   "version": 2,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Visitors from the United States: you can opt out of statistics and of sale, sharing and targeted advertising at any time in the privacy settings or on our page {{link.choices}}.\n",
+   "hash": "7f06fe324a1b821e"
+  },
+  {
+   "id": "gpc",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 37,
+   "when": "audience.us and pp.gpc",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "We honour Global Privacy Control signals as an opt-out of sale, sharing and targeted advertising.\n",
+   "hash": "cbf8cc9f1493ff62"
+  },
+  {
+   "id": "list",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookies used on this website\n\n{{#cookie_table}}\n\nService providers can change their cookies. The list is based on the services this website uses and is updated regularly.\n",
+   "hash": "5569f743996d54d5"
+  },
+  {
+   "id": "services",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 50,
+   "when": "cat.analytics or cat.marketing or cat.media or cat.preferences",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Services that may set cookies or access your device\n\n{{#services_table:all}}\n",
+   "hash": "bf18684f301f84a0"
+  },
+  {
+   "id": "control",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## How to control cookies\n\nYou can change or withdraw your choices at any time in the privacy settings of this website. You can also delete cookies in your browser and block them in its settings; blocking necessary cookies may stop parts of the website from working.\n",
+   "hash": "17f588529c169070"
+  },
+  {
+   "id": "control-link",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 61,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "{{#settings_link}}\n",
+   "hash": "63b1817f021af16b"
+  },
+  {
+   "id": "contact",
+   "doc": "cookies",
+   "lang": "en",
+   "order": 70,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Contact\n\nQuestions about cookies: {{entity.email}}\n",
+   "hash": "89b7b418d7d565c1"
+  },
+  {
+   "id": "provider",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Angaben gemäß § 5 DDG\n\n{{entity.name}}\n{{entity.address}}\n",
+   "hash": "39dd359670ff13bc"
+  },
+  {
+   "id": "representative",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 15,
+   "when": "entity.representative and entity.type != 'individual'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Vertreten durch: {{entity.representative}}\n",
+   "hash": "67b82cfb0adcb999"
+  },
+  {
+   "id": "contact",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kontakt\n\nE-Mail: {{entity.email}}\n",
+   "hash": "f090a9bf6533ab9e"
+  },
+  {
+   "id": "phone",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 21,
+   "when": "entity.phone",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Telefon: {{entity.phone}}\n",
+   "hash": "0c3e64bb9590878e"
+  },
+  {
+   "id": "register",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 30,
+   "when": "entity.register",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Registereintrag\n\n{{entity.register}}\n",
+   "hash": "1361c66983f6237d"
+  },
+  {
+   "id": "vat",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 35,
+   "when": "entity.vat_id",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Umsatzsteuer-ID\n\nUmsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz: {{entity.vat_id}}\n",
+   "hash": "d6c1cd0e191b89e2"
+  },
+  {
+   "id": "editorial",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 40,
+   "when": "entity.content_responsible",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV\n\n{{entity.content_responsible}}\n",
+   "hash": "be4a4f38c6c8b91b"
+  },
+  {
+   "id": "dispute",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Verbraucherstreitbeilegung\n\nWir sind nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.\n",
+   "hash": "d2575d49027bb7e2"
+  },
+  {
+   "id": "privacy",
+   "doc": "impressum",
+   "lang": "de",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Hinweise zum Datenschutz: {{link.privacy}}\n",
+   "hash": "5099e3e46862ee92"
+  },
+  {
+   "id": "provider",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Information pursuant to § 5 DDG (German Digital Services Act)\n\n{{entity.name}}\n{{entity.address}}\n",
+   "hash": "e0221847c54a510c"
+  },
+  {
+   "id": "representative",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 15,
+   "when": "entity.representative and entity.type != 'individual'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Represented by: {{entity.representative}}\n",
+   "hash": "791f0bb5d05824b7"
+  },
+  {
+   "id": "contact",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Contact\n\nE-mail: {{entity.email}}\n",
+   "hash": "2c443e8d3c3fea44"
+  },
+  {
+   "id": "phone",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 21,
+   "when": "entity.phone",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Phone: {{entity.phone}}\n",
+   "hash": "39e7eb8afffeec10"
+  },
+  {
+   "id": "register",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 30,
+   "when": "entity.register",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Register entry\n\n{{entity.register}}\n",
+   "hash": "3a12ff26d9ddcac9"
+  },
+  {
+   "id": "vat",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 35,
+   "when": "entity.vat_id",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## VAT ID\n\nVAT identification number pursuant to § 27a of the German VAT Act: {{entity.vat_id}}\n",
+   "hash": "7f64064f1d219097"
+  },
+  {
+   "id": "editorial",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 40,
+   "when": "entity.content_responsible",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Responsible for content pursuant to § 18(2) MStV\n\n{{entity.content_responsible}}\n",
+   "hash": "460bb21ec120313b"
+  },
+  {
+   "id": "dispute",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Consumer dispute resolution\n\nWe are neither willing nor obliged to take part in dispute resolution proceedings before a consumer arbitration board.\n",
+   "hash": "8a496e9897165a0b"
+  },
+  {
+   "id": "privacy",
+   "doc": "impressum",
+   "lang": "en",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Information on data protection: {{link.privacy}}\n",
+   "hash": "9375e5c27751a06d"
+  },
+  {
+   "id": "intro",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Diese Datenschutzerklärung informiert darüber, wie {{entity.name}} („wir“) personenbezogene Daten verarbeitet, wenn Sie {{site.name}} ({{site.url}}) besuchen, mit uns Kontakt aufnehmen oder an unseren Veranstaltungen und Angeboten teilnehmen, und welche Rechte Sie haben.\n\nPersonenbezogene Daten sind alle Angaben, die sich auf Sie persönlich beziehen oder beziehen lassen.\n",
+   "hash": "671bb70a74e86333"
+  },
+  {
+   "id": "controller",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "de"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Verantwortlicher\n\n{{entity.name}}\n{{entity.address}}\nE-Mail: {{entity.email}}\n",
+   "hash": "8a9497d8a8b9d1c6"
+  },
+  {
+   "id": "controller-phone",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 21,
+   "when": "entity.phone",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Telefon: {{entity.phone}}\n",
+   "hash": "0c3e64bb9590878e"
+  },
+  {
+   "id": "controller-representative",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 22,
+   "when": "entity.representative and entity.type != 'individual'",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Vertreten durch: {{entity.representative}}\n",
+   "hash": "67b82cfb0adcb999"
+  },
+  {
+   "id": "dpo",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 25,
+   "when": "entity.dpo",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Datenschutzbeauftragter\n\nUnseren Datenschutzbeauftragten erreichen Sie unter:\n{{entity.dpo_contact}}\n",
+   "hash": "d1462c5f701455db"
+  },
+  {
+   "id": "eu-representative",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 26,
+   "when": "entity.eu_rep and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Vertreter in der EU / im Vereinigten Königreich\n\nNach Art. 27 DSGVO haben wir folgenden Vertreter benannt, an den Sie sich zusätzlich zu uns wenden können:\n{{entity.eu_rep_contact}}\n",
+   "hash": "3c2f992a9d8d5906"
+  },
+  {
+   "id": "overview",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Welche Daten wir verarbeiten\n\nJe nachdem, wie Sie unsere Angebote nutzen, verarbeiten wir insbesondere:\n\n- **Kontakt- und Stammdaten**, etwa Name, E-Mail-Adresse, Anschrift und Telefonnummer,\n- **Nutzungs- und Verbindungsdaten**, etwa IP-Adresse, Browser, Betriebssystem, aufgerufene Seiten, Datum und Uhrzeit,\n- **ungefährer Standort**, abgeleitet aus der IP-Adresse (Land oder Region, nicht der genaue Ort).\n",
+   "hash": "b10f201fc19a6572"
+  },
+  {
+   "id": "overview-commercial",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 41,
+   "when": "site.tickets or group.payments or group.shop",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Vertrags- und Zahlungsdaten**, etwa gebuchte Pässe, Tickets oder Produkte und der Zahlungsstatus. Vollständige Kartendaten speichern wir nicht; Zahlungen wickeln unsere Zahlungsdienstleister ab.\n",
+   "hash": "6ebacf771919a4d7"
+  },
+  {
+   "id": "overview-event",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 42,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Veranstaltungsdaten**, etwa gebuchte Veranstaltungen und Optionen und bei Wettbewerben Klasse, Rolle, Platzierungen und Wertungen.\n",
+   "hash": "fac9259484709681"
+  },
+  {
+   "id": "overview-media",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 43,
+   "when": "site.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Bild- und Tonaufnahmen**, etwa Fotos und Videos von unseren Veranstaltungen.\n",
+   "hash": "f23f9bd5aed6d503"
+  },
+  {
+   "id": "overview-sensitive",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 45,
+   "when": "data.sensitive",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Besondere Kategorien personenbezogener Daten** (Art. 9 DSGVO): {{data.sensitive_text}} Diese Daten verarbeiten wir nur zu dem genannten Zweck und nur, wenn Sie sie freiwillig angeben und ausdrücklich einwilligen (Art. 9 Abs. 2 lit. a DSGVO) oder das Gesetz es erlaubt.\n",
+   "hash": "de849cde9129af02"
+  },
+  {
+   "id": "hosting",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Bereitstellung der Website und Server-Logfiles\n\nBeim Aufruf einer Seite übermittelt Ihr Browser automatisch technische Daten an unseren Webserver: IP-Adresse, Datum und Uhrzeit der Anfrage, aufgerufene Adresse, zuvor besuchte Seite (Referrer) sowie Angaben zu Browser und Betriebssystem. Diese Daten werden in Logfiles gespeichert.\n\nWir nutzen sie, um die Website auszuliefern, ihren stabilen und sicheren Betrieb zu gewährleisten und Angriffe zu erkennen und aufzuklären. Logfiles speichern wir nur so lange, wie es dafür erforderlich ist, in der Regel höchstens einige Wochen, es sei denn, ein Sicherheitsvorfall erfordert eine längere Aufbewahrung.\n\nDie Website wird bei {{site.hosting_provider}} gehostet; der Anbieter verarbeitet die Daten in unserem Auftrag (Art. 28 DSGVO).\n\nRechtsgrundlage ist unser berechtigtes Interesse an einer sicheren und funktionsfähigen Website (Art. 6 Abs. 1 lit. f DSGVO).\n",
+   "hash": "4701ff99fd748c16"
+  },
+  {
+   "id": "contact",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 60,
+   "when": "site.contact_form",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kontaktaufnahme\n\nWenn Sie uns per E-Mail oder über ein Kontaktformular schreiben, verarbeiten wir Ihre Angaben (etwa Name, E-Mail-Adresse und Nachricht), um Ihre Anfrage zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, wenn die Anfrage mit einem Vertrag oder einer Anmeldung zusammenhängt, sonst unser berechtigtes Interesse an der Beantwortung (Art. 6 Abs. 1 lit. f DSGVO). Wir löschen die Daten, sobald sie nicht mehr erforderlich sind und keine gesetzlichen Aufbewahrungspflichten bestehen.\n",
+   "hash": "1998a060b20965e2"
+  },
+  {
+   "id": "accounts",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 65,
+   "when": "site.accounts",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Benutzerkonto\n\nWenn Sie ein Benutzerkonto anlegen, speichern wir Benutzername, E-Mail-Adresse, Passwort (verschlüsselt) und die Angaben in Ihrem Profil, um das Konto und seine Funktionen bereitzustellen (Art. 6 Abs. 1 lit. b DSGVO). Sie können die Löschung Ihres Kontos jederzeit verlangen.\n",
+   "hash": "87132edce47ce591"
+  },
+  {
+   "id": "comments",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 66,
+   "when": "site.comments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kommentare\n\nWenn Sie einen Kommentar schreiben, speichern wir den Kommentar, den angegebenen Namen, die E-Mail-Adresse, den Zeitpunkt und Ihre IP-Adresse. Das dient der Veröffentlichung und dazu, gegen rechtswidrige Inhalte vorgehen zu können (Art. 6 Abs. 1 lit. f DSGVO). Die E-Mail-Adresse wird nicht veröffentlicht.\n",
+   "hash": "cf00a2c684ab07a5"
+  },
+  {
+   "id": "registration",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 70,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Anmeldung und Tickets\n\nWenn Sie sich für eine Veranstaltung anmelden oder einen Pass oder ein Ticket kaufen, verarbeiten wir die für die Abwicklung erforderlichen Daten: Kontaktdaten, gewählte Optionen, Zahlungsstatus und gegebenenfalls freiwillige Angaben (etwa Tanzpartner oder Unterkunftswunsch). Wir nutzen sie, um die Veranstaltung durchzuführen, Sie dazu zu informieren und unsere steuer- und handelsrechtlichen Pflichten zu erfüllen.\n\nRechtsgrundlagen sind die Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO) und gesetzliche Aufbewahrungspflichten (Art. 6 Abs. 1 lit. c DSGVO).\n",
+   "hash": "4c919bcbed032d93"
+  },
+  {
+   "id": "registration-provider",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 71,
+   "when": "site.tickets and site.ticketing_provider",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Anmeldung und Ticketverkauf laufen über {{site.ticketing_provider}}. Der Anbieter verarbeitet die Daten in unserem Auftrag oder im Rahmen seines eigenen Dienstes; für eigene Zwecke gilt seine Datenschutzerklärung.\n",
+   "hash": "580eb042ef66a705"
+  },
+  {
+   "id": "registration-services",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 72,
+   "when": "group.registration",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "{{#services_list:registration}}\n",
+   "hash": "89e998738e43bf33"
+  },
+  {
+   "id": "competitions",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 73,
+   "when": "site.tickets and site.competitions",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Wettbewerbe und Ergebnisse\n\nWenn Sie an einem Wettbewerb teilnehmen, veröffentlichen wir Ihren Namen, Klasse, Rolle, Platzierungen und die Wertungen der Jury auf unserer Website und auf den Ergebnisseiten unseres Wertungssystems. Ergebnisse können an die Organisationen übermittelt werden, die Punkteregister für den Tanzstil führen (etwa das World Swing Dance Council, WSDC), weil die Teilnahme an einem Registry-Event die Teilnahme an diesem Punktesystem bedeutet. Veröffentlichte Ergebnisse sind Teil der Veranstaltungsdokumentation und bleiben in der Regel dauerhaft abrufbar.\n\nRechtsgrundlage ist unser berechtigtes Interesse und das der Tanzgemeinschaft an nachvollziehbaren Ergebnissen (Art. 6 Abs. 1 lit. f DSGVO).\n",
+   "hash": "b2e9cb1f9a7564d8"
+  },
+  {
+   "id": "payments",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 75,
+   "when": "group.payments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Zahlungsabwicklung\n\nZahlungen wickeln folgende Anbieter ab. Sie erhalten die für die Transaktion erforderlichen Zahlungsdaten und nutzen sie unter anderem zur Betrugsprävention. Vollständige Kartendaten erhalten und speichern wir nicht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.\n\n{{#services_list:payments}}\n",
+   "hash": "a02ebd81507bdc9f"
+  },
+  {
+   "id": "shop",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 76,
+   "when": "group.shop",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Bestellungen in unserem Onlineshop werden auf dieser Website verarbeitet. Wir speichern die Bestelldaten (Produkte, Kontakt- und Lieferdaten, Zahlungsstatus) zur Vertragserfüllung und für die Buchhaltung.\n",
+   "hash": "45acfe7653cc4983"
+  },
+  {
+   "id": "newsletter",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 80,
+   "when": "site.newsletter",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Newsletter\n\nWenn Sie unseren Newsletter abonnieren, verwenden wir Ihre E-Mail-Adresse (und gegebenenfalls Ihren Namen), um Sie über unsere Veranstaltungen zu informieren. Die Anmeldung bestätigen Sie über einen Link in einer Bestätigungs-E-Mail (Double-Opt-in); wir protokollieren Anmeldung und Bestätigung. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Sie können den Newsletter jederzeit über den Link in jeder Ausgabe oder per Nachricht an uns abbestellen.\n",
+   "hash": "54fefd04a30bacdd"
+  },
+  {
+   "id": "newsletter-services",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 81,
+   "when": "site.newsletter and group.newsletter",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Für den Versand nutzen wir folgenden Dienst. Er kann erfassen, ob Newsletter geöffnet und welche Links angeklickt werden, damit wir sehen, was unsere Leser interessiert.\n\n{{#services_list:newsletter}}\n",
+   "hash": "82a321dd8732de29"
+  },
+  {
+   "id": "media",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 85,
+   "when": "site.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Fotos und Videos bei Veranstaltungen\n\nBei unseren Veranstaltungen machen wir und von uns beauftragte Fotografen und Videografen Fotos und Videos und veröffentlichen einen Teil davon auf unserer Website, in sozialen Netzwerken und in Veranstaltungsvideos (etwa Wettbewerbsvideos). Wer auf einer öffentlichen Veranstaltung tanzt, kann auf diesen Aufnahmen zu sehen sein. Wir weisen vor Ort darauf hin.\n\nRechtsgrundlage ist unser berechtigtes Interesse an der Dokumentation und Darstellung unserer Veranstaltungen (Art. 6 Abs. 1 lit. f DSGVO) oder Ihre Einwilligung, wenn wir sie einholen (Art. 6 Abs. 1 lit. a DSGVO). Sie können jederzeit widersprechen (Art. 21 DSGVO); schreiben Sie dazu an {{entity.email}}. Wir entfernen oder verpixeln die Aufnahme dann, soweit zumutbar.\n",
+   "hash": "db9563efb372898d"
+  },
+  {
+   "id": "cookies",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 90,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookies und ähnliche Technologien\n\nWir verwenden Cookies und ähnliche Technologien (etwa Local Storage), die für den Betrieb der Website erforderlich sind (§ 25 Abs. 2 TDDDG, Art. 6 Abs. 1 lit. f DSGVO). Alle anderen, etwa für Statistik, externe Medien oder Werbung, setzen wir nur mit Ihrer Einwilligung ein (§ 25 Abs. 1 TDDDG, Art. 6 Abs. 1 lit. a DSGVO). Einzelheiten finden Sie in unserer {{link.cookies}}.\n",
+   "hash": "ee5ff53ad9661119"
+  },
+  {
+   "id": "cookies-settings",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 91,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Ihre Auswahl können Sie jederzeit ändern oder widerrufen:\n\n{{#settings_link}}\n",
+   "hash": "14ebfa0fa3c5a0da"
+  },
+  {
+   "id": "analytics",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 95,
+   "when": "cat.analytics",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Statistik\n\nUm zu verstehen, wie die Website genutzt wird, und sie zu verbessern, setzen wir mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG) folgende Analysedienste ein. Sie erfassen Angaben zu Ihrem Gerät und Ihrer Nutzung der Website, meist mit Cookies oder ähnlichen Technologien.\n\n{{#services_table:analytics}}\n",
+   "hash": "84c051538c2f80ed"
+  },
+  {
+   "id": "marketing",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 97,
+   "when": "group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Werbung\n\nMit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG) nutzen wir folgende Dienste, um den Erfolg unserer Werbung zu messen und Ihnen auf anderen Websites und Plattformen passende Anzeigen zu zeigen. Die Anbieter können Informationen über Ihren Besuch mit Daten zusammenführen, die ihnen bereits vorliegen.\n\n{{#services_table:marketing}}\n",
+   "hash": "40aa4bf8dd6a4183"
+  },
+  {
+   "id": "media-embeds",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 100,
+   "when": "cat.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Eingebettete Inhalte\n\nEinige Seiten enthalten Inhalte anderer Plattformen, etwa Videos oder Karten. Beim Laden verbindet sich Ihr Browser mit dem Anbieter, der dabei mindestens Ihre IP-Adresse erhält und Cookies setzen kann. Wir zeigen deshalb zunächst einen Platzhalter und laden den Inhalt erst, wenn Sie zustimmen (Art. 6 Abs. 1 lit. a DSGVO, § 25 Abs. 1 TDDDG).\n\n{{#services_table:media}}\n",
+   "hash": "6f697769031915a9"
+  },
+  {
+   "id": "other-services",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 105,
+   "when": "group.security or group.fonts or group.comments or group.forms or cat.preferences",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Weitere Dienste\n\nDienste, die für Betrieb, Sicherheit und Bereitstellung der Website erforderlich sind, setzen wir auf Grundlage unseres berechtigten Interesses (Art. 6 Abs. 1 lit. f DSGVO) oder zur Vertragserfüllung (Art. 6 Abs. 1 lit. b DSGVO) ein. Funktionale Dienste, die nicht unbedingt erforderlich sind, nur mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO).\n\n{{#services_table:necessary}}\n\n{{#services_table:preferences}}\n",
+   "hash": "9a5592fa2ba800e1"
+  },
+  {
+   "id": "social-pages",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 108,
+   "when": "site.social_pages",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Unsere Auftritte in sozialen Netzwerken\n\nWir betreiben Seiten in sozialen Netzwerken wie Facebook, Instagram oder YouTube. Wenn Sie diese Seiten besuchen oder mit ihnen interagieren, verarbeitet das Netzwerk Ihre Daten nach seiner eigenen Datenschutzerklärung. Für die Seitenstatistiken („Insights“) sind wir mit dem Betreiber gemeinsam verantwortlich (Art. 26 DSGVO); für Facebook und Instagram hat Meta eine entsprechende Vereinbarung veröffentlicht. Ihre Rechte können Sie beim Netzwerk oder bei uns geltend machen.\n",
+   "hash": "2fb6b8d08f9fb400"
+  },
+  {
+   "id": "sharing",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 110,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Empfänger\n\nWir geben personenbezogene Daten nur wie in dieser Erklärung beschrieben weiter, insbesondere an:\n\n- **Auftragsverarbeiter und Dienstleister**, die die Website hosten, Zahlungen abwickeln, E-Mails versenden oder die oben genannten Dienste bereitstellen,\n- **Behörden und Berater**, soweit wir gesetzlich dazu verpflichtet sind oder es zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen erforderlich ist.\n",
+   "hash": "513870b8d384057f"
+  },
+  {
+   "id": "no-sale",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 111,
+   "when": "not data.sells",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Wir verkaufen keine personenbezogenen Daten.\n",
+   "hash": "47b3f1e8253ab916"
+  },
+  {
+   "id": "sale",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 112,
+   "when": "data.sells",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Kontaktdaten stellen wir ausgewählten Partnern oder Sponsoren gegen eine Gegenleistung zur Verfügung, nur mit Ihrer Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die Sie jederzeit widerrufen können.\n",
+   "hash": "24c553d078711620"
+  },
+  {
+   "id": "us-sharing",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 113,
+   "when": "audience.us and (data.shares_ads or group.marketing)",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Nach dem Recht einiger US-Bundesstaaten gilt es als „Verkauf“ oder „Weitergabe“ (sharing), wenn personenbezogene Daten Dritten für Werbezwecke oder gegen eine Gegenleistung zugänglich gemacht werden, auch ohne Bezahlung. In den letzten zwölf Monaten haben wir Internet- und Gerätedaten sowie Kennungen wie Cookie-IDs an die oben genannten Werbedienste weitergegeben, um personalisierte Werbung zu ermöglichen. Sie können dem jederzeit auf unserer Seite {{link.choices}} widersprechen. Daten von Verbrauchern unter 16 Jahren verkaufen oder teilen wir nicht wissentlich.\n",
+   "hash": "3409e87e62bba8b8"
+  },
+  {
+   "id": "transfers",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 120,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Übermittlung in Drittländer\n\nEinige unserer Dienstleister haben ihren Sitz in den USA oder anderen Ländern außerhalb der EU/des EWR. Übermitteln wir personenbezogene Daten dorthin, stützen wir uns auf einen Angemessenheitsbeschluss der EU-Kommission (für die USA: das EU-U.S. Data Privacy Framework, soweit der Empfänger zertifiziert ist) oder auf die Standardvertragsklauseln der EU-Kommission (Art. 46 Abs. 2 lit. c DSGVO) und, wo nötig, zusätzliche Schutzmaßnahmen. Eine Kopie dieser Garantien erhalten Sie auf Anfrage.\n",
+   "hash": "9a092fe5a3672a50"
+  },
+  {
+   "id": "retention",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 130,
+   "when": "data.retention != 'custom'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Speicherdauer\n\nWir speichern personenbezogene Daten nur so lange, wie es für die genannten Zwecke erforderlich ist. Anmelde- und Bestelldaten bewahren wir für die Dauer der Veranstaltung und darüber hinaus so lange auf, wie es steuer- und handelsrechtliche Vorschriften verlangen (in Deutschland bis zu zehn Jahre für Buchungsbelege, § 147 AO, § 257 HGB). Daten, die wir auf Grundlage Ihrer Einwilligung verarbeiten, löschen wir nach Ihrem Widerruf, sofern keine andere Rechtsgrundlage besteht.\n",
+   "hash": "e90c4c2421e45e96"
+  },
+  {
+   "id": "retention-custom",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 131,
+   "when": "data.retention == 'custom'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Speicherdauer\n\n{{data.retention_text}}\n",
+   "hash": "c0347df8cfee36f8"
+  },
+  {
+   "id": "security",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 140,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Sicherheit\n\nWir schützen Ihre Daten mit technischen und organisatorischen Maßnahmen, die dem Risiko angemessen sind, darunter verschlüsselte Verbindungen (HTTPS), Zugriffsbeschränkungen und regelmäßige Updates.\n",
+   "hash": "2f224d7f6a1fe46e"
+  },
+  {
+   "id": "rights",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 150,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Ihre Rechte\n\nSie haben das Recht auf\n\n- Auskunft über die zu Ihnen gespeicherten Daten (Art. 15 DSGVO),\n- Berichtigung unrichtiger Daten (Art. 16 DSGVO),\n- Löschung (Art. 17 DSGVO),\n- Einschränkung der Verarbeitung (Art. 18 DSGVO),\n- Datenübertragbarkeit (Art. 20 DSGVO),\n- Widerruf erteilter Einwilligungen mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO).\n\n**Widerspruchsrecht (Art. 21 DSGVO):** Verarbeiten wir Daten auf Grundlage berechtigter Interessen, können Sie aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit widersprechen. Der Verarbeitung zu Zwecken der Direktwerbung können Sie jederzeit ohne Angabe von Gründen widersprechen.\n\nAußerdem können Sie sich bei einer Datenschutz-Aufsichtsbehörde beschweren, insbesondere in dem Mitgliedstaat Ihres Aufenthaltsorts, Ihres Arbeitsplatzes oder des mutmaßlichen Verstoßes (Art. 77 DSGVO).\n\nIhre Rechte können Sie über unsere Seite {{link.choices}} oder per E-Mail an {{entity.email}} geltend machen.\n",
+   "hash": "96118a1bb548dec9"
+  },
+  {
+   "id": "rights-authority",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 151,
+   "when": "entity.authority",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Für uns zuständig ist: {{entity.authority}}.\n",
+   "hash": "af4a41f2d5911185"
+  },
+  {
+   "id": "us",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 155,
+   "when": "audience.us",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Hinweise für Besucher aus den USA\n\nEinwohner einiger US-Bundesstaaten (etwa Kalifornien, Colorado, Connecticut, Virginia, Texas) haben zusätzlich das Recht zu erfahren, welche Daten wir erheben und weitergeben, ihre Daten berichtigen und löschen zu lassen, eine Kopie zu erhalten und dem Verkauf, der Weitergabe für personalisierte Werbung und dem Profiling zu widersprechen. Anfragen beantworten wir innerhalb von 45 Tagen; gegen eine Ablehnung können Sie Einspruch einlegen. Eine Benachteiligung wegen der Ausübung dieser Rechte findet nicht statt.\n",
+   "hash": "ff614159694a3ef3"
+  },
+  {
+   "id": "gpc",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 156,
+   "when": "audience.us and pp.gpc",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Ein Global-Privacy-Control-Signal (GPC) Ihres Browsers behandeln wir als Widerspruch gegen Verkauf, Weitergabe für personalisierte Werbung und Profiling für diesen Browser.\n",
+   "hash": "d6de69078eb77bdf"
+  },
+  {
+   "id": "children",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 160,
+   "when": "audience.children == 'none' or not audience.children",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Kinder\n\nUnser Angebot richtet sich nicht an Kinder unter 16 Jahren. Wir erheben wissentlich keine Daten von Kindern. Falls uns ein Kind Daten übermittelt hat, wenden Sie sich bitte an uns; wir löschen sie dann.\n",
+   "hash": "e2b6596fdd0badc2"
+  },
+  {
+   "id": "children-teens",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 161,
+   "when": "audience.children == 'teens' or audience.children == 'under13'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Minderjährige\n\nMinderjährige können sich für einige Veranstaltungen anmelden, etwa in Junior-Klassen. Soweit gesetzlich erforderlich, holen wir die Einwilligung der Eltern oder Erziehungsberechtigten ein. Wir verwenden die Daten Minderjähriger nur zur Durchführung der Veranstaltung und nicht für Werbung. Eltern und Erziehungsberechtigte können die Daten ihres Kindes jederzeit einsehen und ihre Löschung verlangen.\n",
+   "hash": "46bfbd0d03ce27fd"
+  },
+  {
+   "id": "changes",
+   "doc": "privacy",
+   "lang": "de",
+   "order": 170,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Änderungen\n\nWir passen diese Datenschutzerklärung an, wenn sich unsere Verarbeitung oder die Rechtslage ändert. Der Stand ist oben angegeben; frühere Fassungen finden Sie am Ende der Seite.\n",
+   "hash": "27d8b98f05dd3c7a"
+  },
+  {
+   "id": "intro",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "This Privacy Policy explains how {{entity.name}} (\"we\", \"us\", \"our\") collects, uses and shares personal information when you visit {{site.name}} ({{site.url}}), contact us or take part in our events and services, and which rights and choices you have.\n\nPersonal information means any information that identifies you or can reasonably be linked to you.\n",
+   "hash": "19819cb7d45d250a"
+  },
+  {
+   "id": "controller",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Who is responsible\n\n{{entity.name}}\n{{entity.address}}\nE-mail: {{entity.email}}\n",
+   "hash": "139f11e3ee569250"
+  },
+  {
+   "id": "controller-phone",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 21,
+   "when": "entity.phone",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Phone: {{entity.phone}}\n",
+   "hash": "39e7eb8afffeec10"
+  },
+  {
+   "id": "controller-representative",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 22,
+   "when": "entity.representative and entity.type != 'individual'",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Represented by: {{entity.representative}}\n",
+   "hash": "791f0bb5d05824b7"
+  },
+  {
+   "id": "dpo",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 25,
+   "when": "entity.dpo",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Data protection officer\n\nYou can reach our data protection officer at:\n{{entity.dpo_contact}}\n",
+   "hash": "0149e36a84569b6b"
+  },
+  {
+   "id": "eu-representative",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 26,
+   "when": "entity.eu_rep and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Representative in the EU / UK\n\nUnder Article 27 GDPR we have appointed the following representative, whom you can contact in addition to us:\n{{entity.eu_rep_contact}}\n",
+   "hash": "aa7174fa97957018"
+  },
+  {
+   "id": "categories",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 40,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## What personal information we collect\n\nDepending on how you interact with us, we collect the following categories of personal information:\n\n- **Identifiers and contact details**, such as your name, e-mail address, postal address and phone number.\n- **Internet and device information**, such as your IP address, browser type, operating system, the pages you view and the date and time of your visit.\n- **Approximate location**, derived from your IP address (country or region, not your exact position).\n",
+   "hash": "e3499aeb6be98203"
+  },
+  {
+   "id": "categories-commercial",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 41,
+   "when": "site.tickets or group.payments or group.shop",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Commercial information**, such as the passes, tickets or products you bought, registrations and payment status. We do not store full card numbers; payments are handled by our payment providers.\n",
+   "hash": "a5006b3a1075c4d2"
+  },
+  {
+   "id": "categories-event",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 42,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Event information**, such as the events and options you register for, your participation choices and, for competitions, your division, role, placements and scores.\n",
+   "hash": "f0dacef9ac1aaf12"
+  },
+  {
+   "id": "categories-media",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 43,
+   "when": "site.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Audio and visual information**, such as photos and videos taken at our events.\n",
+   "hash": "94b9f95519af1bb3"
+  },
+  {
+   "id": "categories-inferences",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 44,
+   "when": "cat.analytics or group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Usage and preference information**, such as statistics on how you use the website and, where you allow it, interests derived for advertising.\n",
+   "hash": "c9bb0219842a9c06"
+  },
+  {
+   "id": "categories-sensitive",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 45,
+   "when": "data.sensitive",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Sensitive information**: {{data.sensitive_text}} We only process this information for the purpose stated, and only where you provide it voluntarily or the law allows it.\n",
+   "hash": "5d749c29b78153a3"
+  },
+  {
+   "id": "sources",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 46,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "We receive this information directly from you (for example when you fill in a form), automatically from your browser or device when you use the website, and from service providers who act for us (for example registration or payment providers).\n",
+   "hash": "fb48ca6ceed086ee"
+  },
+  {
+   "id": "hosting",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Visiting the website\n\nWhen you open a page, your browser automatically sends technical data to our web server, such as your IP address, the date and time of the request, the address of the page requested, the referring page, and browser and operating system information. The server stores these data in log files.\n\nWe use them to deliver the website, to keep it stable and secure and to detect and investigate attacks. We keep log files only as long as needed for these purposes, usually no longer than a few weeks, unless an incident requires longer storage.\n\nThe website is hosted by {{site.hosting_provider}}, which processes these data on our behalf.\n",
+   "hash": "494c9919c48410e2"
+  },
+  {
+   "id": "hosting-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 51,
+   "when": "audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): our legitimate interest in a secure and working website, Article 6(1)(f) GDPR. We have a data processing agreement with the hosting provider.\n",
+   "hash": "78ebad799157d0e4"
+  },
+  {
+   "id": "contact",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 60,
+   "when": "site.contact_form",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Contacting us\n\nIf you contact us by e-mail or through a contact form, we use the information you provide (such as your name, e-mail address and message) to answer your request. We delete it when it is no longer needed, unless legal retention periods apply.\n",
+   "hash": "fcf623892e068bc4"
+  },
+  {
+   "id": "contact-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 61,
+   "when": "site.contact_form and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): Article 6(1)(b) GDPR where your request relates to a contract or registration, otherwise our legitimate interest in answering enquiries, Article 6(1)(f) GDPR.\n",
+   "hash": "9905de51bdf911d2"
+  },
+  {
+   "id": "accounts",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 65,
+   "when": "site.accounts",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## User accounts\n\nIf you create an account, we store your user name, e-mail address, password (encrypted) and the information you add to your profile, to provide the account and its functions. You can ask us to delete your account at any time.\n",
+   "hash": "788c79771c8b9070"
+  },
+  {
+   "id": "comments",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 66,
+   "when": "site.comments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Comments\n\nWhen you post a comment, we store the comment, the name and e-mail address you enter, the time and your IP address. We do this to publish the comment and to be able to act against unlawful content. Your e-mail address is not published.\n",
+   "hash": "6aa080759d9ae63b"
+  },
+  {
+   "id": "registration",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 70,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Event registration and tickets\n\nWhen you register for an event or buy a pass or ticket, we process the information needed to manage your registration: your contact details, the options you choose, payment status and, where needed, information you give us voluntarily (for example a dance partner or accommodation request). We use this information to run the event, to contact you about it and to meet our accounting and tax obligations.\n",
+   "hash": "ac60bf73a3fa31b1"
+  },
+  {
+   "id": "registration-provider",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 71,
+   "when": "site.tickets and site.ticketing_provider",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Registration and ticket sales are handled with {{site.ticketing_provider}}. The provider processes your information on our behalf or as part of its own service; its privacy policy applies to data it processes for its own purposes.\n",
+   "hash": "26f0a847a427b591"
+  },
+  {
+   "id": "registration-services",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 72,
+   "when": "group.registration",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "{{#services_list:registration}}\n",
+   "hash": "89e998738e43bf33"
+  },
+  {
+   "id": "competitions",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 73,
+   "when": "site.tickets and site.competitions",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "### Competitions and results\n\nIf you compete, your name, division, role, placements and the judges' scores are published on our website and on result pages of our scoring system. Results may also be passed to the organisations that maintain points registries for the dance style (for example the World Swing Dance Council, WSDC), because competing at a registry event means taking part in that points system. Published results are part of the event record and are generally kept permanently.\n",
+   "hash": "3487ec7d766af3a7"
+  },
+  {
+   "id": "registration-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 74,
+   "when": "site.tickets and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): performance of the contract with you, Article 6(1)(b) GDPR; statutory retention obligations, Article 6(1)(c) GDPR; publication of competition results: our legitimate interest and that of the dance community in transparent results, Article 6(1)(f) GDPR.\n",
+   "hash": "93c5fea8ba6f9b76"
+  },
+  {
+   "id": "payments",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 75,
+   "when": "group.payments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Payments\n\nPayments are processed by the following providers. They receive the payment data needed for the transaction and use it, among other things, to prevent fraud. We do not receive or store your full card details.\n\n{{#services_list:payments}}\n",
+   "hash": "66f4d0cf5f440687"
+  },
+  {
+   "id": "shop",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 76,
+   "when": "group.shop",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Orders in our online shop are processed on this website. We store the order data (products, contact and delivery details, payment status) to fulfil the order and for accounting.\n",
+   "hash": "e44b796f82466fa0"
+  },
+  {
+   "id": "newsletter",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 80,
+   "when": "site.newsletter",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Newsletter\n\nIf you subscribe to our newsletter, we use your e-mail address (and your name, if given) to send you news about our events. Where required, we confirm your subscription with a confirmation e-mail (double opt-in) and keep a record of it. You can unsubscribe at any time with the link in every newsletter or by contacting us.\n",
+   "hash": "eb81ce582cebf2a0"
+  },
+  {
+   "id": "newsletter-services",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 81,
+   "when": "site.newsletter and group.newsletter",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "The newsletter is sent with the following service. It may record whether newsletters are opened and which links are clicked, so we can see what interests our readers.\n\n{{#services_list:newsletter}}\n",
+   "hash": "1a4e495bd3762fc4"
+  },
+  {
+   "id": "newsletter-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 82,
+   "when": "site.newsletter and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): your consent, Article 6(1)(a) GDPR. You can withdraw it at any time with effect for the future.\n",
+   "hash": "c3b013ad88f3b80b"
+  },
+  {
+   "id": "media",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 85,
+   "when": "site.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Photos and videos at our events\n\nWe and photographers or videographers we commission take photos and videos at our events and publish some of them on our website, on social media and in videos of the event (for example competition videos). Dancing at a public event means you may appear in these recordings. We inform attendees about this at the event.\n\nIf you do not want to be shown in a published photo or video, tell us at {{entity.email}}; we will remove or blur it where reasonably possible.\n",
+   "hash": "122181806e280b3d"
+  },
+  {
+   "id": "media-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 86,
+   "when": "site.media and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): our legitimate interest in documenting and presenting our events, Article 6(1)(f) GDPR, or your consent where we ask for it, Article 6(1)(a) GDPR. You have the right to object at any time (Article 21 GDPR).\n",
+   "hash": "4a642d3c7e8f5d5b"
+  },
+  {
+   "id": "cookies",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 90,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Cookies and similar technologies\n\nWe use cookies and similar technologies (such as local storage) that are necessary for the website to work. Other technologies, such as statistics, embedded media or advertising, are only used as described below and, where the law requires it, only with your consent. Details are in our {{link.cookies}}.\n",
+   "hash": "df245f1780cd2bd7"
+  },
+  {
+   "id": "cookies-settings",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 91,
+   "when": "pp.banner",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "You can change or withdraw your choices at any time:\n\n{{#settings_link}}\n",
+   "hash": "4b83fe5ac7fed76d"
+  },
+  {
+   "id": "analytics",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 95,
+   "when": "cat.analytics",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Statistics\n\nTo understand how the website is used and to improve it, we use the following analytics services. They collect information about your device and how you use the website, usually with cookies or similar technologies.\n\n{{#services_table:analytics}}\n",
+   "hash": "86957ff6458b3168"
+  },
+  {
+   "id": "analytics-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 96,
+   "when": "cat.analytics and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Visitors from the EU, the EEA, the UK and Switzerland: these services only run with your consent, Article 6(1)(a) GDPR and, for access to your device, Article 5(3) of the ePrivacy Directive and its national implementations.\n",
+   "hash": "213e1abb1315dcbd"
+  },
+  {
+   "id": "marketing",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 97,
+   "when": "group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Advertising\n\nWe use the following services to measure the success of our advertising and to show you relevant ads on other websites and platforms. They may combine information about your visit with information they hold about you.\n\n{{#services_table:marketing}}\n",
+   "hash": "ce47462d4e6961d5"
+  },
+  {
+   "id": "marketing-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 98,
+   "when": "group.marketing and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Visitors from the EU, the EEA, the UK and Switzerland: these services only run with your consent, Article 6(1)(a) GDPR.\n",
+   "hash": "a9e297b4bf883713"
+  },
+  {
+   "id": "media-embeds",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 100,
+   "when": "cat.media",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Embedded content\n\nSome pages contain content from other platforms, such as videos or maps. When such content loads, your browser connects to the provider, which receives at least your IP address and may set cookies. Where a consent rule applies, we show a placeholder first and load the content only when you allow it.\n\n{{#services_table:media}}\n",
+   "hash": "a2968550ec41ad7c"
+  },
+  {
+   "id": "other-services",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 105,
+   "when": "group.security or group.fonts or group.comments or group.forms or cat.preferences",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Other services we use\n\n{{#services_table:necessary}}\n\n{{#services_table:preferences}}\n",
+   "hash": "7098b0d74245f4a2"
+  },
+  {
+   "id": "other-services-basis",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 106,
+   "when": "(group.security or group.fonts or group.comments or group.forms or cat.preferences) and audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Legal basis (GDPR): services needed to run, secure and provide the website are based on our legitimate interest, Article 6(1)(f) GDPR, or on the contract with you, Article 6(1)(b) GDPR. Functional services that are not strictly necessary only run with your consent, Article 6(1)(a) GDPR.\n",
+   "hash": "5af27fa22569f051"
+  },
+  {
+   "id": "social-pages",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 108,
+   "when": "site.social_pages",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Our pages on social networks\n\nWe run pages on social networks such as Facebook, Instagram or YouTube. When you visit or interact with these pages, the network processes your data under its own privacy policy. For page statistics provided by the network, the network and we may be jointly responsible; for Facebook and Instagram, Meta has published an agreement on this joint responsibility. You can exercise your rights with the network or with us.\n",
+   "hash": "8a29dfff015cc36d"
+  },
+  {
+   "id": "sharing",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 110,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Who we share personal information with\n\nWe share personal information only as described in this policy, in particular with:\n\n- **Service providers** who host the website, process payments, send e-mails or provide the other services named above. They may use the information only to provide their services to us.\n- **Authorities and advisers**, where the law requires it or where needed to establish, exercise or defend legal claims.\n- **A buyer or successor**, if our business or an event is transferred, under the same protection.\n",
+   "hash": "5c2e17031cd28754"
+  },
+  {
+   "id": "sharing-results",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 111,
+   "when": "site.tickets and site.competitions",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- **Points registries and the dance community**, for competition results as described above.\n",
+   "hash": "27b2c450848e592a"
+  },
+  {
+   "id": "sale-none",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 115,
+   "when": "audience.us and not data.sells and not data.shares_ads and not group.marketing",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Sale and sharing of personal information\n\nWe do not sell personal information and do not share it for cross-context behavioral (targeted) advertising, and we have not done so in the past 12 months. We do not knowingly sell or share personal information of consumers under 16.\n",
+   "hash": "a4ee74011e0a0bb6"
+  },
+  {
+   "id": "sale-yes",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 116,
+   "when": "audience.us and (data.sells or data.shares_ads or group.marketing)",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Sale and sharing of personal information\n\nUnder some US state laws, making personal information available to third parties for advertising, or in exchange for something of value, counts as \"selling\" or \"sharing\" it, even if no money changes hands. In the past 12 months we have done this as follows:\n",
+   "hash": "56f7c1add61a31e3"
+  },
+  {
+   "id": "sale-yes-ads",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 117,
+   "when": "audience.us and (data.shares_ads or group.marketing)",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- Internet and device information and identifiers such as cookie IDs, shared with the advertising services named above, for targeted advertising.\n",
+   "hash": "378ef1e732de0e38"
+  },
+  {
+   "id": "sale-yes-sell",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 118,
+   "when": "audience.us and data.sells",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "- Contact details, made available to partners or sponsors in exchange for a benefit.\n",
+   "hash": "73b90776484dda40"
+  },
+  {
+   "id": "sale-optout",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 119,
+   "when": "audience.us and (data.sells or data.shares_ads or group.marketing)",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "You can opt out at any time on our page {{link.choices}}. We do not knowingly sell or share personal information of consumers under 16.\n",
+   "hash": "2f8d155f8a77f7e7"
+  },
+  {
+   "id": "sale-optout-banner",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 120,
+   "when": "audience.us and pp.banner and (data.shares_ads or group.marketing)",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "For advertising services on this website you can also opt out in the privacy settings (switch off \"Marketing\") or with a Global Privacy Control signal from your browser.\n",
+   "hash": "69a0b21747a8799d"
+  },
+  {
+   "id": "transfers",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 120,
+   "when": "audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Transfers outside the EU / EEA\n\nSome of our service providers are located in the United States or other countries outside the EU/EEA and the UK, or we are located there ourselves. Where personal information is transferred to such countries, we rely on an adequacy decision of the European Commission (for the United States: the EU-U.S. Data Privacy Framework, for certified companies; for the UK: the UK Extension), or on the European Commission's standard contractual clauses (Article 46(2)(c) GDPR) and, where needed, additional safeguards. You can ask us for a copy of these safeguards.\n",
+   "hash": "7ebe4db4232e499b"
+  },
+  {
+   "id": "retention",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 130,
+   "when": "data.retention != 'custom'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## How long we keep personal information\n\nWe keep personal information only as long as needed for the purposes described in this policy. Registration and order data are kept for the duration of the event and as long as tax and commercial laws require (in many countries up to ten years for accounting records). Information we process on the basis of your consent is deleted when you withdraw your consent, unless another legal basis applies.\n",
+   "hash": "df39bdf000df2b89"
+  },
+  {
+   "id": "retention-custom",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 131,
+   "when": "data.retention == 'custom'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## How long we keep personal information\n\n{{data.retention_text}}\n",
+   "hash": "f030d49918a74385"
+  },
+  {
+   "id": "security",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 140,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Security\n\nWe use technical and organisational measures appropriate to the risk to protect personal information, including encrypted connections (HTTPS), access controls and regular updates. No method of transmission or storage is completely secure, but we work to protect your information and to respond to incidents promptly.\n",
+   "hash": "094534bb726f25a2"
+  },
+  {
+   "id": "rights-eu",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 150,
+   "when": "audience.eu",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Your rights in the EU, the EEA, the UK and Switzerland\n\nUnder the GDPR (and the UK GDPR and Swiss data protection law) you have the right to:\n\n- access the personal information we hold about you (Article 15 GDPR),\n- have incorrect information corrected (Article 16),\n- have your information deleted (Article 17),\n- have processing restricted (Article 18),\n- receive your information in a common machine-readable format (Article 20),\n- **object** to processing based on legitimate interests, for reasons arising from your situation, and to direct marketing at any time (Article 21),\n- withdraw consent at any time with effect for the future (Article 7(3)).\n\nYou also have the right to lodge a complaint with a data protection supervisory authority, in particular in the country where you live or work or where the alleged infringement took place.\n",
+   "hash": "19bdb53305e16971"
+  },
+  {
+   "id": "rights-eu-authority",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 151,
+   "when": "audience.eu and entity.authority",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "eu"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "The authority responsible for us is: {{entity.authority}}.\n",
+   "hash": "0b86903591db4df8"
+  },
+  {
+   "id": "rights-us",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 155,
+   "when": "audience.us",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Your rights in the United States\n\nDepending on the state you live in (for example California, Colorado, Connecticut, Virginia, Texas, Oregon and other states with comprehensive privacy laws), you have some or all of the following rights:\n\n- **Know and access**: to know what personal information we collect, use and disclose, and to get a copy.\n- **Correct** inaccurate personal information.\n- **Delete** personal information we collected from you.\n- **Portability**: to receive your information in a portable format.\n- **Opt out** of the sale of personal information, of sharing for targeted advertising, and of profiling that produces legal or similarly significant effects.\n- **Limit** the use of sensitive personal information, where we use it beyond what is necessary.\n- **Non-discrimination**: we will not treat you differently because you exercise your rights.\n\nTo exercise your rights, use the form on our page {{link.choices}} or write to {{entity.email}}. We will confirm receipt and answer within 45 days; if we need more time (up to another 45 days), we will tell you why. To protect your information, we verify your identity before we disclose or delete data, usually by asking you to confirm details we already have. You may use an authorised agent; we may ask for proof of the agent's authority and verify your identity directly.\n\n**Appeals**: if we decline your request, you can appeal by replying to our decision or by choosing \"Appeal\" in the request form. We will answer your appeal within the period required by your state's law (usually 45 or 60 days). If you are not satisfied, you can contact your state's Attorney General.\n",
+   "hash": "30b450b02ca10c18"
+  },
+  {
+   "id": "gpc",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 156,
+   "when": "audience.us and pp.gpc",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "**Global Privacy Control**: we treat a Global Privacy Control (GPC) signal from your browser as a valid request to opt out of the sale and sharing of your personal information and of targeted advertising for that browser.\n",
+   "hash": "b4741a58a9f9d985"
+  },
+  {
+   "id": "dnt",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 157,
+   "when": "audience.us",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "**Do Not Track**: there is no common standard for \"Do Not Track\" browser signals, so we do not respond to them. We do respond to Global Privacy Control as described above, where we offer it.\n",
+   "hash": "2bdb2386a3696fd5"
+  },
+  {
+   "id": "shine-the-light",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 158,
+   "when": "audience.us and data.sells",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "**California \"Shine the Light\"**: California residents may ask once a year which personal information we disclosed to third parties for their direct marketing in the previous calendar year. Write to {{entity.email}}.\n",
+   "hash": "d739281887e4d395"
+  },
+  {
+   "id": "children-none",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 160,
+   "when": "audience.children == 'none' or not audience.children",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Children\n\nOur website and services are not directed at children under 13 (in the EU: under 16), and we do not knowingly collect their personal information. If you believe a child has given us personal information, contact us and we will delete it.\n",
+   "hash": "cc1250f8fa009044"
+  },
+  {
+   "id": "children-teens",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 161,
+   "when": "audience.children == 'teens'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Minors\n\nTeenagers aged 13 to 17 may register for some of our events, for example in junior divisions. Where the law requires it, we ask for the consent of a parent or guardian, and we use minors' information only to run the event. We do not sell or share minors' personal information for advertising. Our services are not directed at children under 13.\n",
+   "hash": "4e3e4684100168fa"
+  },
+  {
+   "id": "children-under13",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 162,
+   "when": "audience.children == 'under13'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Children\n\nChildren, including children under 13, may take part in some of our events, for example in junior divisions. We collect children's personal information only with verifiable consent from a parent or guardian, only the information needed to run the event, and we do not use it for advertising or sell or share it. Parents and guardians can review their child's information, ask us to delete it and refuse further collection at any time by contacting us at {{entity.email}}.\n",
+   "hash": "1573c3ee649f6f6d"
+  },
+  {
+   "id": "changes",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 170,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Changes to this policy\n\nWe update this policy when our practices or the law change. The date at the top shows when it was last updated; earlier versions are listed at the end of the page.\n",
+   "hash": "ba6ef74b9eb16a9a"
+  },
+  {
+   "id": "contact-us",
+   "doc": "privacy",
+   "lang": "en",
+   "order": 180,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Contact\n\nQuestions about this policy or about your personal information: {{entity.email}}\n",
+   "hash": "df437c6a2a68aaca"
+  },
+  {
+   "id": "intro",
+   "doc": "terms",
+   "lang": "de",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Diese Nutzungsbedingungen gelten für die Nutzung von {{site.name}} ({{site.url}}), betrieben von {{entity.name}}, {{entity.address}} („wir“). Mit der Nutzung der Website erkennen Sie diese Bedingungen an.\n",
+   "hash": "feacd2a74cf3efe5"
+  },
+  {
+   "id": "events",
+   "doc": "terms",
+   "lang": "de",
+   "order": 15,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Für Anmeldungen, Pässe und Tickets zu unseren Veranstaltungen gelten die gesonderten Bedingungen, die bei der Anmeldung angezeigt werden (etwa zu Zahlung, Stornierung, Erstattung, Veranstaltungsregeln und Verhaltenskodex). Weichen sie von diesen Nutzungsbedingungen ab, gehen sie für die Veranstaltung vor.\n",
+   "hash": "7d2764b943b4b907"
+  },
+  {
+   "id": "use",
+   "doc": "terms",
+   "lang": "de",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Nutzung der Website\n\nSie dürfen die Website im Rahmen dieser Bedingungen und der Gesetze für private, nicht kommerzielle Zwecke nutzen. Nicht erlaubt ist insbesondere:\n\n- den Betrieb oder die Sicherheit der Website zu stören, sich unbefugt Zugang zu verschaffen oder sie zu überlasten,\n- Inhalte oder personenbezogene Daten mit automatisierten Mitteln (Bots, Scraper) über die normale Nutzung und die Indexierung durch Suchmaschinen hinaus abzurufen,\n- über die Website Spam, Schadsoftware oder rechtswidrige Inhalte zu verbreiten.\n",
+   "hash": "dc5687e5ecbcb7de"
+  },
+  {
+   "id": "ip",
+   "doc": "terms",
+   "lang": "de",
+   "order": 30,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Inhalte und Urheberrecht\n\nTexte, Logos, Fotos, Videos und sonstige Inhalte dieser Website sind urheberrechtlich oder anderweitig geschützt und gehören uns oder unseren Lizenzgebern. Sie dürfen Seiten für den privaten Gebrauch ansehen, herunterladen und ausdrucken. Jede andere Nutzung, insbesondere Vervielfältigung, Bearbeitung, Verbreitung oder kommerzielle Verwendung, bedarf unserer vorherigen schriftlichen Zustimmung.\n",
+   "hash": "fd15142ad48e64d3"
+  },
+  {
+   "id": "user-content",
+   "doc": "terms",
+   "lang": "de",
+   "order": 40,
+   "when": "terms.user_content or site.comments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Ihre Inhalte\n\nWenn Sie Inhalte veröffentlichen oder hochladen (etwa Kommentare oder Fotos), versichern Sie, dass Sie die erforderlichen Rechte haben und die Inhalte weder Gesetze noch Rechte Dritter verletzen. Sie räumen uns ein unentgeltliches, nicht ausschließliches, räumlich unbeschränktes Recht ein, die Inhalte auf der Website und im Zusammenhang mit unseren Veranstaltungen zu veröffentlichen, darzustellen und zu speichern, solange sie veröffentlicht sind. Wir können Inhalte entfernen, die gegen diese Bedingungen oder Gesetze verstoßen.\n",
+   "hash": "1eca7dd7e751644b"
+  },
+  {
+   "id": "links",
+   "doc": "terms",
+   "lang": "de",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Links\n\nDie Website enthält Links zu Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Für diese Inhalte ist der jeweilige Anbieter verantwortlich. Werden uns Rechtsverletzungen bekannt, entfernen wir den Link umgehend.\n",
+   "hash": "11339d9ff5377ee3"
+  },
+  {
+   "id": "availability",
+   "doc": "terms",
+   "lang": "de",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Verfügbarkeit und Richtigkeit\n\nWir bemühen uns, die Informationen auf dieser Website, etwa Termine, Zeitpläne und Preise, richtig und aktuell zu halten, können Vollständigkeit, Richtigkeit und ständige Verfügbarkeit aber nicht garantieren. Angaben auf der Website sind kein verbindliches Angebot, sofern nicht ausdrücklich angegeben. Wir können die Website oder Teile davon jederzeit ändern, einschränken oder einstellen.\n",
+   "hash": "cd73742849a3753b"
+  },
+  {
+   "id": "liability",
+   "doc": "terms",
+   "lang": "de",
+   "order": 70,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Haftung\n\nWir haften unbeschränkt bei Vorsatz und grober Fahrlässigkeit, für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie nach dem Produkthaftungsgesetz. Bei leichter Fahrlässigkeit haften wir nur für die Verletzung wesentlicher Pflichten, begrenzt auf den vorhersehbaren, typischen Schaden. Im Übrigen ist die Haftung für die unentgeltliche Nutzung dieser Website ausgeschlossen.\n",
+   "hash": "78fb6a926d153c06"
+  },
+  {
+   "id": "privacy",
+   "doc": "terms",
+   "lang": "de",
+   "order": 80,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Datenschutz\n\nWie wir mit personenbezogenen Daten umgehen, erläutert unsere {{link.privacy}}.\n",
+   "hash": "22159dcefc647e70"
+  },
+  {
+   "id": "law",
+   "doc": "terms",
+   "lang": "de",
+   "order": 90,
+   "when": "terms.governing_law",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Anwendbares Recht\n\nEs gilt das Recht von {{terms.governing_law}}. Sind Sie Verbraucher, bleibt der Schutz zwingender Vorschriften des Staates Ihres gewöhnlichen Aufenthalts unberührt.\n",
+   "hash": "386f3fc52acf3705"
+  },
+  {
+   "id": "changes",
+   "doc": "terms",
+   "lang": "de",
+   "order": 95,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Änderungen und salvatorische Klausel\n\nWir können diese Bedingungen mit Wirkung für die Zukunft ändern; die aktuelle Fassung steht auf dieser Seite. Sollte eine Bestimmung unwirksam sein, bleiben die übrigen wirksam.\n\nKontakt: {{entity.email}}\n",
+   "hash": "2674a510825005a6"
+  },
+  {
+   "id": "intro",
+   "doc": "terms",
+   "lang": "en",
+   "order": 10,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "These Terms of Use apply to the use of {{site.name}} ({{site.url}}), operated by {{entity.name}}, {{entity.address}} (\"we\", \"us\"). By using the website you accept these terms. If you do not agree, please do not use the website.\n",
+   "hash": "dfaf4b7613dcf0c8"
+  },
+  {
+   "id": "events",
+   "doc": "terms",
+   "lang": "en",
+   "order": 15,
+   "when": "site.tickets",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "Registrations, passes and tickets for our events are subject to the separate conditions shown during registration (for example payment, cancellation and refund rules, event rules and codes of conduct). If those conditions differ from these terms, the registration conditions take precedence for the event.\n",
+   "hash": "49c334c11a5e24fe"
+  },
+  {
+   "id": "use",
+   "doc": "terms",
+   "lang": "en",
+   "order": 20,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Using the website\n\nYou may use the website for personal, non-commercial purposes in line with these terms and applicable law. You must not:\n\n- interfere with the operation or security of the website, try to gain unauthorised access or overload it,\n- use automated means (bots, scrapers) to collect content or personal information beyond what is technically necessary for normal use, such as search engine indexing,\n- use the website to send spam or to distribute malware or unlawful content.\n",
+   "hash": "1ba115b42159b1c8"
+  },
+  {
+   "id": "ip",
+   "doc": "terms",
+   "lang": "en",
+   "order": 30,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Content and intellectual property\n\nTexts, logos, photos, videos and other content on this website are protected by copyright and other rights and belong to us or our licensors. You may view, download and print pages for personal use. Any other use, in particular copying, editing, distributing or using content commercially, requires our prior written permission. Names and logos of events, organisations and partners are trademarks of their respective owners.\n",
+   "hash": "cd5a2646fd1aaf47"
+  },
+  {
+   "id": "user-content",
+   "doc": "terms",
+   "lang": "en",
+   "order": 40,
+   "when": "terms.user_content or site.comments",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Your content\n\nIf you post or upload content (for example comments or photos), you confirm that you have the necessary rights and that it does not violate the law or the rights of others. You grant us a free, non-exclusive, worldwide licence to publish, display and store this content on the website and in connection with our events, for as long as it is published. We may remove content that violates these terms or the law. You remain responsible for your content.\n",
+   "hash": "74841568eced27f2"
+  },
+  {
+   "id": "links",
+   "doc": "terms",
+   "lang": "en",
+   "order": 50,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Links to other websites\n\nThe website contains links to websites of third parties. We have no control over their content and are not responsible for it. When we become aware of unlawful content behind a link, we remove the link.\n",
+   "hash": "e9584984f1e212b5"
+  },
+  {
+   "id": "availability",
+   "doc": "terms",
+   "lang": "en",
+   "order": 60,
+   "when": "true",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Availability and accuracy\n\nWe take care to keep the information on this website correct and up to date, for example event dates, schedules and prices, but we cannot guarantee that it is complete, accurate or always available. Information on the website is not a binding offer unless expressly stated. We may change, suspend or discontinue the website or parts of it at any time.\n",
+   "hash": "646388f1411af043"
+  },
+  {
+   "id": "liability-us",
+   "doc": "terms",
+   "lang": "en",
+   "order": 70,
+   "when": "entity.country == 'US' or entity.country == 'CA' or entity.country == 'other'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Disclaimer and limitation of liability\n\nTHE WEBSITE IS PROVIDED \"AS IS\" AND \"AS AVAILABLE\", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, TO THE EXTENT PERMITTED BY LAW. TO THE FULLEST EXTENT PERMITTED BY LAW, WE ARE NOT LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES ARISING FROM YOUR USE OF THE WEBSITE. Nothing in these terms limits liability that cannot be limited by law.\n",
+   "hash": "b8dee1485f8e43b3"
+  },
+  {
+   "id": "liability-eu",
+   "doc": "terms",
+   "lang": "en",
+   "order": 71,
+   "when": "entity.country != 'US' and entity.country != 'CA' and entity.country != 'other'",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Liability\n\nWe are liable without limitation for intent and gross negligence, for injury to life, body or health and where mandatory law provides for liability. For slight negligence we are liable only for the breach of essential obligations, limited to the foreseeable damage typical for this kind of website. Otherwise our liability for the free use of this website is excluded.\n",
+   "hash": "0b8e0ac6d5f78a62"
+  },
+  {
+   "id": "privacy",
+   "doc": "terms",
+   "lang": "en",
+   "order": 80,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Privacy\n\nHow we handle personal information is explained in our {{link.privacy}}.\n",
+   "hash": "e04e86ac2f74b6b7"
+  },
+  {
+   "id": "law",
+   "doc": "terms",
+   "lang": "en",
+   "order": 90,
+   "when": "terms.governing_law",
+   "version": 1,
+   "change": "material",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Governing law\n\nThese terms are governed by the laws of {{terms.governing_law}}, without regard to its conflict of law rules. If you are a consumer, this does not deprive you of the protection of mandatory provisions of the law of the country where you live.\n",
+   "hash": "fc930d09176803ee"
+  },
+  {
+   "id": "changes",
+   "doc": "terms",
+   "lang": "en",
+   "order": 95,
+   "when": "true",
+   "version": 1,
+   "change": "editorial",
+   "effective": null,
+   "jurisdiction": [
+    "us",
+    "eu",
+    "uk"
+   ],
+   "reviewed_by": null,
+   "reviewed_at": null,
+   "body": "## Changes and severability\n\nWe may change these terms with effect for the future; the current version is published on this page. If any provision is invalid, the remaining provisions stay in effect.\n\nContact: {{entity.email}}\n",
+   "hash": "b718be26d46a008c"
+  }
+ ]
+}
