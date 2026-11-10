@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.7.261027
+Stable tag: 1.8.261028
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,7 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 * Bearer token authentication with scoped API keys
 * OAuth 2.1 remote MCP connector (Claude Desktop / claude.ai) with PKCE and Dynamic Client Registration
 * Native MCP JSON-RPC transport endpoint (/wp-json/goo1-mcp/v1/mcp)
+* Lean MCP profile (/wp-json/goo1-mcp/v1/mcp/lean): four meta tools instead of ~100 — for clients with many connected sites
 * Per-key rate limiting
 * Full audit logging
 
@@ -63,6 +64,11 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.8.261028 =
+* MCP: new lean profile at /wp-json/goo1-mcp/v1/mcp/lean with four tools: wp_find_tools (keyword search, short descriptions, access read/write), wp_describe_tool (full description and input schema), wp_call_read (runs only tools with readOnlyHint) and wp_call_write (everything else). The tool list is about 5 % of the full one, so many connected sites no longer fill the context window. Same authentication (API keys and OAuth), scopes, redaction and audit log; the full /mcp endpoint is unchanged.
+* OAuth: protected-resource metadata also served under …/oauth-protected-resource/mcp/lean (resource = the lean URL); a 401 on /mcp/lean points there.
+* Admin: the settings page shows the lean connector URL with a copy button.
 
 = 1.7.261027 =
 * Secrets: sealed hand-over ("goo1seal1": X25519 + HKDF-SHA256 + ChaCha20-Poly1305). The request's private key is stored encrypted with a key derived from the wp-config salts (needs unique AUTH_KEY/SECURE_AUTH_KEY). Export targets are exact hosts (no wildcards, no redirects). New tools secrets_request, secrets_status, secrets_export_sealed. A target site creates a one-time request (30 min); the envelope comes from tools/goo1-seal.mjs on the owner's computer (reads goo1-vault.json or Vaultwarden via the bw CLI; fetches the public key from the target itself), from another Bridge site (only to hosts on its "Secret export targets" allowlist; it fetches the recipient's key itself), or from a hidden wp-admin "Secret inbox" page. The AI only ever sees the envelope.
