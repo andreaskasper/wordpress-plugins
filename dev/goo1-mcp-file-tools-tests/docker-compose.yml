@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpw
+      MARIADB_DATABASE: wp
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: Wp-Db-Pass-9f3K2
+    networks: [net]
+  wp:
+    image: wordpress:php8.3-apache
+    depends_on: [db]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: Wp-Db-Pass-9f3K2
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME','http://wp.test');
+        define('WP_SITEURL','http://wp.test');
+        define('WP_DEBUG_LOG', true);
+        define('WP_DEBUG_DISPLAY', false);
+    volumes:
+      - wproot:/var/www/html
+      - /home/claude/wordpress-plugins/src/goo1-mcp:/var/www/html/wp-content/plugins/goo1-mcp
+    networks:
+      net:
+        aliases: [wp.test]
+  cli:
+    image: wordpress:cli-php8.3
+    user: "33:33"
+    depends_on: [wp]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: Wp-Db-Pass-9f3K2
+      WORDPRESS_DB_NAME: wp
+    volumes:
+      - wproot:/var/www/html
+      - /home/claude/wordpress-plugins/src/goo1-mcp:/var/www/html/wp-content/plugins/goo1-mcp
+    networks: [net]
+    entrypoint: ["sleep","infinity"]
+volumes:
+  wproot:
+networks:
+  net:
