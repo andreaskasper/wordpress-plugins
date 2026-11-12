@@ -168,6 +168,34 @@ class Goo1_MCP_File_Access {
 	}
 
 	/* ------------------------------------------------------------------
+	 * File hashes
+	 * ---------------------------------------------------------------- */
+
+	/**
+	 * Hash of a file's content as the file tools report it (fields sha256,
+	 * if_sha256, current_sha256 …): HMAC-SHA256 keyed with a site salt, so
+	 * a short secret that read/search show as [redacted] cannot be guessed
+	 * offline against the hash of the real file. Only the expected hash of a
+	 * download (wp_file_fetch sha256) is a plain SHA-256.
+	 */
+	public static function hash( $content ) {
+		return hash_hmac( 'sha256', (string) $content, self::hash_key() );
+	}
+
+	/** @return string|false */
+	public static function hash_file( $abs ) {
+		return hash_hmac_file( 'sha256', $abs, self::hash_key() );
+	}
+
+	private static function hash_key() {
+		static $key = null;
+		if ( null === $key ) {
+			$key = hash_hmac( 'sha256', 'goo1-mcp file hash', wp_salt( 'auth' ) );
+		}
+		return $key;
+	}
+
+	/* ------------------------------------------------------------------
 	 * Paths
 	 * ---------------------------------------------------------------- */
 
@@ -357,9 +385,76 @@ class Goo1_MCP_File_Access {
 		return self::dir_rel( WP_CONTENT_DIR );
 	}
 
-	public static function uploads_rel() {
-		$u = wp_upload_dir( null, false );
-		return self::dir_rel( isset( $u['basedir'] ) ? $u['basedir'] : '' );
+	/**
+	 * Relative path of a folder; if it does not exist (yet), its normalised
+	 * path below the WordPress folder, so rules for it apply before it is
+	 * created. False when it lies outside.
+	 */
+	private static function dir_rel_any( $abs ) {
+		if ( ! is_string( $abs ) || '' === $abs ) {
+			return false;
+		}
+		$rel = self::dir_rel( $abs );
+		if ( false !== $rel ) {
+			return $rel;
+		}
+		$abs = untrailingslashit( wp_normalize_path( $abs ) );
+		foreach ( array( self::base(), untrailingslashit( wp_normalize_path( ABSPATH ) ) ) as $b ) {
+			if ( $abs === $b ) {
+				return '';
+			}
+			if ( 0 === strpos( $abs, $b . '/' ) ) {
+				$n = self::normalize( substr( $abs, strlen( $b ) + 1 ) );
+				return is_wp_error( $n ) ? false : $n;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Every folder that holds uploads: this site's upload folder, the main
+	 * site's (multisite: a sub-site's basedir is only uploads/sites/N),
+	 * wp-content/uploads, UPLOADS and the old multisite blogs.dir.
+	 *
+	 * @return string[] Relative paths.
+	 */
+	public static function uploads_rels() {
+		$abs = array( WP_CONTENT_DIR . '/uploads', WP_CONTENT_DIR . '/blogs.dir' );
+		$u   = wp_upload_dir( null, false );
+		if ( ! empty( $u['basedir'] ) ) {
+			$abs[] = $u['basedir'];
+		}
+		if ( defined( 'UPLOADS' ) && UPLOADS ) {
+			$abs[] = ABSPATH . ltrim( UPLOADS, '/' );
+		}
+		if ( is_multisite() && ! is_main_site() ) {
+			switch_to_blog( get_main_site_id() );
+			$m = wp_upload_dir( null, false );
+			restore_current_blog();
+			if ( ! empty( $m['basedir'] ) ) {
+				$abs[] = $m['basedir'];
+			}
+		}
+		$out = array();
+		foreach ( $abs as $a ) {
+			$r = self::dir_rel_any( $a );
+			if ( false !== $r && '' !== $r ) {
+				$out[ $r ] = true;
+			}
+		}
+		return array_keys( $out );
+	}
+
+	/** The upload folder that contains $rel (case-insensitive), or false. */
+	public static function uploads_root_of( $rel ) {
+		$lower = strtolower( $rel );
+		$best  = false;
+		foreach ( self::uploads_rels() as $u ) {
+			if ( self::is_within( $lower, strtolower( $u ) ) && ( false === $best || strlen( $u ) < strlen( $best ) ) ) {
+				$best = $u;
+			}
+		}
+		return $best;
 	}
 
 	/**
@@ -367,12 +462,14 @@ class Goo1_MCP_File_Access {
 	 * site (wp-content, uploads, plugins, themes, mu-plugins).
 	 */
 	public static function shared_dirs() {
-		$dirs = array(
-			self::content_rel(),
-			self::uploads_rel(),
-			self::dir_rel( WP_PLUGIN_DIR ),
-			self::dir_rel( defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : '' ),
-			self::dir_rel( get_theme_root() ),
+		$dirs = array_merge(
+			array(
+				self::content_rel(),
+				self::dir_rel( WP_PLUGIN_DIR ),
+				self::dir_rel( defined( 'WPMU_PLUGIN_DIR' ) ? WPMU_PLUGIN_DIR : '' ),
+				self::dir_rel( get_theme_root() ),
+			),
+			self::uploads_rels()
 		);
 		return array_values( array_unique( array_filter( $dirs, 'is_string' ) ) );
 	}
@@ -410,12 +507,17 @@ class Goo1_MCP_File_Access {
 		if ( in_array( $name, self::BLOCKED_NAMES, true ) || 0 === strpos( $name, 'id_rsa' ) || 0 === strpos( $name, 'id_ed25519' ) || 0 === strpos( $name, 'id_ecdsa' ) ) {
 			return 'Server configuration and credential files are not accessible through the bridge.';
 		}
-		$ext = pathinfo( $name, PATHINFO_EXTENSION );
-		if ( in_array( $ext, self::KEY_EXT, true ) ) {
-			return 'Key and certificate files are not accessible through the bridge.';
-		}
-		if ( preg_match( '/\.sql(\.(gz|zip|bz2|xz|7z|tar|tgz|zst))?$/', $name ) ) {
-			return 'Database dumps are not accessible through the bridge.';
+		// Every extension counts, not only the last one: copies such as
+		// server.key.bak or dump.sql.1 are as sensitive as the original.
+		$exts = explode( '.', $name );
+		array_shift( $exts );
+		foreach ( $exts as $ext ) {
+			if ( in_array( $ext, self::KEY_EXT, true ) ) {
+				return 'Key and certificate files are not accessible through the bridge.';
+			}
+			if ( 'sql' === $ext ) {
+				return 'Database dumps are not accessible through the bridge.';
+			}
 		}
 
 		$content = self::content_rel();
@@ -446,8 +548,8 @@ class Goo1_MCP_File_Access {
 			if ( ( false !== $own && self::is_within( $rel, $own ) ) || self::is_within( $lower, strtolower( ( false === $content ? 'wp-content' : $content ) . '/plugins/goo1-mcp' ) ) ) {
 				return 'The bridge does not change its own plugin folder.';
 			}
-			$uploads = self::uploads_rel();
-			if ( false !== $uploads && ! $is_dir && '.htaccess' !== $name && $rel !== $uploads && self::is_within( $rel, $uploads ) ) {
+			$uploads = self::uploads_root_of( $rel );
+			if ( false !== $uploads && ! $is_dir && '.htaccess' !== $name && strtolower( $rel ) !== strtolower( $uploads ) ) {
 				$reason = self::upload_type_reason( $name );
 				if ( '' !== $reason ) {
 					return $reason;
@@ -491,15 +593,19 @@ class Goo1_MCP_File_Access {
 		if ( ! $parts ) {
 			return 'Below uploads only files with a type WordPress allows for uploads can be written (this file has no extension).';
 		}
+		// Apache (mod_mime) uses every extension it knows, so x.html.pages is
+		// served as HTML when .pages is unknown to it: check all of them.
 		foreach ( $parts as $p ) {
 			if ( in_array( $p, self::SCRIPT_EXT, true ) ) {
 				return 'Scripts (PHP, CGI, Perl, Python, shell) are never written below uploads.';
 			}
 		}
-		$ext = end( $parts );
-		if ( in_array( $ext, self::UPLOAD_EXCLUDED_EXT, true ) ) {
-			return 'HTML, JavaScript, SVG and XML files are not written below uploads (they would run in visitors\' browsers on this domain).';
+		foreach ( $parts as $p ) {
+			if ( in_array( $p, self::UPLOAD_EXCLUDED_EXT, true ) ) {
+				return 'HTML, JavaScript, SVG and XML files are not written below uploads, also not as an inner extension (they would run in visitors\' browsers on this domain).';
+			}
 		}
+		$ext = end( $parts );
 		$allowed = array( 'css' );
 		foreach ( array_keys( get_allowed_mime_types() ) as $exts ) {
 			foreach ( explode( '|', strtolower( $exts ) ) as $e ) {

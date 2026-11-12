@@ -71,7 +71,8 @@ class Goo1_MCP_Audit_Log {
 	 * could be guessed offline).
 	 */
 	public static function strip_file_content( $endpoint, $params ) {
-		if ( false === strpos( $endpoint, '/goo1-mcp/v1/files/' ) ) {
+		// Case-insensitive: WordPress routes /goo1-mcp/v1/FILES/write to the same handler.
+		if ( false === stripos( (string) $endpoint, '/goo1-mcp/v1/files/' ) ) {
 			return $params;
 		}
 		foreach ( array( 'content', 'old_string', 'new_string' ) as $k ) {

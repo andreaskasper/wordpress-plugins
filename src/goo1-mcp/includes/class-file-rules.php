@@ -9,6 +9,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Goo1_MCP_File_Rules {
 
+	/**
+	 * First line of every .htaccess the bridge writes. Only files that start
+	 * with it are changed or deleted by the bridge; any other .htaccess
+	 * (another plugin's, the host's) is left alone, also a pure block file.
+	 */
+	const HTACCESS_MARKER = '# goo1-mcp: written by goo1 Claude Bridge';
+
 	/** Extensions checked as PHP (syntax check + loopback). */
 	const PHP_EXT = array( 'php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8' );
 
@@ -46,6 +53,26 @@ class Goo1_MCP_File_Rules {
 
 	public static function is_htaccess( $name ) {
 		return '.htaccess' === strtolower( basename( $name ) );
+	}
+
+	/** Whether a .htaccess was written by the bridge (first line is the marker). */
+	public static function htaccess_is_own( $content ) {
+		$content = (string) $content;
+		if ( 0 === strpos( $content, "\xEF\xBB\xBF" ) ) {
+			$content = substr( $content, 3 );
+		}
+		$nl    = strpos( $content, "\n" );
+		$first = false === $nl ? $content : substr( $content, 0, $nl );
+		return 0 === strpos( rtrim( $first, "\r" ), self::HTACCESS_MARKER );
+	}
+
+	/** Content with the marker as its first line (added when missing). */
+	public static function htaccess_with_marker( $content ) {
+		if ( self::htaccess_is_own( $content ) ) {
+			return (string) $content;
+		}
+		$eol = 'crlf' === self::eol( (string) $content ) ? "\r\n" : "\n";
+		return self::HTACCESS_MARKER . $eol . (string) $content;
 	}
 
 	/**
@@ -220,8 +247,21 @@ class Goo1_MCP_File_Rules {
 	public static function htaccess_bad_lines( $content ) {
 		$bad   = array();
 		$depth = array();
-		foreach ( preg_split( '/\r\n|\n|\r/', (string) $content ) as $n => $raw ) {
+		// Apache ends lines at LF only (a CR before it is dropped). A lone CR
+		// would make this check see two lines where Apache sees one.
+		foreach ( explode( "\n", (string) $content ) as $n => $raw ) {
+			$raw = rtrim( $raw, "\r" );
+			if ( false !== strpos( $raw, "\r" ) ) {
+				$bad[] = sprintf( 'line %d: carriage return inside the line', $n + 1 );
+				continue;
+			}
 			$line = trim( $raw );
+			// A backslash at the end continues the line in Apache, also for a
+			// comment, which would swallow the next (blocking) line.
+			if ( '' !== $line && '\\' === substr( $line, -1 ) ) {
+				$bad[] = sprintf( 'line %d: %s (line continuation with \\ is not allowed)', $n + 1, $line );
+				continue;
+			}
 			if ( '' === $line || '#' === $line[0] ) {
 				continue;
 			}

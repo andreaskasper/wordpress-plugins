@@ -464,6 +464,29 @@ class Goo1_MCP_Redactor {
 	}
 
 	/**
+	 * Whether a private key block is still open after this piece of text,
+	 * given whether one was open before it (same markers as
+	 * redact_private_keys()). Used to carry the state across lines that are
+	 * skipped before a partial read window.
+	 */
+	public static function private_key_open_after( $text, $open ) {
+		if ( false === strpos( (string) $text, 'PRIVATE KEY' ) ) {
+			return $open;
+		}
+		$b = preg_match_all( '/-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/', $text, $bm, PREG_OFFSET_CAPTURE );
+		$e = preg_match_all( '/-----END [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/', $text, $em, PREG_OFFSET_CAPTURE );
+		if ( false === $b || false === $e ) {
+			return true; // PCRE error: fail closed.
+		}
+		$last_b = $b ? end( $bm[0] )[1] : -1;
+		$last_e = $e ? end( $em[0] )[1] : -1;
+		if ( $last_b < 0 && $last_e < 0 ) {
+			return $open;
+		}
+		return $last_b > $last_e;
+	}
+
+	/**
 	 * Mask PEM / PGP private key blocks with string search (no regex over the
 	 * block body). A block without END is masked to the end of the text, an
 	 * END without BEGIN (the window started inside the block) from the start.

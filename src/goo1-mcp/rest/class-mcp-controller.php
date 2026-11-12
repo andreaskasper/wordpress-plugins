@@ -46,7 +46,7 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 	const LEAN_TOOLS = array( 'wp_find_tools', 'wp_describe_tool', 'wp_call_read', 'wp_call_write' );
 
 	public static function is_lean_route( $route ) {
-		return '/mcp/lean' === substr( (string) $route, -9 );
+		return '/mcp/lean' === substr( rtrim( strtolower( (string) $route ), '/' ), -9 );
 	}
 
 	/**

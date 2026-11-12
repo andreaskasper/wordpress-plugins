@@ -96,6 +96,13 @@ class Goo1_MCP_Database_Controller extends Goo1_MCP_Base_Controller {
 		if ( preg_match( '#/\*\s*M?!#i', $sql ) ) {
 			return $this->error( 'blocked_query', 'Executable comments (/*! … */, /*M! … */) are not allowed.', 403 );
 		}
+		// The bridge's backup table holds file contents base64-encoded, which
+		// the row redaction cannot see. Table names cannot be built at run
+		// time in a single statement, so a scan of the raw text (strings
+		// included, also under ANSI_QUOTES) is enough – fail closed.
+		if ( self::mentions_backup_table( $sql ) ) {
+			return $this->error( 'blocked_query', 'The Claude Bridge backup table is not accessible through SQL. Use wp_file_backups / wp_file_restore or elementor_list_backups / elementor_restore_backup.', 403 );
+		}
 		$sql_upper = strtoupper( $this->code_only( $sql ) );
 		// Named locks can stall the OAuth token endpoint.
 		if ( preg_match( '/\b(GET_LOCK|RELEASE_ALL_LOCKS)\b/', $sql_upper ) ) {
@@ -157,6 +164,10 @@ class Goo1_MCP_Database_Controller extends Goo1_MCP_Base_Controller {
 			$sql = $wpdb->prepare( $sql, $bindings );
 			if ( null === $sql ) {
 				return $this->error( 'prepare_failed', 'Failed to prepare query. Check parameter count matches placeholders.' );
+			}
+			// %i (identifier placeholder, WP 6.2+) can put a table name in.
+			if ( self::mentions_backup_table( $sql ) ) {
+				return $this->error( 'blocked_query', 'The Claude Bridge backup table is not accessible through SQL. Use wp_file_backups / wp_file_restore or elementor_list_backups / elementor_restore_backup.', 403 );
 			}
 		}
 
@@ -281,6 +292,15 @@ class Goo1_MCP_Database_Controller extends Goo1_MCP_Base_Controller {
 		);
 
 		$rows = $rows ?: array();
+		if ( self::mentions_backup_table( $name ) ) {
+			// Metadata only: payloads (file contents in base64, Elementor data)
+			// stay with the backup tools, also with "Secrets in clear text".
+			foreach ( $rows as $i => $row ) {
+				if ( array_key_exists( 'payload', $row ) ) {
+					$rows[ $i ]['payload'] = '[omitted: use wp_file_backups / elementor_list_backups]';
+				}
+			}
+		}
 		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
 			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
 		} else {
@@ -292,6 +312,14 @@ class Goo1_MCP_Database_Controller extends Goo1_MCP_Base_Controller {
 			'rows'      => $rows,
 			'row_count' => count( $rows ),
 		) );
+	}
+
+	/**
+	 * Whether a statement or table name refers to the bridge's backup table
+	 * ({prefix}goo1_mcp_backups), case-insensitively.
+	 */
+	public static function mentions_backup_table( $sql ) {
+		return false !== stripos( (string) $sql, 'goo1_mcp_backups' );
 	}
 
 	/**

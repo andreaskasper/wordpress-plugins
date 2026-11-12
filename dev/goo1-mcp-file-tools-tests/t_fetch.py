@@ -8,7 +8,7 @@ def t(name, cond, info=None):
 def ok(r): return r.get('success') is True
 def code(r): return (r.get('error') or {}).get('code')
 sha=open('/home/claude/testenv/files/logo.sha').read().strip()
-r=call('wp_file_fetch',{'path':'wp-content/uploads/2026/11/logo.png','url':'http://files.test/logo.png','sha256':sha}); t('fetch binary', ok(r) and r['data']['sha256']==sha and r['data']['size']==70000, r)
+r=call('wp_file_fetch',{'path':'wp-content/uploads/2026/11/logo.png','url':'http://files.test/logo.png','sha256':sha}); t('fetch binary', ok(r) and r['data']['download_sha256']==sha and r['data']['sha256']!=sha and r['data']['size']==70000, r)
 r=call('wp_file_read',{'path':'wp-content/uploads/2026/11/logo.png'},'read'); t('read binary meta', ok(r) and r['data']['binary'] and r['data']['mime']=='image/png', r)
 r=call('wp_file_fetch',{'path':'wp-content/uploads/2026/11/logo.png','url':'http://files.test/logo.png'}); t('fetch exists', code(r)=='goo1_mcp_exists', r)
 r=call('wp_file_fetch',{'path':'wp-content/uploads/2026/11/logo.png','url':'http://files.test/logo.png','overwrite':True}); t('fetch overwrite + backup', ok(r) and r['data']['backup_id'], r)

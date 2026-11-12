@@ -59,7 +59,7 @@ class Goo1_MCP_File_Writer {
 			if ( false === $old ) {
 				return self::err( 'goo1_mcp_unreadable', 'The existing file cannot be read.', 500 );
 			}
-			$old_sha = hash( 'sha256', $old );
+			$old_sha = Goo1_MCP_File_Access::hash( $old );
 		}
 		$if_sha = isset( $o['if_sha256'] ) ? strtolower( trim( (string) $o['if_sha256'] ) ) : '';
 		if ( '' !== $if_sha ) {
@@ -91,12 +91,14 @@ class Goo1_MCP_File_Writer {
 		}
 		$is_php = isset( $content ) ? Goo1_MCP_File_Rules::is_php( $name, $content ) : Goo1_MCP_File_Rules::is_php( $name );
 
-		// .htaccess: only blocking lines, never over a foreign file (also for restore).
+		// .htaccess: only blocking lines, only files the bridge wrote itself
+		// (marker line), never over a foreign file (also for restore).
 		if ( Goo1_MCP_File_Rules::is_htaccess( $name ) ) {
-			if ( $exists && Goo1_MCP_File_Rules::htaccess_bad_lines( $old ) ) {
-				return self::err( 'goo1_mcp_foreign_htaccess', 'The existing .htaccess contains rules other than access blocks (probably from another plugin or the host); the bridge does not change it.', 403 );
+			if ( $exists && ( ! Goo1_MCP_File_Rules::htaccess_is_own( $old ) || Goo1_MCP_File_Rules::htaccess_bad_lines( $old ) ) ) {
+				return self::err( 'goo1_mcp_foreign_htaccess', 'This .htaccess was not written by the bridge (its first line is not "' . Goo1_MCP_File_Rules::HTACCESS_MARKER . '"), probably by another plugin or the host; the bridge does not change it.', 403 );
 			}
-			$bad = Goo1_MCP_File_Rules::htaccess_bad_lines( $content );
+			$content = Goo1_MCP_File_Rules::htaccess_with_marker( $content );
+			$bad     = Goo1_MCP_File_Rules::htaccess_bad_lines( $content );
 			if ( $bad ) {
 				return self::err( 'goo1_mcp_htaccess_rules', 'Only access blocks are allowed in .htaccess (Require all denied, Deny from all, Order, <Files>/<FilesMatch>, <IfModule [!]mod_authz_core.c>, Options -Indexes, comments). Refused: ' . implode( '; ', array_slice( $bad, 0, 10 ) ), 400 );
 			}
@@ -146,11 +148,12 @@ class Goo1_MCP_File_Writer {
 		$ok    = '' !== $source ? self::put_from_file( $abs, $source, $perms ) : self::put( $abs, $content, $perms );
 		if ( is_wp_error( $ok ) ) {
 			self::remove_dirs( $created_dirs );
+			Goo1_MCP_Backups::discard_file( $backup_id ); // Nothing changed.
 			return $ok;
 		}
 		Goo1_MCP_Audit_Log::add_flag( 'file_write' );
 		clearstatcache( true, $abs );
-		$new_sha = hash_file( 'sha256', $abs );
+		$new_sha = Goo1_MCP_File_Access::hash_file( $abs );
 
 		$result = array(
 			'path'            => $rel,
@@ -195,7 +198,12 @@ class Goo1_MCP_File_Writer {
 			if ( is_wp_error( $undo ) ) {
 				$data['restore_error'] = $undo->get_error_message();
 				$data['backup_id']     = $backup_id;
-			} elseif ( $is_php ) {
+			} else {
+				// The file is in the backed-up state again: the backup of this
+				// attempt must not push out an older, different one.
+				Goo1_MCP_Backups::discard_file( $backup_id );
+			}
+			if ( ! is_wp_error( $undo ) && $is_php ) {
 				$again = Goo1_MCP_File_Verify::php();
 				if ( 'fatal' === $again['status'] ) {
 					$data['note'] = 'The site still fails after restoring the previous state, so the error was probably not caused by this change. The change was not kept; pass verify=false to save it without the check.';
@@ -205,6 +213,9 @@ class Goo1_MCP_File_Writer {
 				? 'The site failed to load after saving (' . ( isset( $failed['error']['message'] ) ? $failed['error']['message'] : 'error' ) . '); the previous state was put back.'
 				: 'The server answered 500 after saving the .htaccess (a directive is not allowed here); the previous state was put back.';
 			return self::err( 'goo1_mcp_verify_failed', $msg, 422, array( 'details' => $data ) );
+		}
+		if ( $backup_id ) {
+			Goo1_MCP_Backups::prune_file( $rel );
 		}
 		return $result;
 	}
@@ -234,14 +245,14 @@ class Goo1_MCP_File_Writer {
 		if ( false === $old ) {
 			return self::err( 'goo1_mcp_unreadable', 'The file cannot be read.', 500 );
 		}
-		$old_sha = hash( 'sha256', $old );
+		$old_sha = Goo1_MCP_File_Access::hash( $old );
 		$if_sha  = isset( $o['if_sha256'] ) ? strtolower( trim( (string) $o['if_sha256'] ) ) : '';
 		if ( '' !== $if_sha && ! hash_equals( $old_sha, $if_sha ) ) {
 			return self::err( 'goo1_mcp_sha_mismatch', 'The file changed since it was read (if_sha256 does not match); nothing was deleted.', 409, array( 'current_sha256' => $old_sha ) );
 		}
 		$name = basename( $rel );
-		if ( Goo1_MCP_File_Rules::is_htaccess( $name ) && Goo1_MCP_File_Rules::htaccess_bad_lines( $old ) ) {
-			return self::err( 'goo1_mcp_foreign_htaccess', 'The .htaccess contains rules other than access blocks (probably from another plugin or the host); the bridge does not delete it.', 403 );
+		if ( Goo1_MCP_File_Rules::is_htaccess( $name ) && ( ! Goo1_MCP_File_Rules::htaccess_is_own( $old ) || Goo1_MCP_File_Rules::htaccess_bad_lines( $old ) ) ) {
+			return self::err( 'goo1_mcp_foreign_htaccess', 'This .htaccess was not written by the bridge (its first line is not "' . Goo1_MCP_File_Rules::HTACCESS_MARKER . '"), probably by another plugin or the host; the bridge does not delete it.', 403 );
 		}
 		$backup_id = null;
 		if ( empty( $o['no_backup'] ) ) {
@@ -252,6 +263,7 @@ class Goo1_MCP_File_Writer {
 		}
 		$perms = @fileperms( $abs ) & 0777; // phpcs:ignore
 		if ( ! @unlink( $abs ) ) { // phpcs:ignore
+			Goo1_MCP_Backups::discard_file( $backup_id );
 			return self::err( 'goo1_mcp_delete_failed', 'Could not delete the file (permissions?).', 500 );
 		}
 		self::invalidate( $abs );
@@ -264,8 +276,14 @@ class Goo1_MCP_File_Writer {
 			$result['verify'] = $v;
 			if ( 'fatal' === $v['status'] ) {
 				$undo = self::put( $abs, $old, $perms );
+				if ( ! is_wp_error( $undo ) ) {
+					Goo1_MCP_Backups::discard_file( $backup_id );
+				}
 				return self::err( 'goo1_mcp_verify_failed', 'The site failed to load without this file (' . $v['error']['message'] . '); it was put back.', 422, array( 'details' => array( 'path' => $rel, 'verify' => $v, 'restored' => ! is_wp_error( $undo ) ) ) );
 			}
+		}
+		if ( $backup_id ) {
+			Goo1_MCP_Backups::prune_file( $rel );
 		}
 		return $result;
 	}

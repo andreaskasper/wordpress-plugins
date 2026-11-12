@@ -113,7 +113,13 @@ class Goo1_MCP_Backups {
 
 	/**
 	 * Back up a file before it is changed. Content is stored base64-encoded,
-	 * so binary and non-UTF-8 files survive the JSON payload.
+	 * so binary and non-UTF-8 files survive the JSON payload. The column
+	 * sha256 holds the keyed file hash the file tools report
+	 * (Goo1_MCP_File_Access::hash()); the payload keeps the plain SHA-256 for
+	 * the integrity check in get_file(). Older backups are not pruned here:
+	 * the caller calls prune_file() once the change succeeded, or
+	 * discard_file() when the file was put back (so failed attempts never
+	 * push out real backups).
 	 *
 	 * @return int|WP_Error Backup id.
 	 */
@@ -149,7 +155,7 @@ class Goo1_MCP_Backups {
 				'object_key'  => self::file_key( $rel ),
 				'label'       => function_exists( 'mb_strcut' ) ? mb_strcut( (string) $rel, 0, 191, 'UTF-8' ) : substr( (string) $rel, 0, 191 ),
 				'payload'     => $payload,
-				'sha256'      => $sha,
+				'sha256'      => Goo1_MCP_File_Access::hash( $content ),
 				'size_bytes'  => strlen( $content ),
 				'created_by'  => get_current_user_id(),
 				'created_at'  => current_time( 'mysql' ),
@@ -159,8 +165,14 @@ class Goo1_MCP_Backups {
 		if ( ! $ok ) {
 			return new WP_Error( 'goo1_mcp_backup_failed', 'Could not store the backup (database error); nothing was changed.' );
 		}
-		$id = (int) $wpdb->insert_id;
+		return (int) $wpdb->insert_id;
+	}
 
+	/**
+	 * Keep only the newest KEEP backups of a file (after a successful change).
+	 */
+	public static function prune_file( $rel ) {
+		global $wpdb;
 		$keep_ids = $wpdb->get_col( $wpdb->prepare(
 			'SELECT id FROM ' . self::table() . " WHERE object_type = 'file' AND object_key = %s ORDER BY id DESC LIMIT %d",
 			self::file_key( $rel ), self::KEEP
@@ -171,7 +183,17 @@ class Goo1_MCP_Backups {
 				self::file_key( $rel ), (int) min( $keep_ids )
 			) );
 		}
-		return $id;
+	}
+
+	/**
+	 * Remove a backup taken for a change that did not happen (the file is in
+	 * exactly the backed-up state again).
+	 */
+	public static function discard_file( $id ) {
+		global $wpdb;
+		if ( $id ) {
+			$wpdb->delete( self::table(), array( 'id' => (int) $id, 'object_type' => 'file' ), array( '%d', '%s' ) );
+		}
 	}
 
 	/**
@@ -212,14 +234,14 @@ class Goo1_MCP_Backups {
 			return null;
 		}
 		$content = base64_decode( $p['content'], true ); // phpcs:ignore
-		if ( false === $content || hash( 'sha256', $content ) !== $row['sha256'] ) {
+		if ( false === $content || ! isset( $p['sha256'] ) || ! hash_equals( (string) $p['sha256'], hash( 'sha256', $content ) ) ) {
 			return null;
 		}
 		return array(
 			'id'         => (int) $row['id'],
 			'path'       => (string) $p['path'],
 			'content'    => $content,
-			'sha256'     => $row['sha256'],
+			'sha256'     => Goo1_MCP_File_Access::hash( $content ),
 			'size'       => strlen( $content ),
 			'perms'      => isset( $p['perms'] ) ? (string) $p['perms'] : '',
 			'mtime'      => isset( $p['mtime'] ) ? (int) $p['mtime'] : 0,

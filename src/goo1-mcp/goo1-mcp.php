@@ -144,7 +144,10 @@ add_action( 'rest_api_init', function () {
  */
 add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 	$route = $request->get_route();
-	if ( strpos( $route, '/goo1-mcp/v1' ) === 0 ) {
+	// WordPress matches REST routes case-insensitively (/GOO1-MCP/v1/… reaches
+	// the same handler), so every check here must ignore case too.
+	$lc = strtolower( (string) $route );
+	if ( strpos( $lc, '/goo1-mcp/v1' ) === 0 ) {
 		// On 401, point clients at the OAuth metadata (RFC 9728 / MCP auth spec).
 		if ( 401 === $response->get_status() ) {
 			$response->header(
@@ -156,7 +159,7 @@ add_filter( 'rest_post_dispatch', function ( $response, $server, $request ) {
 		$key_data = Goo1_MCP_Auth::instance()->current();
 		// Skip the /mcp envelope itself — each tools/call is dispatched
 		// internally and audited under its real endpoint.
-		if ( $key_data && substr( $route, -4 ) !== '/mcp' && ! Goo1_MCP_MCP_Controller::is_lean_route( $route ) ) {
+		if ( $key_data && substr( rtrim( $lc, '/' ), -4 ) !== '/mcp' && ! Goo1_MCP_MCP_Controller::is_lean_route( $route ) ) {
 			Goo1_MCP_Audit_Log::instance()->log(
 				$key_data['label'],
 				$route,

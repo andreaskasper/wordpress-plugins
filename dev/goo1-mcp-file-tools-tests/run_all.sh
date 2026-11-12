@@ -10,3 +10,4 @@ echo "== more"; python3 t_more.py
 ./reset.sh >/dev/null; echo "== fetch"; python3 t_fetch.py
 ./reset.sh >/dev/null; echo "== lean"; python3 t_lean.py
 ./reset.sh >/dev/null; echo "== regress"; python3 t_regress.py
+./reset.sh >/dev/null; echo "== review"; python3 t_review.py

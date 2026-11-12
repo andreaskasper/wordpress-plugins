@@ -10,4 +10,5 @@ Not part of the plugin ZIP (outside `src/`).
 
 `t_fetch.py` needs a static server container `testenv-files` (alias `files.test`, `php -S 0.0.0.0:80 -t /srv` with files `logo.png`, `lib.txt`, `broken.txt`, `bad.json`, `big.bin`, `logo.sha`) and an mu-plugin that filters `http_request_host_is_external` to true for `files.test`.
 `t_lean.py` needs an Apache snippet `<Directory …/plugins/voting/strict> AllowOverride AuthConfig Limit </Directory>` in `conf-enabled` (simulates shared hosting where `Options` in .htaccess gives 500).
-`t74.php`: PHP 7.4 run via `php:7.4-cli` + mysqli and the wp-cli phar copied from the cli container.
+`t_review.py` (regression tests for the 13 findings of the independent review, R1–R13) also needs the redirect scripts from `files-server/` in the same `/srv` folder (`to-own.php`, `to-own-dot.php`, `to-lib.php`, `loop.php`, `to-private.php`; `php -S` runs them) and the `strict` Apache snippet; R7 simulates a multisite sub-site with an `upload_dir` filter and the `UPLOADS` constant.
+`t74.php`: PHP 7.4 run via `php:7.4-cli` + mysqli and the wp-cli phar copied from the cli container; pass the `WORDPRESS_DB_*` variables to that container (the official wp-config reads them).

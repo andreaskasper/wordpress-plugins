@@ -24,6 +24,9 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 	const SEARCH_MAX_BYTES = 20971520;
 	const SEARCH_LINE_MAX  = 500;
 
+	/** Redirects wp_file_fetch follows itself (each target checked like the URL). */
+	const FETCH_MAX_REDIRECTS = 3;
+
 	public function register_routes() {
 		$read  = $this->get_permission_callback( 'read' );
 		$write = $this->get_permission_callback( 'full' );
@@ -97,7 +100,7 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		if ( ! $is_dir ) {
 			$info['size'] = (int) @filesize( $abs ); // phpcs:ignore
 			if ( $with_hash ) {
-				$info['sha256'] = $info['size'] <= self::HASH_MAX_BYTES ? hash_file( 'sha256', $abs ) : null;
+				$info['sha256'] = $info['size'] <= self::HASH_MAX_BYTES ? Goo1_MCP_File_Access::hash_file( $abs ) : null;
 			}
 		}
 		return $info;
@@ -214,7 +217,7 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		$out  = array(
 			'path'   => $t['rel'],
 			'size'   => $size,
-			'sha256' => hash_file( 'sha256', $abs ),
+			'sha256' => Goo1_MCP_File_Access::hash_file( $abs ),
 			'mtime'  => gmdate( 'c', (int) filemtime( $abs ) ),
 			'perms'  => substr( sprintf( '%o', fileperms( $abs ) ), -4 ),
 		);
@@ -234,9 +237,11 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		$buf     = '';
 		$taken   = 0;
 		$more    = false;
+		$in_key  = false; // A private key block opened before the window.
 		while ( ( $line = fgets( $fp ) ) !== false ) {
 			$line_no++;
 			if ( $line_no < $offset ) {
+				$in_key = Goo1_MCP_Redactor::private_key_open_after( $line, $in_key );
 				continue;
 			}
 			if ( ( $limit && $taken >= $limit ) || ( $taken > 0 && strlen( $buf ) + strlen( $line ) > $max ) ) {
@@ -252,16 +257,23 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		}
 		$total = $line_no;
 		if ( $more ) {
-			// Count the remaining lines for total_lines.
-			$total = $line_no;
+			// Count the lines after the one that stopped the window. That line
+			// was read whole by fgets(), so the rest starts on a new line; a
+			// last line without a line break counts once, and only if the
+			// rest is not empty.
+			$rest_len  = 0;
+			$rest_last = '';
 			while ( ! feof( $fp ) ) {
-				$total += substr_count( (string) fread( $fp, 1048576 ), "\n" );
-			}
-			if ( $size > 0 ) {
-				fseek( $fp, -1, SEEK_END );
-				if ( "\n" !== fread( $fp, 1 ) ) {
-					$total++;
+				$chunk = (string) fread( $fp, 1048576 );
+				if ( '' === $chunk ) {
+					break;
 				}
+				$total    += substr_count( $chunk, "\n" );
+				$rest_len += strlen( $chunk );
+				$rest_last = substr( $chunk, -1 );
+			}
+			if ( $rest_len > 0 && "\n" !== $rest_last ) {
+				$total++;
 			}
 		}
 		fclose( $fp );
@@ -273,6 +285,10 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		$redactions = 0;
 		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
 			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		} elseif ( $in_key ) {
+			// The window starts inside a private key block: mask from the
+			// start of the window as if the block's BEGIN line were there.
+			$buf = Goo1_MCP_Redactor::redact_text( "-----BEGIN PRIVATE KEY-----\n" . $buf, $redactions );
 		} else {
 			$buf = Goo1_MCP_Redactor::redact_text( $buf, $redactions );
 		}
