@@ -215,7 +215,17 @@ class Goo1_MCP_Backups {
 				$limit
 			), ARRAY_A );
 		}
-		return is_array( $rows ) ? $rows : array();
+		$rows = is_array( $rows ) ? $rows : array();
+		// label is cut at 191 bytes; the full path is in the payload.
+		foreach ( $rows as $i => $r ) {
+			if ( strlen( (string) $r['label'] ) >= 191 ) {
+				$p = json_decode( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT payload FROM ' . self::table() . ' WHERE id = %d', (int) $r['id'] ) ), true );
+				if ( is_array( $p ) && isset( $p['path'] ) ) {
+					$rows[ $i ]['label'] = (string) $p['path'];
+				}
+			}
+		}
+		return $rows;
 	}
 
 	/**

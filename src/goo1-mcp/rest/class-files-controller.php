@@ -217,7 +217,9 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		$out  = array(
 			'path'   => $t['rel'],
 			'size'   => $size,
-			'sha256' => Goo1_MCP_File_Access::hash_file( $abs ),
+			// Hashing streams, but is capped like the write limit (a hash is
+			// only needed to change the file).
+			'sha256' => $size <= max( self::HASH_MAX_BYTES, Goo1_MCP_File_Writer::max_write_bytes() ) ? Goo1_MCP_File_Access::hash_file( $abs ) : null,
 			'mtime'  => gmdate( 'c', (int) filemtime( $abs ) ),
 			'perms'  => substr( sprintf( '%o', fileperms( $abs ) ), -4 ),
 		);
@@ -238,17 +240,40 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 		$taken   = 0;
 		$more    = false;
 		$in_key  = false; // A private key block opened before the window.
-		while ( ( $line = fgets( $fp ) ) !== false ) {
-			$line_no++;
-			if ( $line_no < $offset ) {
-				$in_key = Goo1_MCP_Redactor::private_key_open_after( $line, $in_key );
+		while ( true ) {
+			if ( $line_no + 1 < $offset ) {
+				// Skipped line: read in pieces (a line can be huge), carrying
+				// the key-block state; 64 bytes overlap catch a split marker.
+				$piece = fgets( $fp, 65536 );
+				if ( false === $piece ) {
+					break;
+				}
+				$line_no++;
+				$in_key = Goo1_MCP_Redactor::private_key_open_after( $piece, $in_key );
+				while ( "\n" !== substr( $piece, -1 ) && ! feof( $fp ) ) {
+					$tail  = substr( $piece, -64 );
+					$piece = fgets( $fp, 65536 );
+					if ( false === $piece ) {
+						break;
+					}
+					$in_key = Goo1_MCP_Redactor::private_key_open_after( $tail . $piece, $in_key );
+				}
 				continue;
 			}
-			if ( ( $limit && $taken >= $limit ) || ( $taken > 0 && strlen( $buf ) + strlen( $line ) > $max ) ) {
-				$more = true;
+			$line = fgets( $fp, $max + 2 ); // At most $max + 1 bytes.
+			if ( false === $line ) {
 				break;
 			}
-			if ( 0 === $taken && strlen( $line ) > $max ) {
+			$line_no++;
+			$partial = "\n" !== substr( $line, -1 ) && ! feof( $fp );
+			if ( ( $limit && $taken >= $limit ) || ( $taken > 0 && ( $partial || strlen( $buf ) + strlen( $line ) > $max ) ) ) {
+				$more = true;
+				if ( $partial ) {
+					self::skip_rest_of_line( $fp );
+				}
+				break;
+			}
+			if ( 0 === $taken && ( $partial || strlen( $line ) > $max ) ) {
 				fclose( $fp );
 				return $this->fail( new WP_Error( 'goo1_mcp_line_too_long', sprintf( 'Line %d alone is longer than the read limit (%s).', $line_no, size_format( $max ) ), array( 'status' => 413 ) ) );
 			}
@@ -310,6 +335,15 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 			$out['redaction_hint'] = 'Secrets were replaced by [redacted]. To change lines containing [redacted], use wp_file_edit with an old_string that does not include them.';
 		}
 		return $this->success( $out );
+	}
+
+	/** Read on to the end of the current line, in pieces. */
+	private static function skip_rest_of_line( $fp ) {
+		while ( ( $piece = fgets( $fp, 65536 ) ) !== false ) {
+			if ( "\n" === substr( $piece, -1 ) ) {
+				return;
+			}
+		}
 	}
 
 	/** Cut a byte string so a UTF-8 sequence split at the end does not count as invalid. */
@@ -446,7 +480,10 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 			return;
 		}
 		// Search the redacted text, so the search cannot probe a secret.
-		$lines = preg_split( '/\r\n|\n|\r/', Goo1_MCP_Redactor::redact_text( $content ) );
+		// Lines are split at LF only, like wp_file_read, and redacted line by
+		// line from the secret ranges of the whole file, so a multi-line key
+		// block keeps the line numbers (they can be passed to read as offset).
+		$lines = self::redacted_lines( $content );
 		foreach ( $lines as $i => $line ) {
 			if ( null !== $re ) {
 				$m = @preg_match( $re, $line ); // phpcs:ignore
@@ -472,6 +509,46 @@ class Goo1_MCP_Files_Controller extends Goo1_MCP_Base_Controller {
 				'after'  => isset( $lines[ $i + 1 ] ) ? self::short( $lines[ $i + 1 ] ) : null,
 			);
 		}
+	}
+
+	/**
+	 * Lines of a text (split at LF, a CR before it dropped) with every part
+	 * inside a secret range replaced by [redacted].
+	 *
+	 * @return string[]
+	 */
+	private static function redacted_lines( $content ) {
+		$spans = Goo1_MCP_Redactor::secret_spans( $content );
+		$mask  = Goo1_MCP_Redactor::MASK;
+		$out   = array();
+		$start = 0;
+		$len   = strlen( $content );
+		$k     = 0;
+		while ( $start <= $len ) {
+			$nl   = strpos( $content, "\n", $start );
+			$end  = false === $nl ? $len : $nl;
+			$line = '';
+			$pos  = $start;
+			while ( $k < count( $spans ) && $spans[ $k ][1] <= $start ) {
+				$k++;
+			}
+			for ( $j = $k; $j < count( $spans ) && $spans[ $j ][0] < $end; $j++ ) {
+				$a     = max( $start, $spans[ $j ][0] );
+				$b     = min( $end, $spans[ $j ][1] );
+				$line .= substr( $content, $pos, $a - $pos ) . $mask;
+				$pos   = $b;
+			}
+			$line .= substr( $content, $pos, $end - $pos );
+			$out[] = rtrim( $line, "\r" );
+			if ( false === $nl ) {
+				break;
+			}
+			$start = $nl + 1;
+		}
+		if ( $out && '' === end( $out ) && "\n" === substr( $content, -1 ) ) {
+			array_pop( $out ); // No extra empty line after the last line break.
+		}
+		return $out;
 	}
 
 	/** preg_last_error_msg() is PHP 8.0+; the plugin supports 7.4. */

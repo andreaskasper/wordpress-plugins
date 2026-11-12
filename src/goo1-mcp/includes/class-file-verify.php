@@ -143,6 +143,11 @@ class Goo1_MCP_File_Verify {
 
 		$sample = '';
 		foreach ( (array) @scandir( $abs_dir ) as $f ) { // phpcs:ignore
+			// Never request a script: that would run it without a login.
+			$ext = strtolower( pathinfo( $f, PATHINFO_EXTENSION ) );
+			if ( in_array( $ext, Goo1_MCP_File_Access::SCRIPT_EXT, true ) || in_array( $ext, Goo1_MCP_File_Rules::PHP_EXT, true ) || 'inc' === $ext ) {
+				continue;
+			}
 			if ( '.' !== $f[0] && is_file( $abs_dir . '/' . $f ) ) {
 				$sample = $f;
 				break;

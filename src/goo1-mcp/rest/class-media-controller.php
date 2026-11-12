@@ -280,11 +280,28 @@ class Goo1_MCP_Media_Controller extends Goo1_MCP_Base_Controller {
 			$timeout = 30;
 		}
 
-		// download_url() uses wp_safe_remote_get() internally (blocks private
-		// hosts / SSRF by default).
-		$tmp = download_url( $url, $timeout );
-		if ( is_wp_error( $tmp ) ) {
-			return $tmp;
+		// Same rules as wp_file_fetch: public addresses only, never the site
+		// itself (also not via a redirect) – otherwise a file the bridge
+		// refuses to read (e.g. .env reachable over HTTP) could be copied
+		// into the media library under a harmless name.
+		$bad = Goo1_MCP_File_Access::url_error( $url );
+		if ( $bad ) {
+			return $bad;
+		}
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		$tmp = wp_tempnam( $url );
+		if ( ! $tmp ) {
+			return new WP_Error( 'http_no_file', 'Could not create a temporary file.' );
+		}
+		$dl = Goo1_MCP_File_Access::download( $url, array( 'timeout' => $timeout, 'stream' => true, 'filename' => $tmp ) );
+		if ( $dl['error'] || is_wp_error( $dl['response'] ) || 200 !== (int) wp_remote_retrieve_response_code( $dl['response'] ) ) {
+			@unlink( $tmp ); // phpcs:ignore
+			if ( $dl['error'] ) {
+				return $dl['error'];
+			}
+			return is_wp_error( $dl['response'] ) ? $dl['response'] : new WP_Error( 'http_404', sprintf( 'Download failed: HTTP %d.', (int) wp_remote_retrieve_response_code( $dl['response'] ) ) );
 		}
 
 		$max = (int) $request->get_param( 'max_filesize' );

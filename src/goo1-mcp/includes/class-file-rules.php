@@ -17,7 +17,7 @@ class Goo1_MCP_File_Rules {
 	const HTACCESS_MARKER = '# goo1-mcp: written by goo1 Claude Bridge';
 
 	/** Extensions checked as PHP (syntax check + loopback). */
-	const PHP_EXT = array( 'php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8' );
+	const PHP_EXT = array( 'php', 'phtml', 'pht', 'phar', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8' );
 
 	/**
 	 * Whether content is text: valid UTF-8 without NUL bytes.
@@ -53,6 +53,23 @@ class Goo1_MCP_File_Rules {
 
 	public static function is_htaccess( $name ) {
 		return '.htaccess' === strtolower( basename( $name ) );
+	}
+
+	/**
+	 * Whether a browser would take this content for HTML, XML or SVG when
+	 * the server sends no (or a generic) Content-Type: the first character
+	 * after an optional UTF-8 BOM and whitespace is "<" (a superset of the
+	 * WHATWG "unknown MIME type" HTML/XML patterns). Used below uploads,
+	 * where WordPress allows types the web server may not know (.3gp,
+	 * .midi, .rtx …) and the browser would then sniff the content.
+	 */
+	public static function looks_like_markup( $head ) {
+		$head = (string) $head;
+		if ( 0 === strpos( $head, "\xEF\xBB\xBF" ) ) {
+			$head = substr( $head, 3 );
+		}
+		$head = ltrim( $head, "\x09\x0A\x0C\x0D\x20" );
+		return '' !== $head && '<' === $head[0];
 	}
 
 	/** Whether a .htaccess was written by the bridge (first line is the marker). */
@@ -247,6 +264,10 @@ class Goo1_MCP_File_Rules {
 	public static function htaccess_bad_lines( $content ) {
 		$bad   = array();
 		$depth = array();
+		// Per section: "Order deny,allow" without "Deny from all" makes the
+		// default allow and, since mod_access_compat does not merge with the
+		// parent folder, would lift a parent's "Deny from all".
+		$frames = array( array( 'order_da' => false, 'deny' => false, 'line' => 0 ) );
 		// Apache ends lines at LF only (a CR before it is dropped). A lone CR
 		// would make this check see two lines where Apache sees one.
 		foreach ( explode( "\n", (string) $content ) as $n => $raw ) {
@@ -266,26 +287,44 @@ class Goo1_MCP_File_Rules {
 				continue;
 			}
 			if ( preg_match( '/^<(Files|FilesMatch)(\s+~)?\s+("[^"<>]*"|[^\s"<>]+)\s*>$/i', $line, $m ) ) {
-				$depth[] = strtolower( $m[1] );
+				$depth[]  = strtolower( $m[1] );
+				$frames[] = array( 'order_da' => false, 'deny' => false, 'line' => 0 );
 				continue;
 			}
 			if ( preg_match( '/^<IfModule\s+!?mod_authz_core\.c\s*>$/i', $line ) ) {
-				$depth[] = 'ifmodule';
+				$depth[]  = 'ifmodule';
+				$frames[] = array( 'order_da' => false, 'deny' => false, 'line' => 0 );
 				continue;
 			}
 			if ( preg_match( '/^<\/(Files|FilesMatch|IfModule)\s*>$/i', $line, $m ) ) {
 				if ( ! $depth || array_pop( $depth ) !== strtolower( $m[1] ) ) {
 					$bad[] = sprintf( 'line %d: %s (unbalanced block)', $n + 1, $line );
+				} else {
+					$f = array_pop( $frames );
+					if ( $f['order_da'] && ! $f['deny'] ) {
+						$bad[] = sprintf( 'line %d: Order deny,allow without Deny from all in the same section (would allow access)', $f['line'] );
+					}
 				}
 				continue;
 			}
-			if ( preg_match( '/^(Require\s+all\s+denied|Deny\s+from\s+all|Order\s+(deny\s*,\s*allow|allow\s*,\s*deny)|Options\s+-Indexes)$/i', $line ) ) {
+			if ( preg_match( '/^Order\s+deny\s*,\s*allow$/i', $line ) ) {
+				$frames[ count( $frames ) - 1 ]['order_da'] = true;
+				$frames[ count( $frames ) - 1 ]['line']     = $n + 1;
+				continue;
+			}
+			if ( preg_match( '/^Deny\s+from\s+all$/i', $line ) ) {
+				$frames[ count( $frames ) - 1 ]['deny'] = true;
+				continue;
+			}
+			if ( preg_match( '/^(Require\s+all\s+denied|Order\s+allow\s*,\s*deny|Options\s+-Indexes)$/i', $line ) ) {
 				continue;
 			}
 			$bad[] = sprintf( 'line %d: %s', $n + 1, $line );
 		}
 		if ( $depth ) {
 			$bad[] = 'unclosed block: <' . implode( '>, <', $depth ) . '>';
+		} elseif ( $frames[0]['order_da'] && ! $frames[0]['deny'] ) {
+			$bad[] = sprintf( 'line %d: Order deny,allow without Deny from all in the same section (would allow access)', $frames[0]['line'] );
 		}
 		return $bad;
 	}

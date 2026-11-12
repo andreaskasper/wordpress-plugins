@@ -417,6 +417,45 @@ class Goo1_MCP_Redactor {
 		if ( ! is_string( $text ) || '' === $text ) {
 			return $text;
 		}
+		foreach ( self::text_forms() as $s ) {
+			$s = (string) $s;
+			if ( false !== strpos( $text, $s ) ) {
+				$n     = 0;
+				$text  = str_replace( $s, self::MASK, $text, $n );
+				$count += $n;
+			}
+		}
+
+		$text = self::redact_private_keys( $text, $count );
+
+		// Short, bounded patterns (no backtracking risk on large input).
+		foreach ( self::HASH_PATTERNS as $re ) {
+			$n   = 0;
+			$out = preg_replace( $re, self::MASK, $text, -1, $n );
+			if ( null === $out ) {
+				// PCRE failed (limits): fail closed instead of returning nothing.
+				$count++;
+				return self::MASK;
+			}
+			$text   = $out;
+			$count += (int) $n;
+		}
+		return $text;
+	}
+
+	/** Password hash formats masked inside free text. */
+	const HASH_PATTERNS = array(
+		'/\$(?:P|H)\$[.\/0-9A-Za-z]{31}/',
+		'/\$2[abxy]\$\d\d\$[.\/A-Za-z0-9]{53}/',
+		'/\$argon2(?:id|i|d)\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+\/]+\$[A-Za-z0-9+\/]+/',
+	);
+
+	/**
+	 * Every form of every known secret that redact_text() masks, longest first.
+	 *
+	 * @return string[]
+	 */
+	private static function text_forms() {
 		// Each secret also in the forms logs commonly use (JSON-escaped, URL-encoded).
 		$forms = array();
 		foreach ( array_merge( self::known_secrets(), self::config_secrets() ) as $s ) {
@@ -432,35 +471,102 @@ class Goo1_MCP_Redactor {
 		usort( $forms, function ( $a, $b ) {
 			return strlen( $b ) - strlen( $a );
 		} );
-		foreach ( $forms as $s ) {
-			$s = (string) $s;
-			if ( false !== strpos( $text, $s ) ) {
-				$n     = 0;
-				$text  = str_replace( $s, self::MASK, $text, $n );
-				$count += $n;
+		return $forms;
+	}
+
+	/**
+	 * Where redact_text() would mask: byte ranges [start, end) of $text with
+	 * a known secret, a private key block or a password hash, overlapping
+	 * ranges merged. Used where a tool must act on the redacted view of a
+	 * text but change the real one (wp_file_edit), so that its answers never
+	 * depend on a secret. On a PCRE error the whole text is one range.
+	 *
+	 * @return array[] array( start, end ), sorted.
+	 */
+	public static function secret_spans( $text ) {
+		if ( ! is_string( $text ) || '' === $text ) {
+			return array();
+		}
+		$len   = strlen( $text );
+		$spans = array();
+		foreach ( self::text_forms() as $f ) {
+			$f = (string) $f;
+			for ( $p = strpos( $text, $f ); false !== $p; $p = strpos( $text, $f, $p + 1 ) ) {
+				$spans[] = array( $p, $p + strlen( $f ) );
 			}
 		}
-
-		$text = self::redact_private_keys( $text, $count );
-
-		// Short, bounded patterns (no backtracking risk on large input).
-		$patterns = array(
-			'/\$(?:P|H)\$[.\/0-9A-Za-z]{31}/',
-			'/\$2[abxy]\$\d\d\$[.\/A-Za-z0-9]{53}/',
-			'/\$argon2(?:id|i|d)\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+\/]+\$[A-Za-z0-9+\/]+/',
-		);
-		foreach ( $patterns as $re ) {
-			$n   = 0;
-			$out = preg_replace( $re, self::MASK, $text, -1, $n );
-			if ( null === $out ) {
-				// PCRE failed (limits): fail closed instead of returning nothing.
-				$count++;
-				return self::MASK;
-			}
-			$text   = $out;
-			$count += (int) $n;
+		$keys = self::private_key_spans( $text );
+		if ( null === $keys ) {
+			return array( array( 0, $len ) );
 		}
-		return $text;
+		$spans = array_merge( $spans, $keys );
+		foreach ( self::HASH_PATTERNS as $re ) {
+			$n = preg_match_all( $re, $text, $m, PREG_OFFSET_CAPTURE );
+			if ( false === $n ) {
+				return array( array( 0, $len ) );
+			}
+			foreach ( $m[0] as $hit ) {
+				$spans[] = array( $hit[1], $hit[1] + strlen( $hit[0] ) );
+			}
+		}
+		if ( ! $spans ) {
+			return array();
+		}
+		usort( $spans, function ( $a, $b ) {
+			return $a[0] - $b[0];
+		} );
+		$out = array( $spans[0] );
+		foreach ( array_slice( $spans, 1 ) as $sp ) {
+			$last = count( $out ) - 1;
+			if ( $sp[0] <= $out[ $last ][1] ) {
+				$out[ $last ][1] = max( $out[ $last ][1], $sp[1] );
+			} else {
+				$out[] = $sp;
+			}
+		}
+		return $out;
+	}
+
+	/**
+	 * Ranges of private key blocks, by the rules of redact_private_keys().
+	 *
+	 * @return array[]|null Null on a PCRE error.
+	 */
+	private static function private_key_spans( $text ) {
+		if ( false === strpos( $text, 'PRIVATE KEY' ) ) {
+			return array();
+		}
+		$begin_re = '/-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/';
+		$end_re   = '/-----END [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/';
+		$out      = array();
+		$offset   = 0;
+		$len      = strlen( $text );
+		while ( $offset < $len ) {
+			$has_begin = preg_match( $begin_re, $text, $bm, PREG_OFFSET_CAPTURE, $offset );
+			$has_end   = preg_match( $end_re, $text, $em, PREG_OFFSET_CAPTURE, $offset );
+			if ( false === $has_begin || false === $has_end ) {
+				return null;
+			}
+			if ( ! $has_begin && ! $has_end ) {
+				break;
+			}
+			if ( $has_end && ( ! $has_begin || $em[0][1] < $bm[0][1] ) ) {
+				$end   = $em[0][1] + strlen( $em[0][0] );
+				$out[] = array( $offset, $end );
+				$offset = $end;
+				continue;
+			}
+			$after = $bm[0][1] + strlen( $bm[0][0] );
+			if ( preg_match( $end_re, $text, $em2, PREG_OFFSET_CAPTURE, $after ) ) {
+				$end   = $em2[0][1] + strlen( $em2[0][0] );
+				$out[] = array( $bm[0][1], $end );
+				$offset = $end;
+			} else {
+				$out[] = array( $bm[0][1], $len );
+				break;
+			}
+		}
+		return $out;
 	}
 
 	/**

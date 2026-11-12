@@ -51,15 +51,22 @@ class Goo1_MCP_File_Writer {
 			return self::err( 'goo1_mcp_is_dir', 'The path is a folder, not a file.', 409 );
 		}
 
-		// Overwrite rules.
+		// Overwrite rules. The old content is only loaded where it may be
+		// needed to put it back (PHP, .htaccess); the hash is streamed, so a
+		// large file changed with no_backup=true is never read into memory.
 		$old     = null;
 		$old_sha = null;
 		if ( $exists ) {
-			$old = @file_get_contents( $abs ); // phpcs:ignore
-			if ( false === $old ) {
+			$old_sha = Goo1_MCP_File_Access::hash_file( $abs );
+			if ( false === $old_sha ) {
 				return self::err( 'goo1_mcp_unreadable', 'The existing file cannot be read.', 500 );
 			}
-			$old_sha = Goo1_MCP_File_Access::hash( $old );
+			if ( self::may_need_undo( $name ) ) {
+				$old = @file_get_contents( $abs ); // phpcs:ignore
+				if ( false === $old ) {
+					return self::err( 'goo1_mcp_unreadable', 'The existing file cannot be read.', 500 );
+				}
+			}
 		}
 		$if_sha = isset( $o['if_sha256'] ) ? strtolower( trim( (string) $o['if_sha256'] ) ) : '';
 		if ( '' !== $if_sha ) {
@@ -103,11 +110,20 @@ class Goo1_MCP_File_Writer {
 				return self::err( 'goo1_mcp_htaccess_rules', 'Only access blocks are allowed in .htaccess (Require all denied, Deny from all, Order, <Files>/<FilesMatch>, <IfModule [!]mod_authz_core.c>, Options -Indexes, comments). Refused: ' . implode( '; ', array_slice( $bad, 0, 10 ) ), 400 );
 			}
 		}
+		// Below uploads nothing a browser would render as HTML/XML/SVG, also
+		// for restore (types such as .3gp have no Content-Type on Apache).
+		if ( ! Goo1_MCP_File_Rules::is_htaccess( $name ) && false !== Goo1_MCP_File_Access::uploads_root_of( $rel ) ) {
+			$head = isset( $content ) ? substr( $content, 0, 1024 ) : (string) @file_get_contents( $source, false, null, 0, 1024 ); // phpcs:ignore
+			if ( Goo1_MCP_File_Rules::looks_like_markup( $head ) ) {
+				return self::err( 'goo1_mcp_markup_in_uploads', 'Below uploads no file may start with "<" (a browser could run it as HTML, XML or SVG on this domain); nothing was saved.', 400 );
+			}
+		}
 		if ( $check ) {
 			if ( $is_php ) {
 				$perr = Goo1_MCP_File_Rules::php_error( $content );
 				if ( '' !== $perr ) {
-					return self::err( 'goo1_mcp_php_syntax', 'PHP syntax error, nothing was saved: ' . $perr, 400 );
+					// The parser quotes the token it stopped at, which can be a secret.
+					return self::err( 'goo1_mcp_php_syntax', 'PHP syntax error, nothing was saved: ' . Goo1_MCP_Redactor::redact_text( $perr ), 400 );
 				}
 			}
 			if ( Goo1_MCP_File_Rules::is_json( $name ) && empty( $o['allow_invalid_json'] ) ) {
@@ -241,16 +257,22 @@ class Goo1_MCP_File_Writer {
 			return array( 'path' => $rel, 'deleted' => 'folder' );
 		}
 
-		$old = @file_get_contents( $abs ); // phpcs:ignore
-		if ( false === $old ) {
+		$name    = basename( $rel );
+		$old     = null;
+		$old_sha = Goo1_MCP_File_Access::hash_file( $abs );
+		if ( false === $old_sha ) {
 			return self::err( 'goo1_mcp_unreadable', 'The file cannot be read.', 500 );
 		}
-		$old_sha = Goo1_MCP_File_Access::hash( $old );
+		if ( self::may_need_undo( $name ) ) {
+			$old = @file_get_contents( $abs ); // phpcs:ignore
+			if ( false === $old ) {
+				return self::err( 'goo1_mcp_unreadable', 'The file cannot be read.', 500 );
+			}
+		}
 		$if_sha  = isset( $o['if_sha256'] ) ? strtolower( trim( (string) $o['if_sha256'] ) ) : '';
 		if ( '' !== $if_sha && ! hash_equals( $old_sha, $if_sha ) ) {
 			return self::err( 'goo1_mcp_sha_mismatch', 'The file changed since it was read (if_sha256 does not match); nothing was deleted.', 409, array( 'current_sha256' => $old_sha ) );
 		}
-		$name = basename( $rel );
 		if ( Goo1_MCP_File_Rules::is_htaccess( $name ) && ( ! Goo1_MCP_File_Rules::htaccess_is_own( $old ) || Goo1_MCP_File_Rules::htaccess_bad_lines( $old ) ) ) {
 			return self::err( 'goo1_mcp_foreign_htaccess', 'This .htaccess was not written by the bridge (its first line is not "' . Goo1_MCP_File_Rules::HTACCESS_MARKER . '"), probably by another plugin or the host; the bridge does not delete it.', 403 );
 		}
@@ -271,7 +293,7 @@ class Goo1_MCP_File_Writer {
 		$result = array( 'path' => $rel, 'deleted' => 'file', 'previous_sha256' => $old_sha, 'backup_id' => $backup_id );
 
 		$verify = array_key_exists( 'verify', $o ) && null !== $o['verify'] ? (bool) $o['verify'] : true;
-		if ( Goo1_MCP_File_Rules::is_php( $name, $old ) && $verify ) {
+		if ( null !== $old && Goo1_MCP_File_Rules::is_php( $name, $old ) && $verify ) {
 			$v                = Goo1_MCP_File_Verify::php();
 			$result['verify'] = $v;
 			if ( 'fatal' === $v['status'] ) {
@@ -286,6 +308,15 @@ class Goo1_MCP_File_Writer {
 			Goo1_MCP_Backups::prune_file( $rel );
 		}
 		return $result;
+	}
+
+	/**
+	 * Whether a change of this file is checked afterwards and may have to be
+	 * undone (PHP incl. .inc, .htaccess), so its old content is kept.
+	 */
+	private static function may_need_undo( $name ) {
+		$ext = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+		return Goo1_MCP_File_Rules::is_htaccess( $name ) || 'inc' === $ext || in_array( $ext, Goo1_MCP_File_Rules::PHP_EXT, true );
 	}
 
 	/** Put the previous state back after a failed check. */

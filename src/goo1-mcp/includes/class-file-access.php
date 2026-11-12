@@ -25,7 +25,7 @@ class Goo1_MCP_File_Access {
 	const SCRIPT_EXT = array( 'php', 'phtml', 'phar', 'phps', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8', 'pht', 'cgi', 'pl', 'py', 'sh' );
 
 	/** Types WordPress may allow for uploads that are still refused below uploads (stored XSS). */
-	const UPLOAD_EXCLUDED_EXT = array( 'html', 'htm', 'shtml', 'xhtml', 'js', 'mjs', 'svg', 'svgz', 'xml', 'swf' );
+	const UPLOAD_EXCLUDED_EXT = array( 'html', 'htm', 'shtml', 'xhtml', 'xht', 'xhtm', 'js', 'mjs', 'svg', 'svgz', 'xml', 'xsl', 'xslt', 'mml', 'mathml', 'rdf', 'atom', 'rss', 'xsd', 'xul', 'swf' );
 
 	/** Key and credential file extensions (read and write blocked). */
 	const KEY_EXT = array( 'pem', 'key', 'p12', 'pfx', 'jks', 'ppk', 'kdbx' );
@@ -193,6 +193,73 @@ class Goo1_MCP_File_Access {
 			$key = hash_hmac( 'sha256', 'goo1-mcp file hash', wp_salt( 'auth' ) );
 		}
 		return $key;
+	}
+
+	/* ------------------------------------------------------------------
+	 * Downloads (wp_file_fetch, wp_upload_media)
+	 * ---------------------------------------------------------------- */
+
+	/**
+	 * Why a download URL (or a redirect target) is refused, or null.
+	 * wp_http_validate_url() rejects private addresses but lets the site's
+	 * own host through; a download from the site itself could copy a
+	 * blocked file (e.g. a wp-config backup or .env reachable over HTTP)
+	 * into a shared folder or the media library.
+	 */
+	public static function url_error( $url ) {
+		if ( '' === (string) $url || ! wp_http_validate_url( $url ) ) {
+			return new WP_Error( 'goo1_mcp_bad_url', 'url must be a public http(s) URL.', array( 'status' => 400 ) );
+		}
+		$host = rtrim( strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ), '.' );
+		foreach ( array( home_url(), site_url() ) as $own ) {
+			if ( $host === rtrim( strtolower( (string) wp_parse_url( $own, PHP_URL_HOST ) ), '.' ) ) {
+				return new WP_Error( 'goo1_mcp_bad_url', 'Downloads from this site itself are not allowed; read the file with wp_file_read instead.', array( 'status' => 400 ) );
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * wp_safe_remote_get() that follows redirects itself, checking every
+	 * target with url_error() (the HTTP API would accept a redirect to the
+	 * site's own host).
+	 *
+	 * @param string $url  Already checked with url_error().
+	 * @param array  $args wp_safe_remote_get() arguments (redirection is ignored).
+	 * @param int    $max_redirects
+	 * @return array response (array|WP_Error|null), url (last URL), error (WP_Error|null).
+	 */
+	public static function download( $url, $args, $max_redirects = 3 ) {
+		$args['redirection'] = 0;
+		$current = $url;
+		$res     = null;
+		for ( $hop = 0; $hop <= $max_redirects; $hop++ ) {
+			$res = wp_safe_remote_get( $current, $args );
+			if ( is_wp_error( $res ) ) {
+				break;
+			}
+			$status = (int) wp_remote_retrieve_response_code( $res );
+			if ( ! in_array( $status, array( 301, 302, 303, 307, 308 ), true ) ) {
+				break;
+			}
+			$location = wp_remote_retrieve_header( $res, 'location' );
+			if ( is_array( $location ) ) {
+				$location = end( $location );
+			}
+			if ( '' === (string) $location ) {
+				break;
+			}
+			if ( $max_redirects === $hop ) {
+				return array( 'response' => $res, 'url' => $current, 'error' => new WP_Error( 'goo1_mcp_fetch_failed', sprintf( 'Download failed: more than %d redirects.', $max_redirects ), array( 'status' => 502 ) ) );
+			}
+			$next = esc_url_raw( WP_Http::make_absolute_url( (string) $location, $current ), array( 'http', 'https' ) );
+			$bad  = self::url_error( $next );
+			if ( $bad ) {
+				return array( 'response' => $res, 'url' => $current, 'error' => new WP_Error( $bad->get_error_code(), 'Redirect refused: ' . $bad->get_error_message(), array( 'status' => 400, 'redirect_to' => $next ) ) );
+			}
+			$current = $next;
+		}
+		return array( 'response' => $res, 'url' => $current, 'error' => null );
 	}
 
 	/* ------------------------------------------------------------------
@@ -548,7 +615,9 @@ class Goo1_MCP_File_Access {
 			if ( ( false !== $own && self::is_within( $rel, $own ) ) || self::is_within( $lower, strtolower( ( false === $content ? 'wp-content' : $content ) . '/plugins/goo1-mcp' ) ) ) {
 				return 'The bridge does not change its own plugin folder.';
 			}
-			$uploads = self::uploads_root_of( $rel );
+			// Type rules apply to what is written; deleting a stray script
+			// below uploads must stay possible.
+			$uploads = 'write' === $op ? self::uploads_root_of( $rel ) : false;
 			if ( false !== $uploads && ! $is_dir && '.htaccess' !== $name && strtolower( $rel ) !== strtolower( $uploads ) ) {
 				$reason = self::upload_type_reason( $name );
 				if ( '' !== $reason ) {
@@ -614,6 +683,14 @@ class Goo1_MCP_File_Access {
 		}
 		if ( ! in_array( $ext, $allowed, true ) ) {
 			return sprintf( 'Below uploads only file types WordPress allows for uploads can be written; .%s is not one of them.', $ext );
+		}
+		// Inner parts that look like an extension must be allowed types too
+		// (WordPress' own rule in sanitize_file_name()): the web server may
+		// serve a part it knows, e.g. x.xht.3gp as XHTML.
+		foreach ( array_slice( $parts, 0, -1 ) as $p ) {
+			if ( preg_match( '/^[a-z]{2,5}\d?$/', $p ) && ! in_array( $p, $allowed, true ) ) {
+				return sprintf( 'Below uploads every part of the name that looks like an extension must be a type WordPress allows for uploads; .%s is not (rename, e.g. with "-" instead of ".").', $p );
+			}
 		}
 		return '';
 	}

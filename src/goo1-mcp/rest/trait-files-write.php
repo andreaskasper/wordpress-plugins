@@ -51,7 +51,9 @@ trait Goo1_MCP_Files_Write {
 		}
 		$mask = Goo1_MCP_Redactor::MASK;
 		if ( false !== strpos( $content, $mask ) ) {
-			$old = $t['exists'] && ! $t['is_dir'] ? (string) @file_get_contents( $t['abs'] ) : ''; // phpcs:ignore
+			// Only files up to the write limit are read for this (a larger
+			// one counts as having no [redacted], so content with it is refused).
+			$old = $t['exists'] && ! $t['is_dir'] && (int) @filesize( $t['abs'] ) <= Goo1_MCP_File_Writer::max_write_bytes() ? (string) @file_get_contents( $t['abs'] ) : ''; // phpcs:ignore
 			if ( substr_count( $content, $mask ) > substr_count( $old, $mask ) ) {
 				return $this->fail( new WP_Error( 'goo1_mcp_redacted_content', 'content contains [redacted], but the file has a secret there. Writing it would replace the secret with the placeholder. Use wp_file_edit for the lines you want to change.', array( 'status' => 400 ) ) );
 			}
@@ -79,6 +81,10 @@ trait Goo1_MCP_Files_Write {
 		if ( ! is_string( $old_s ) || '' === $old_s || ! is_string( $new_s ) ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_bad_edit', 'old_string (non-empty) and new_string (may be empty) are required.', array( 'status' => 400 ) ) );
 		}
+		clearstatcache( true, $t['abs'] );
+		if ( (int) @filesize( $t['abs'] ) > Goo1_MCP_File_Writer::max_write_bytes() ) { // phpcs:ignore
+			return $this->fail( new WP_Error( 'goo1_mcp_too_large', sprintf( 'The file is larger than the write limit of %s (Claude Bridge → Settings → File access).', size_format( Goo1_MCP_File_Writer::max_write_bytes() ) ), array( 'status' => 413 ) ) );
+		}
 		$cur = @file_get_contents( $t['abs'] ); // phpcs:ignore
 		if ( false === $cur ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_unreadable', 'The file cannot be read.', array( 'status' => 500 ) ) );
@@ -91,33 +97,86 @@ trait Goo1_MCP_Files_Write {
 		if ( '' !== $if_sha && ! hash_equals( $sha, $if_sha ) ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_sha_mismatch', 'The file changed since it was read (if_sha256 does not match); nothing was changed. Read it again.', array( 'status' => 409, 'current_sha256' => $sha ) ) );
 		}
+		// Matching runs on the redacted view of the file (what wp_file_read
+		// shows), the change on the real file. So every answer – not found,
+		// ambiguous, unchanged – depends only on text the caller can read,
+		// and old_string cannot be used to guess a [redacted] secret.
 		$mask = Goo1_MCP_Redactor::MASK;
-		if ( ( false !== strpos( $old_s, $mask ) || false !== strpos( $new_s, $mask ) ) && false === strpos( $cur, $mask ) ) {
+		if ( Goo1_MCP_Permissions::instance()->allow_unredacted( $request ) ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+			$secret = array();
+		} else {
+			$secret = Goo1_MCP_Redactor::secret_spans( $cur );
+		}
+		$has_mask = false !== strpos( $old_s, $mask ) || false !== strpos( $new_s, $mask );
+		if ( $has_mask && ( $secret || false === strpos( $cur, $mask ) ) ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_redacted_content', 'old_string/new_string contain [redacted]: that is a secret masked in the read result, not the real text. Choose an old_string next to it that does not include [redacted].', array( 'status' => 400 ) ) );
 		}
+		// View: secrets replaced by the mask; $marks maps view ranges back.
+		$view  = '';
+		$marks = array(); // array( view_start, view_end, shift after this mark )
+		$prev  = 0;
+		$shift = 0;
+		foreach ( $secret as $sp ) {
+			$view   .= substr( $cur, $prev, $sp[0] - $prev );
+			$vs      = strlen( $view );
+			$view   .= $mask;
+			$shift  += ( $sp[1] - $sp[0] ) - strlen( $mask );
+			$marks[] = array( $vs, strlen( $view ), $shift );
+			$prev    = $sp[1];
+		}
+		$view .= substr( $cur, $prev );
+		$to_cur = function ( $p ) use ( $marks ) {
+			$add = 0;
+			foreach ( $marks as $m ) {
+				if ( $m[1] <= $p ) {
+					$add = $m[2];
+				} else {
+					break;
+				}
+			}
+			return $p + $add;
+		};
 
-		$all = self::flag( $request, 'replace_all' );
-		$eol_mode = false !== strpos( $cur, "\r\n" ) && false === strpos( $old_s, "\r" );
+		$all      = self::flag( $request, 'replace_all' );
+		$eol_mode = false !== strpos( $view, "\r\n" ) && false === strpos( $old_s, "\r" );
 		if ( $eol_mode ) {
 			// CRLF or mixed line endings: match with CRLF read as LF, so an LF
 			// and a CRLF occurrence both count for the uniqueness check.
-			$spans = self::eol_spans( $cur, $old_s );
+			$found = self::eol_spans( $view, $old_s );
 		} else {
-			$spans = array();
-			for ( $pos = strpos( $cur, $old_s ); false !== $pos; $pos = strpos( $cur, $old_s, $pos + strlen( $old_s ) ) ) {
-				$spans[] = array( $pos, strlen( $old_s ) );
+			$found = array();
+			for ( $pos = strpos( $view, $old_s ); false !== $pos; $pos = strpos( $view, $old_s, $pos + strlen( $old_s ) ) ) {
+				$found[] = array( $pos, strlen( $old_s ) );
+			}
+		}
+		// A match touching a mask is not a match (it would change a secret).
+		$spans = array();
+		foreach ( $found as $f ) {
+			$touch = false;
+			foreach ( $marks as $m ) {
+				if ( $f[0] < $m[1] && $f[0] + $f[1] > $m[0] ) {
+					$touch = true;
+					break;
+				}
+			}
+			if ( ! $touch ) {
+				$spans[] = $f;
 			}
 		}
 		$count = count( $spans );
 		if ( 0 === $count ) {
-			return $this->fail( new WP_Error( 'goo1_mcp_edit_not_found', 'old_string was not found in the file (it must match exactly, including spaces, tabs and line breaks). Read the file again.', array( 'status' => 404 ) ) );
+			return $this->fail( new WP_Error( 'goo1_mcp_edit_not_found', 'old_string was not found in the file (it must match exactly, including spaces, tabs and line breaks, and must not overlap [redacted]). Read the file again.', array( 'status' => 404 ) ) );
 		}
 		if ( $count > 1 && ! $all ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_edit_ambiguous', sprintf( 'old_string appears %d times; include more surrounding text to make it unique, or set replace_all=true.', $count ), array( 'status' => 409 ) ) );
 		}
 		$new = $cur;
 		foreach ( array_reverse( $all ? $spans : array( $spans[0] ) ) as $sp ) {
-			$new = substr_replace( $new, $eol_mode ? self::eol_like( $new_s, $cur, $sp[0], $sp[1] ) : $new_s, $sp[0], $sp[1] );
+			$cs   = $to_cur( $sp[0] );
+			$ce   = $to_cur( $sp[0] + $sp[1] );
+			$repl = $eol_mode ? self::eol_like( $new_s, $view, $sp[0], $sp[1] ) : $new_s;
+			$new  = substr_replace( $new, $repl, $cs, $ce - $cs );
 		}
 		if ( $new === $cur ) {
 			return $this->success( array( 'path' => $t['rel'], 'unchanged' => true, 'sha256' => $sha ) );
@@ -223,48 +282,18 @@ trait Goo1_MCP_Files_Write {
 		if ( ! $tmp ) {
 			return $this->fail( new WP_Error( 'goo1_mcp_tmp_failed', 'Could not create a temporary file.', array( 'status' => 500 ) ) );
 		}
-		// Redirects are followed here, not by the HTTP API: every target must
-		// pass the same checks as the first URL (wp_safe_remote_get() would
-		// accept a redirect to the site's own host).
-		$current = $url;
-		$res     = null;
-		$fail    = null;
-		for ( $hop = 0; $hop <= self::FETCH_MAX_REDIRECTS; $hop++ ) {
-			$res = wp_safe_remote_get( $current, array(
-				'timeout'             => 120,
-				'redirection'         => 0,
-				'stream'              => true,
-				'filename'            => $tmp,
-				'limit_response_size' => $max + 1,
-			) );
-			if ( is_wp_error( $res ) ) {
-				break;
-			}
-			$status = (int) wp_remote_retrieve_response_code( $res );
-			if ( ! in_array( $status, array( 301, 302, 303, 307, 308 ), true ) ) {
-				break;
-			}
-			$location = wp_remote_retrieve_header( $res, 'location' );
-			if ( is_array( $location ) ) {
-				$location = end( $location );
-			}
-			if ( '' === (string) $location ) {
-				break;
-			}
-			if ( self::FETCH_MAX_REDIRECTS === $hop ) {
-				$fail = new WP_Error( 'goo1_mcp_fetch_failed', sprintf( 'Download failed: more than %d redirects.', self::FETCH_MAX_REDIRECTS ), array( 'status' => 502 ) );
-				break;
-			}
-			$next = esc_url_raw( WP_Http::make_absolute_url( (string) $location, $current ), array( 'http', 'https' ) );
-			$bad  = self::fetch_url_error( $next );
-			if ( $bad ) {
-				$fail = new WP_Error( $bad->get_error_code(), 'Redirect refused: ' . $bad->get_error_message(), array( 'status' => 400, 'redirect_to' => $next ) );
-				break;
-			}
-			$current = $next;
-		}
+		// Redirects are followed by the helper, each target checked like the URL.
+		$dl      = Goo1_MCP_File_Access::download( $url, array(
+			'timeout'             => 120,
+			'stream'              => true,
+			'filename'            => $tmp,
+			'limit_response_size' => $max + 1,
+		), self::FETCH_MAX_REDIRECTS );
+		$res     = $dl['response'];
+		$current = $dl['url'];
+		$fail    = $dl['error'];
 		if ( $fail ) {
-			// Set above (redirect refused / too many).
+			// Redirect refused or too many redirects (from download()).
 		} elseif ( is_wp_error( $res ) ) {
 			$fail = new WP_Error( 'goo1_mcp_fetch_failed', 'Download failed: ' . $res->get_error_message(), array( 'status' => 502 ) );
 		} elseif ( 200 !== (int) wp_remote_retrieve_response_code( $res ) ) {
@@ -275,9 +304,11 @@ trait Goo1_MCP_Files_Write {
 			if ( $size > $max ) {
 				$fail = new WP_Error( 'goo1_mcp_too_large', sprintf( 'The download is larger than the limit of %s (Claude Bridge → Settings → File access).', size_format( $max ) ), array( 'status' => 413 ) );
 			} else {
-				$got  = hash_file( 'sha256', $tmp );
+				$got  = (string) hash_file( 'sha256', $tmp );
 				$want = strtolower( trim( (string) $request->get_param( 'sha256' ) ) );
-				if ( '' !== $want && ! hash_equals( $got, $want ) ) {
+				if ( '' === $got ) {
+					$fail = new WP_Error( 'goo1_mcp_fetch_failed', 'The download could not be read back.', array( 'status' => 500 ) );
+				} elseif ( '' !== $want && ! hash_equals( $got, $want ) ) {
 					$fail = new WP_Error( 'goo1_mcp_fetch_sha', 'The download does not match the expected sha256; nothing was saved.', array( 'status' => 422, 'download_sha256' => $got ) );
 				}
 			}
@@ -302,24 +333,9 @@ trait Goo1_MCP_Files_Write {
 		return $this->done( $out );
 	}
 
-	/**
-	 * Why a fetch URL (or redirect target) is refused, or null.
-	 * wp_http_validate_url() rejects private addresses but lets the site's
-	 * own host through; a download from the site itself could copy a
-	 * blocked file (e.g. a wp-config backup reachable over HTTP) into a
-	 * shared folder.
-	 */
+	/** Why a fetch URL is refused, or null (see Goo1_MCP_File_Access::url_error()). */
 	protected static function fetch_url_error( $url ) {
-		if ( '' === (string) $url || ! wp_http_validate_url( $url ) ) {
-			return new WP_Error( 'goo1_mcp_bad_url', 'url must be a public http(s) URL.', array( 'status' => 400 ) );
-		}
-		$host = rtrim( strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ), '.' );
-		foreach ( array( home_url(), site_url() ) as $own ) {
-			if ( $host === rtrim( strtolower( (string) wp_parse_url( $own, PHP_URL_HOST ) ), '.' ) ) {
-				return new WP_Error( 'goo1_mcp_bad_url', 'Downloads from this site itself are not allowed; read the file with wp_file_read instead.', array( 'status' => 400 ) );
-			}
-		}
-		return null;
+		return Goo1_MCP_File_Access::url_error( $url );
 	}
 
 	/* ------------------------------------------------------------------
