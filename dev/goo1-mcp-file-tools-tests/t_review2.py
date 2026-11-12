@@ -96,4 +96,6 @@ r=call('wp_file_backups',{},'read'); t('M long path shown in full', ok(r) and an
 sh("mkdir -p /var/www/html/"+P+"/mv && printf '<?php file_put_contents(__DIR__.\"/ran.txt\",\"1\");' > /var/www/html/"+P+"/mv/a.php && echo t > /var/www/html/"+P+"/mv/z.txt")
 r=call('wp_file_write',{'path':P+'/mv/.htaccess','content':'Require all denied\n'}); t('M htaccess check samples a non-script', ok(r) and r['data']['verify'].get('sample',{}).get('file','').endswith('z.txt'), r)
 t('M sample script not run', 'ran.txt' not in sh('ls /var/www/html/'+P+'/mv'))
+r=call('wp_upload_media',{'url':'http://files.test/big.bin','filename':'b.bin','max_filesize':1000},'write'); t('M3 media max_filesize stops the download', not ok(r), r)
+tmpn=sh('ls /tmp | grep -c -i "big" ; true').strip(); t('M3 no temp file left', tmpn=='0', tmpn)
 print('pass',passes[0],'fail',len(fails))

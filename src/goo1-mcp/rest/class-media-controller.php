@@ -295,7 +295,12 @@ class Goo1_MCP_Media_Controller extends Goo1_MCP_Base_Controller {
 		if ( ! $tmp ) {
 			return new WP_Error( 'http_no_file', 'Could not create a temporary file.' );
 		}
-		$dl = Goo1_MCP_File_Access::download( $url, array( 'timeout' => $timeout, 'stream' => true, 'filename' => $tmp ) );
+		$args = array( 'timeout' => $timeout, 'stream' => true, 'filename' => $tmp );
+		$cap  = (int) $request->get_param( 'max_filesize' );
+		if ( $cap > 0 ) {
+			$args['limit_response_size'] = $cap + 1; // Stop streaming early; checked below.
+		}
+		$dl = Goo1_MCP_File_Access::download( $url, $args );
 		if ( $dl['error'] || is_wp_error( $dl['response'] ) || 200 !== (int) wp_remote_retrieve_response_code( $dl['response'] ) ) {
 			@unlink( $tmp ); // phpcs:ignore
 			if ( $dl['error'] ) {
