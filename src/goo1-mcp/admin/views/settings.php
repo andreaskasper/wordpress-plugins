@@ -45,9 +45,57 @@ $settings = Goo1_MCP_OAuth::settings();
 				<td>
 					<label>
 						<input type="checkbox" id="grants_enabled" name="grants_enabled" value="1" <?php checked( ! empty( $settings['grants_enabled'] ) ); ?>>
-						<?php esc_html_e( 'Allow granting "Secrets in clear text" and "SQL file access" to individual keys/connections (master switch)', 'goo1-mcp' ); ?>
+						<?php esc_html_e( 'Allow granting "Secrets in clear text", "SQL file access" and "Write files" to individual keys/connections (master switch)', 'goo1-mcp' ); ?>
 					</label>
 					<p class="description"><?php esc_html_e( 'Off by default. Even with a grant, secrets stay redacted unless a call explicitly asks for unredacted=true; such calls are flagged in the audit log. Bridge settings can never be changed through the bridge itself.', 'goo1-mcp' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
+		<?php
+		$goo1_fa_source = Goo1_MCP_File_Access::source();
+		$goo1_fa_config = Goo1_MCP_File_Access::config();
+		?>
+		<h2 id="file-access"><?php esc_html_e( 'File access', 'goo1-mcp' ); ?></h2>
+		<table class="form-table">
+			<tr>
+				<th><label for="file_roots"><?php esc_html_e( 'Shared folders', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<?php if ( 'settings' === $goo1_fa_source ) : ?>
+						<textarea id="file_roots" name="file_roots" rows="4" class="large-text code" placeholder="wp-content/plugins/my-plugin rw&#10;wp-content/themes/my-theme r"><?php echo esc_textarea( Goo1_MCP_File_Access::raw_config() ); ?></textarea>
+					<?php else : ?>
+						<textarea id="file_roots" rows="4" class="large-text code" readonly><?php echo esc_textarea( Goo1_MCP_File_Access::raw_config() ); ?></textarea>
+						<p><strong><?php echo esc_html( 'constant' === $goo1_fa_source ? __( 'Set by the constant GOO1_MCP_FILE_ROOTS in wp-config.php (this field is read-only).', 'goo1-mcp' ) : __( 'Set by the environment variable GOO1_MCP_FILE_ROOTS (this field is read-only).', 'goo1-mcp' ) ); ?></strong></p>
+					<?php endif; ?>
+					<p class="description"><?php esc_html_e( 'One folder per line, relative to the WordPress folder, followed by r (read) or rw (read and write); without a mode = r. Applies to subfolders. Empty = the file tools are off. The WordPress folder itself, wp-admin and wp-includes can only be shared read-only. Always blocked, whatever is shared: wp-config* files, dot files and folders (.env, .git …; .htaccess only with access-block rules below wp-content), keys and certificates, database dumps, backup folders; writing into this plugin and scripts/HTML/JS/SVG below uploads. Changing files also needs the grant "Write files" on the key or connection.', 'goo1-mcp' ); ?></p>
+					<?php if ( $goo1_fa_config['roots'] ) : ?>
+						<table class="widefat striped" style="margin-top:8px;max-width:760px">
+							<thead><tr><th><?php esc_html_e( 'Folder', 'goo1-mcp' ); ?></th><th><?php esc_html_e( 'Mode', 'goo1-mcp' ); ?></th><th><?php esc_html_e( 'Resolved path', 'goo1-mcp' ); ?></th></tr></thead>
+							<tbody>
+							<?php foreach ( $goo1_fa_config['roots'] as $goo1_fa_root ) : ?>
+								<tr>
+									<td><code><?php echo esc_html( '' === $goo1_fa_root['path'] ? '.' : $goo1_fa_root['path'] ); ?></code></td>
+									<td><?php echo esc_html( 'rw' === $goo1_fa_root['mode'] ? __( 'read + write', 'goo1-mcp' ) : __( 'read', 'goo1-mcp' ) ); ?><?php echo $goo1_fa_root['note'] ? ' <span class="description">(' . esc_html( $goo1_fa_root['note'] ) . ')</span>' : ''; ?></td>
+									<td><code><?php echo esc_html( $goo1_fa_root['real'] ); ?></code></td>
+								</tr>
+							<?php endforeach; ?>
+							</tbody>
+						</table>
+					<?php endif; ?>
+					<?php foreach ( $goo1_fa_config['errors'] as $goo1_fa_err ) : ?>
+						<p class="description" style="color:#b32d2e"><?php echo esc_html( sprintf( __( 'Ignored: "%1$s" – %2$s', 'goo1-mcp' ), $goo1_fa_err['line'], $goo1_fa_err['reason'] ) ); ?></p>
+					<?php endforeach; ?>
+					<?php if ( ( defined( 'DISALLOW_FILE_EDIT' ) && DISALLOW_FILE_EDIT ) || ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) ) : ?>
+						<p class="description"><?php esc_html_e( 'Note: DISALLOW_FILE_EDIT / DISALLOW_FILE_MODS is set on this site. These constants switch off WordPress\' own editors; they do not limit the bridge\'s file tools – only the folders listed here do.', 'goo1-mcp' ); ?></p>
+					<?php endif; ?>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="file_max_read_kb"><?php esc_html_e( 'Limits', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<input type="number" id="file_max_read_kb" name="file_max_read_kb" value="<?php echo esc_attr( $settings['file_max_read_kb'] ); ?>" min="16" max="4096" class="small-text"> <?php esc_html_e( 'KB per read call (larger files are returned in line blocks)', 'goo1-mcp' ); ?><br>
+					<input type="number" id="file_max_write_kb" name="file_max_write_kb" value="<?php echo esc_attr( $settings['file_max_write_kb'] ); ?>" min="16" max="51200" class="small-text"> <?php esc_html_e( 'KB maximum file size for write / edit', 'goo1-mcp' ); ?><br>
+					<input type="number" id="file_max_fetch_mb" name="file_max_fetch_mb" value="<?php echo esc_attr( $settings['file_max_fetch_mb'] ); ?>" min="1" max="1024" class="small-text"> <?php esc_html_e( 'MB maximum download size for fetch', 'goo1-mcp' ); ?>
 				</td>
 			</tr>
 		</table>

@@ -23,6 +23,7 @@ class Goo1_MCP_Backups {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			object_type varchar(32) NOT NULL DEFAULT '',
 			object_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			object_key varchar(64) NOT NULL DEFAULT '',
 			label varchar(191) NOT NULL DEFAULT '',
 			payload longtext,
 			sha256 char(64) NOT NULL DEFAULT '',
@@ -30,7 +31,8 @@ class Goo1_MCP_Backups {
 			created_by bigint(20) unsigned NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY  (id),
-			KEY object (object_type, object_id, id)
+			KEY object (object_type, object_id, id),
+			KEY object_key (object_type, object_key, id)
 		) $charset_collate;";
 	}
 
@@ -93,5 +95,146 @@ class Goo1_MCP_Backups {
 		}
 		$row['payload'] = json_decode( $row['payload'], true );
 		return $row;
+	}
+
+	/* ------------------------------------------------------------------
+	 * File backups (object_type "file", object_key = sha1 of the path)
+	 * ---------------------------------------------------------------- */
+
+	/** Largest file that is backed up (bigger ones need no_backup=true). */
+	const FILE_MAX_BYTES = 5242880;
+
+	/** File backups older than this are removed by the daily maintenance. */
+	const FILE_MAX_DAYS = 30;
+
+	public static function file_key( $rel ) {
+		return sha1( (string) $rel );
+	}
+
+	/**
+	 * Back up a file before it is changed. Content is stored base64-encoded,
+	 * so binary and non-UTF-8 files survive the JSON payload.
+	 *
+	 * @return int|WP_Error Backup id.
+	 */
+	public static function create_file( $rel, $abs, $reason = '' ) {
+		global $wpdb;
+		clearstatcache( true, $abs );
+		$size = @filesize( $abs ); // phpcs:ignore
+		if ( false === $size ) {
+			return new WP_Error( 'goo1_mcp_backup_failed', 'Could not read the file for the backup; nothing was changed.' );
+		}
+		if ( $size > self::FILE_MAX_BYTES ) {
+			return new WP_Error( 'goo1_mcp_backup_too_large', sprintf( 'The file is %s; backups are limited to %s. Pass no_backup=true to change it without a backup.', size_format( $size ), size_format( self::FILE_MAX_BYTES ) ), array( 'status' => 413 ) );
+		}
+		$content = @file_get_contents( $abs ); // phpcs:ignore
+		if ( false === $content ) {
+			return new WP_Error( 'goo1_mcp_backup_failed', 'Could not read the file for the backup; nothing was changed.' );
+		}
+		$sha     = hash( 'sha256', $content );
+		$payload = wp_json_encode( array(
+			'path'    => (string) $rel,
+			'reason'  => (string) $reason,
+			'size'    => strlen( $content ),
+			'sha256'  => $sha,
+			'perms'   => substr( sprintf( '%o', @fileperms( $abs ) ), -4 ), // phpcs:ignore
+			'mtime'   => (int) @filemtime( $abs ), // phpcs:ignore
+			'content' => base64_encode( $content ), // phpcs:ignore
+		) );
+		$ok = $wpdb->insert(
+			self::table(),
+			array(
+				'object_type' => 'file',
+				'object_id'   => 0,
+				'object_key'  => self::file_key( $rel ),
+				'label'       => function_exists( 'mb_strcut' ) ? mb_strcut( (string) $rel, 0, 191, 'UTF-8' ) : substr( (string) $rel, 0, 191 ),
+				'payload'     => $payload,
+				'sha256'      => $sha,
+				'size_bytes'  => strlen( $content ),
+				'created_by'  => get_current_user_id(),
+				'created_at'  => current_time( 'mysql' ),
+			),
+			array( '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+		);
+		if ( ! $ok ) {
+			return new WP_Error( 'goo1_mcp_backup_failed', 'Could not store the backup (database error); nothing was changed.' );
+		}
+		$id = (int) $wpdb->insert_id;
+
+		$keep_ids = $wpdb->get_col( $wpdb->prepare(
+			'SELECT id FROM ' . self::table() . " WHERE object_type = 'file' AND object_key = %s ORDER BY id DESC LIMIT %d",
+			self::file_key( $rel ), self::KEEP
+		) );
+		if ( count( $keep_ids ) >= self::KEEP ) {
+			$wpdb->query( $wpdb->prepare(
+				'DELETE FROM ' . self::table() . " WHERE object_type = 'file' AND object_key = %s AND id < %d",
+				self::file_key( $rel ), (int) min( $keep_ids )
+			) );
+		}
+		return $id;
+	}
+
+	/**
+	 * Backups of one file, or the latest backups of all files.
+	 *
+	 * @return array[] id, path, sha256, size_bytes, created_by, created_at.
+	 */
+	public static function list_files( $rel = null, $limit = 50 ) {
+		global $wpdb;
+		$limit = max( 1, min( 200, (int) $limit ) );
+		if ( null !== $rel ) {
+			$rows = $wpdb->get_results( $wpdb->prepare(
+				'SELECT id, label, sha256, size_bytes, created_by, created_at FROM ' . self::table() . " WHERE object_type = 'file' AND object_key = %s ORDER BY id DESC LIMIT %d",
+				self::file_key( $rel ), $limit
+			), ARRAY_A );
+		} else {
+			$rows = $wpdb->get_results( $wpdb->prepare(
+				'SELECT id, label, sha256, size_bytes, created_by, created_at FROM ' . self::table() . " WHERE object_type = 'file' ORDER BY id DESC LIMIT %d",
+				$limit
+			), ARRAY_A );
+		}
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
+	 * One file backup with decoded content.
+	 *
+	 * @return array|null id, path, content, sha256, size, perms, mtime, created_at.
+	 */
+	public static function get_file( $id ) {
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . self::table() . " WHERE id = %d AND object_type = 'file'", (int) $id ), ARRAY_A );
+		if ( ! $row ) {
+			return null;
+		}
+		$p = json_decode( $row['payload'], true );
+		if ( ! is_array( $p ) || ! isset( $p['path'], $p['content'] ) ) {
+			return null;
+		}
+		$content = base64_decode( $p['content'], true ); // phpcs:ignore
+		if ( false === $content || hash( 'sha256', $content ) !== $row['sha256'] ) {
+			return null;
+		}
+		return array(
+			'id'         => (int) $row['id'],
+			'path'       => (string) $p['path'],
+			'content'    => $content,
+			'sha256'     => $row['sha256'],
+			'size'       => strlen( $content ),
+			'perms'      => isset( $p['perms'] ) ? (string) $p['perms'] : '',
+			'mtime'      => isset( $p['mtime'] ) ? (int) $p['mtime'] : 0,
+			'reason'     => isset( $p['reason'] ) ? (string) $p['reason'] : '',
+			'created_by' => (int) $row['created_by'],
+			'created_at' => $row['created_at'],
+		);
+	}
+
+	/**
+	 * Remove file backups older than FILE_MAX_DAYS (site time, like created_at).
+	 */
+	public static function purge_files( $days = self::FILE_MAX_DAYS ) {
+		global $wpdb;
+		$cutoff = gmdate( 'Y-m-d H:i:s', (int) current_time( 'timestamp' ) - max( 1, (int) $days ) * DAY_IN_SECONDS );
+		return $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . self::table() . " WHERE object_type = 'file' AND created_at < %s", $cutoff ) );
 	}
 }

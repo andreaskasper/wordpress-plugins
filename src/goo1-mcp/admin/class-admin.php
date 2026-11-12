@@ -289,7 +289,14 @@ class Goo1_MCP_Admin {
 				'oauth_default_scope'      => $scope,
 				'seal_export_targets'      => sanitize_textarea_field( wp_unslash( $_POST['seal_export_targets'] ?? '' ) ),
 				'trusted_proxies'          => self::clean_trusted_proxies( wp_unslash( $_POST['trusted_proxies'] ?? '' ) ),
+				'file_max_read_kb'         => max( 16, min( 4096, (int) ( $_POST['file_max_read_kb'] ?? 200 ) ) ),
+				'file_max_write_kb'        => max( 16, min( 51200, (int) ( $_POST['file_max_write_kb'] ?? 2048 ) ) ),
+				'file_max_fetch_mb'        => max( 1, min( 1024, (int) ( $_POST['file_max_fetch_mb'] ?? 50 ) ) ),
 			) );
+			// Shared folders: only from the form when no constant / env variable is set.
+			if ( 'settings' === Goo1_MCP_File_Access::source() && isset( $_POST['file_roots'] ) ) {
+				$settings['file_roots'] = self::clean_file_roots( wp_unslash( $_POST['file_roots'] ) );
+			}
 			update_option( 'goo1_mcp_settings', $settings );
 			add_settings_error( 'goo1_mcp', 'settings_saved', 'Settings saved.', 'success' );
 		}
@@ -343,6 +350,25 @@ class Goo1_MCP_Admin {
 			add_settings_error( 'goo1_mcp', 'proxies_invalid', sprintf( 'Ignored invalid trusted proxy entries: %s', implode( ', ', $invalid ) ) );
 		}
 		return implode( "\n", array_values( array_unique( $out ) ) );
+	}
+
+	/**
+	 * Normalise the shared-folder list (one entry per line); invalid lines
+	 * are kept so the admin sees them, with a notice.
+	 */
+	public static function clean_file_roots( $raw ) {
+		$text   = trim( str_replace( ';', "\n", sanitize_textarea_field( (string) $raw ) ) );
+		$parsed = Goo1_MCP_File_Access::parse( $text );
+		foreach ( $parsed['errors'] as $e ) {
+			add_settings_error( 'goo1_mcp', 'file_roots_invalid', sprintf( 'File access: ignored "%s" – %s', $e['line'], $e['reason'] ) );
+		}
+		foreach ( $parsed['roots'] as $r ) {
+			if ( '' !== $r['note'] ) {
+				add_settings_error( 'goo1_mcp', 'file_roots_note', sprintf( 'File access: %s is shared read-only. %s', '' === $r['path'] ? '.' : $r['path'], $r['note'] ), 'warning' );
+			}
+		}
+		Goo1_MCP_File_Access::reset();
+		return $text;
 	}
 
 	public function render_keys_page() {

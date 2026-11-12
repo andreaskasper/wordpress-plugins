@@ -9,10 +9,11 @@ class Goo1_MCP_Permissions {
 	 * Optional grants an admin can give a key / OAuth connection.
 	 *  - unredacted: tool responses may contain secrets in clear text
 	 *  - sql_files:  SQL may use LOAD_FILE / INTO OUTFILE / INTO DUMPFILE
+	 *  - file_write: the file tools may change files in folders shared read-write
 	 * Each grant is null (not granted), 0 (permanent) or a unix timestamp
 	 * until which it is valid.
 	 */
-	const GRANTS = array( 'unredacted', 'sql_files' );
+	const GRANTS = array( 'unredacted', 'sql_files', 'file_write' );
 
 	private static $instance = null;
 
@@ -110,6 +111,13 @@ class Goo1_MCP_Permissions {
 	 */
 	public function allow_sql_files() {
 		return $this->has_grant( Goo1_MCP_Auth::instance()->current(), 'sql_files' );
+	}
+
+	/**
+	 * Whether the current key may change files (file tools).
+	 */
+	public function allow_file_write() {
+		return $this->has_grant( Goo1_MCP_Auth::instance()->current(), 'file_write' );
 	}
 
 	/**

@@ -23,6 +23,10 @@ class Goo1_MCP_Activator {
 			'oauth_default_scope'      => 'read',
 			'seal_export_targets'      => '',
 			'trusted_proxies'          => '',
+			'file_roots'               => '',
+			'file_max_read_kb'         => 200,
+			'file_max_write_kb'        => 2048,
+			'file_max_fetch_mb'        => 50,
 		);
 	}
 
@@ -123,6 +127,7 @@ class Goo1_MCP_Activator {
 	public static function daily_maintenance() {
 		$settings = wp_parse_args( (array) get_option( 'goo1_mcp_settings', array() ), self::default_settings() );
 		Goo1_MCP_Audit_Log::instance()->purge( max( 1, (int) $settings['audit_log_retention_days'] ) );
+		Goo1_MCP_Backups::purge_files();
 		Goo1_MCP_OAuth::instance()->housekeeping();
 		if ( class_exists( 'Goo1_MCP_Seal' ) ) {
 			Goo1_MCP_Seal::prune();

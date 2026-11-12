@@ -42,6 +42,7 @@ class Goo1_MCP_Audit_Log {
 		// Strip internal params and mask secrets in the summary.
 		$safe_params = is_array( $params ) ? $params : array();
 		unset( $safe_params['_goo1_mcp_key'] );
+		$safe_params = self::strip_file_content( (string) $endpoint, $safe_params );
 		$safe_params = Goo1_MCP_Redactor::redact( self::shrink( $safe_params ) );
 		$summary     = wp_json_encode( $safe_params );
 		if ( strlen( $summary ) > 2000 ) {
@@ -62,6 +63,25 @@ class Goo1_MCP_Audit_Log {
 			),
 			array( '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
+	}
+
+	/**
+	 * File tools: never log file contents, only their length (short contents
+	 * would otherwise stay readable in the summary; a hash of a short value
+	 * could be guessed offline).
+	 */
+	public static function strip_file_content( $endpoint, $params ) {
+		if ( false === strpos( $endpoint, '/goo1-mcp/v1/files/' ) ) {
+			return $params;
+		}
+		foreach ( array( 'content', 'old_string', 'new_string' ) as $k ) {
+			if ( isset( $params[ $k ] ) && is_string( $params[ $k ] ) ) {
+				$params[ $k ] = sprintf( '[%d bytes]', strlen( $params[ $k ] ) );
+			} elseif ( isset( $params[ $k ] ) ) {
+				$params[ $k ] = '[omitted]';
+			}
+		}
+		return $params;
 	}
 
 	/**

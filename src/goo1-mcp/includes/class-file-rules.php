@@ -1,0 +1,274 @@
+<?php
+/**
+ * File tools: content checks before a file is saved (PHP syntax, JSON,
+ * .htaccess lines) and text/binary detection.
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+class Goo1_MCP_File_Rules {
+
+	/** Extensions checked as PHP (syntax check + loopback). */
+	const PHP_EXT = array( 'php', 'phtml', 'php3', 'php4', 'php5', 'php6', 'php7', 'php8' );
+
+	/**
+	 * Whether content is text: valid UTF-8 without NUL bytes.
+	 */
+	public static function is_text( $content ) {
+		if ( '' === $content ) {
+			return true;
+		}
+		if ( false !== strpos( $content, "\0" ) ) {
+			return false;
+		}
+		return function_exists( 'mb_check_encoding' ) ? mb_check_encoding( $content, 'UTF-8' ) : (bool) preg_match( '//u', $content );
+	}
+
+	/**
+	 * Whether a file is checked as PHP: PHP extensions, and .inc files that
+	 * contain an opening PHP tag.
+	 */
+	public static function is_php( $name, $content = null ) {
+		$ext = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+		if ( in_array( $ext, self::PHP_EXT, true ) ) {
+			return true;
+		}
+		if ( 'inc' === $ext && is_string( $content ) ) {
+			return false !== stripos( $content, '<?php' ) || false !== strpos( $content, '<?=' );
+		}
+		return false;
+	}
+
+	public static function is_json( $name ) {
+		return 'json' === strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+	}
+
+	public static function is_htaccess( $name ) {
+		return '.htaccess' === strtolower( basename( $name ) );
+	}
+
+	/**
+	 * PHP syntax check with the site's own PHP (no exec needed).
+	 *
+	 * @return string '' when valid, otherwise "message (line n)".
+	 */
+	public static function php_error( $code ) {
+		try {
+			token_get_all( $code, TOKEN_PARSE );
+		} catch ( \ParseError $e ) {
+			return sprintf( '%s (line %d)', $e->getMessage(), $e->getLine() );
+		} catch ( \Throwable $e ) {
+			return $e->getMessage();
+		}
+		return '';
+	}
+
+	/**
+	 * JSON check.
+	 *
+	 * @return string '' when valid, otherwise the error with line and column.
+	 */
+	public static function json_error( $content ) {
+		$content = (string) $content;
+		$probe   = 0 === strpos( $content, "\xEF\xBB\xBF" ) ? substr( $content, 3 ) : $content;
+		json_decode( $probe );
+		if ( JSON_ERROR_NONE === json_last_error() ) {
+			return '';
+		}
+		$msg = json_last_error_msg();
+		$pos = self::json_error_offset( $probe );
+		if ( null === $pos ) {
+			return 'Invalid JSON: ' . $msg;
+		}
+		$before = substr( $probe, 0, $pos );
+		$line   = substr_count( $before, "\n" ) + 1;
+		$nl     = strrpos( $before, "\n" );
+		$col    = $pos - ( false === $nl ? 0 : $nl + 1 ) + 1;
+		return sprintf( 'Invalid JSON: %s (line %d, column %d)', $msg, $line, $col );
+	}
+
+	/**
+	 * Offset of the first JSON syntax error (small scanner, iterative).
+	 * Only used to locate an error json_decode() already reported.
+	 *
+	 * @return int|null
+	 */
+	private static function json_error_offset( $s ) {
+		$len   = strlen( $s );
+		$i     = 0;
+		$stack = array(); // Containers: '{' or '['.
+		$want  = 'value'; // value | key | colon | comma_or_end | end
+		while ( true ) {
+			while ( $i < $len && false !== strpos( " \t\r\n", $s[ $i ] ) ) {
+				$i++;
+			}
+			if ( $i >= $len ) {
+				return ( 'end' === $want && ! $stack ) ? null : $len;
+			}
+			$c = $s[ $i ];
+			if ( 'end' === $want ) {
+				return $i;
+			}
+			if ( 'colon' === $want ) {
+				if ( ':' !== $c ) {
+					return $i;
+				}
+				$i++;
+				$want = 'value';
+				continue;
+			}
+			if ( 'comma_or_end' === $want ) {
+				$top = end( $stack );
+				if ( ',' === $c ) {
+					$i++;
+					$want = '{' === $top ? 'key' : 'value';
+					continue;
+				}
+				if ( ( '}' === $c && '{' === $top ) || ( ']' === $c && '[' === $top ) ) {
+					array_pop( $stack );
+					$i++;
+					$want = $stack ? 'comma_or_end' : 'end';
+					continue;
+				}
+				return $i;
+			}
+			if ( 'key' === $want ) {
+				if ( '}' === $c && '{' === end( $stack ) && $i > 0 && '{' === self::prev_non_ws( $s, $i ) ) {
+					array_pop( $stack );
+					$i++;
+					$want = $stack ? 'comma_or_end' : 'end';
+					continue;
+				}
+				if ( '"' !== $c ) {
+					return $i;
+				}
+				$end = self::json_string_end( $s, $i );
+				if ( null === $end ) {
+					return $i;
+				}
+				$i    = $end;
+				$want = 'colon';
+				continue;
+			}
+			// A value.
+			if ( '{' === $c ) {
+				$stack[] = '{';
+				$i++;
+				$want = 'key';
+				continue;
+			}
+			if ( '[' === $c ) {
+				$stack[] = '[';
+				$i++;
+				if ( preg_match( '/\G\s*\]/', $s, $m, 0, $i ) ) {
+					$i += strlen( $m[0] );
+					array_pop( $stack );
+					$want = $stack ? 'comma_or_end' : 'end';
+				}
+				continue;
+			}
+			if ( '"' === $c ) {
+				$end = self::json_string_end( $s, $i );
+				if ( null === $end ) {
+					return $i;
+				}
+				$i = $end;
+			} elseif ( preg_match( '/\G(?:-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?|true|false|null)/', $s, $m, 0, $i ) ) {
+				$i += strlen( $m[0] );
+			} else {
+				return $i;
+			}
+			$want = $stack ? 'comma_or_end' : 'end';
+		}
+	}
+
+	private static function prev_non_ws( $s, $i ) {
+		for ( $j = $i - 1; $j >= 0; $j-- ) {
+			if ( false === strpos( " \t\r\n", $s[ $j ] ) ) {
+				return $s[ $j ];
+			}
+		}
+		return '';
+	}
+
+	/** Offset after the closing quote of a JSON string starting at $i, or null. */
+	private static function json_string_end( $s, $i ) {
+		$len = strlen( $s );
+		for ( $j = $i + 1; $j < $len; $j++ ) {
+			$c = $s[ $j ];
+			if ( '\\' === $c ) {
+				$j++;
+				continue;
+			}
+			if ( '"' === $c ) {
+				return $j + 1;
+			}
+			if ( ord( $c ) < 0x20 ) {
+				return null;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * .htaccess lines that only block access. Everything else (handlers,
+	 * php_value, rewrites, Allow) could undo the PHP block below uploads.
+	 *
+	 * @return string[] Offending lines (empty = only allowed lines).
+	 */
+	public static function htaccess_bad_lines( $content ) {
+		$bad   = array();
+		$depth = array();
+		foreach ( preg_split( '/\r\n|\n|\r/', (string) $content ) as $n => $raw ) {
+			$line = trim( $raw );
+			if ( '' === $line || '#' === $line[0] ) {
+				continue;
+			}
+			if ( preg_match( '/^<(Files|FilesMatch)(\s+~)?\s+("[^"<>]*"|[^\s"<>]+)\s*>$/i', $line, $m ) ) {
+				$depth[] = strtolower( $m[1] );
+				continue;
+			}
+			if ( preg_match( '/^<IfModule\s+!?mod_authz_core\.c\s*>$/i', $line ) ) {
+				$depth[] = 'ifmodule';
+				continue;
+			}
+			if ( preg_match( '/^<\/(Files|FilesMatch|IfModule)\s*>$/i', $line, $m ) ) {
+				if ( ! $depth || array_pop( $depth ) !== strtolower( $m[1] ) ) {
+					$bad[] = sprintf( 'line %d: %s (unbalanced block)', $n + 1, $line );
+				}
+				continue;
+			}
+			if ( preg_match( '/^(Require\s+all\s+denied|Deny\s+from\s+all|Order\s+(deny\s*,\s*allow|allow\s*,\s*deny)|Options\s+-Indexes)$/i', $line ) ) {
+				continue;
+			}
+			$bad[] = sprintf( 'line %d: %s', $n + 1, $line );
+		}
+		if ( $depth ) {
+			$bad[] = 'unclosed block: <' . implode( '>, <', $depth ) . '>';
+		}
+		return $bad;
+	}
+
+	/**
+	 * Line ending style of a text: lf, crlf, cr, mixed or none.
+	 */
+	public static function eol( $content ) {
+		$crlf = substr_count( $content, "\r\n" );
+		$lf   = substr_count( $content, "\n" ) - $crlf;
+		$cr   = substr_count( $content, "\r" ) - $crlf;
+		if ( ! $crlf && ! $lf && ! $cr ) {
+			return 'none';
+		}
+		if ( $crlf && ! $lf && ! $cr ) {
+			return 'crlf';
+		}
+		if ( $lf && ! $crlf && ! $cr ) {
+			return 'lf';
+		}
+		if ( $cr && ! $crlf && ! $lf ) {
+			return 'cr';
+		}
+		return 'mixed';
+	}
+}

@@ -10,6 +10,7 @@ $grants_enabled = Goo1_MCP_Permissions::grants_enabled();
 $grant_labels   = array(
 	'unredacted' => __( 'Secrets in clear text', 'goo1-mcp' ),
 	'sql_files'  => __( 'SQL file access', 'goo1-mcp' ),
+	'file_write' => __( 'Write files', 'goo1-mcp' ),
 );
 if ( $new_key ) {
 	delete_transient( 'goo1_mcp_new_key' );
@@ -153,7 +154,7 @@ if ( $new_key ) {
 			</tbody>
 		</table>
 		<?php if ( ! $grants_enabled ) : ?>
-			<p class="description"><?php esc_html_e( 'Extra rights (secrets in clear text, SQL file access) are switched off globally. Enable them under Settings to grant them per key.', 'goo1-mcp' ); ?></p>
+			<p class="description"><?php esc_html_e( 'Extra rights (secrets in clear text, SQL file access, writing files) are switched off globally. Enable them under Settings to grant them per key.', 'goo1-mcp' ); ?></p>
 		<?php endif; ?>
 	<?php endif; ?>
 </div>

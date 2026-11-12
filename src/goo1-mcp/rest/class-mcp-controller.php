@@ -200,6 +200,8 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 				return class_exists( 'UpdraftPlus' );
 			case 'managewp':
 				return function_exists( 'mwp_get_potential_key' ) || defined( 'MWP_WORKER_VERSION' );
+			case 'files':
+				return Goo1_MCP_File_Access::enabled();
 			default:
 				return (bool) apply_filters( 'goo1_mcp_tool_available', true, $tool );
 		}

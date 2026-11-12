@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.261112
+Stable tag: 1.9.261112
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,15 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.9.261112 =
+* New file tools, only inside folders the site owner shares in wp-admin (Settings → File access; also via the constant or environment variable GOO1_MCP_FILE_ROOTS): wp_file_list, wp_file_read, wp_file_search, wp_file_write, wp_file_edit, wp_file_fetch, wp_file_delete, wp_file_backups, wp_file_restore. Nothing is shared after the update, so the tools stay off (and hidden) until folders are listed.
+* Reading needs a read key; changing files needs a full-access key with the new grant "Write files" (60 minutes, 24 hours or permanent) and a folder shared read-write. The WordPress folder itself, wp-admin and wp-includes can only be shared read-only.
+* Fixed block list: wp-config files and copies, all dot files and folders, keys and certificates, database dumps, backup folders (UpdraftPlus, All-in-One WP Migration, Duplicator, wp-snapshots); writing into this plugin; below uploads only file types WordPress allows for uploads, never scripts, HTML, JavaScript, SVG or XML. Symlinks cannot lead out of a shared folder.
+* Safety on every change: SHA-256 check against concurrent changes (if_sha256 / overwrite), PHP syntax check, JSON check, backup of the previous version (last 10 per file, 30 days), atomic write, and after PHP changes a loopback check of the front page and admin-ajax.php using WordPress' own error scraping – on a fatal error the previous state is put back automatically (no recovery-mode e-mail).
+* .htaccess only with access-block rules, only below wp-content and one folder below uploads/plugins/themes; foreign .htaccess files are never changed; a 500 after saving is rolled back.
+* Known secrets, password hashes and private keys are replaced by [redacted] in read and search results; file contents never go into the audit log.
+* wp_file_fetch downloads public URLs only (no internal addresses, not from the site itself), streamed, with size limit and optional SHA-256.
 
 = 1.8.261112 =
 * wp_error_log: secrets inside the log lines are replaced by [redacted] (known secret values of the site and the database password and salts from wp-config.php, also JSON-escaped or URL-encoded; password hashes; PEM/PGP private key blocks, also when the window starts inside a block); the response reports `redactions` (counted over the read range, which includes 200 lines before the window so multi-line secrets are recognised). Clear text only with the "Secrets in clear text" grant plus unredacted=true (flagged in the audit log). The log is now read backwards in 64 KB blocks instead of byte by byte (at most 4 MB from the end).

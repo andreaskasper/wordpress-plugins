@@ -58,6 +58,19 @@ Issued access tokens are plain Bearer tokens validated by `Goo1_MCP_Auth` alongs
 - **Elementor backups** (`includes/class-backups.php`, table `{prefix}goo1_mcp_backups`): taken in `save_document()` before every write; saving prefers `Document::save()`.
 - **Site tools** (`rest/class-site-tools-controller.php`): `wp_cache_purge`, `wp_site_overview`.
 
+### File tools (since 1.9)
+Nine tools (`wp_file_list`, `_read`, `_search`, `_write`, `_edit`, `_fetch`, `_delete`, `_backups`, `_restore`), routes `/files/*` in `rest/class-files-controller.php` (read side) + `rest/trait-files-write.php` (changing side). `mcp-server.json` marks them `"requires": "files"`, so they only appear in `tools/list` when at least one folder is shared.
+- **Shared folders** (`includes/class-file-access.php`): constant `GOO1_MCP_FILE_ROOTS` (string or array) > environment variable of the same name > setting `file_roots` (wp-admin → Settings → File access; read-only in the form when one of the first two is set). One entry per line or `;`, path relative to ABSPATH + `r`/`rw` (default `r`); ABSPATH itself, `wp-admin`, `wp-includes` are forced to `r`. Empty = tools off.
+- **Resolution:** `resolve( $path, 'read'|'write'|'delete' )` normalises (no `..`, no control chars/backslashes, absolute paths only inside ABSPATH), resolves with `realpath` (for new files: deepest existing ancestor), picks the most specific root containing the **real** path (a symlink into a read-only root is read-only), refuses symlinks as write targets, the root itself for delete, and runs `blocked_reason()` on both the logical and the real path. Listing and search never follow symlinks.
+- **Fixed block list** (not configurable): read+write – everything starting with `wp-config` except `wp-config-sample.php`, every dot file/folder (only exception `.htaccess`, see below), `php.ini`, `web.config`, `auth.json`, `id_rsa*`/`id_ed25519*`/`id_ecdsa*`, `*.pem|key|p12|pfx|jks|ppk|kdbx`, `*.sql` (also gzip/zip/bz2/xz/7z/tar/zst), `wp-content/updraft/`, `wp-content/ai1wm-backups/`, `wp-content/backups-dup-*`, any `wp-snapshots/`. Write only – this plugin's folder; below uploads only types from `get_allowed_mime_types()` (+css) and never scripts (`SCRIPT_EXT`, also as an inner extension like `x.php.jpg`), html/js/svg/xml/swf.
+- **.htaccess:** only below wp-content in `rw` roots; written only at least one folder below wp-content/uploads/plugins/themes/mu-plugins (`shared_dirs()`); content only access blocks (`Goo1_MCP_File_Rules::htaccess_bad_lines()`); an existing file with other lines (Wordfence, host) is never changed or deleted; `fetch` cannot create one. After writing, `Goo1_MCP_File_Verify::htaccess()` requests the folder and a file in it; a 500 is rolled back.
+- **Every change goes through `Goo1_MCP_File_Writer::save()` / `delete()`:** if_sha256/overwrite rules → PHP syntax (`token_get_all(TOKEN_PARSE)`), JSON (`json_error()` with line/column; `allow_invalid_json`), .htaccess rules → backup (`Goo1_MCP_Backups::create_file()`, table `{prefix}goo1_mcp_backups`, `object_type` `file`, `object_key` = sha1(path), base64 payload, last 10 per file, 30 days via daily maintenance, max 5 MB else `no_backup=true`) → atomic write (temp `.goo1-mcp-tmp-*` in the same folder + rename, permissions kept, new 0644/folders 0755) → `opcache_invalidate` → check → on failure the previous state is put back (new files/folders removed).
+- **PHP check after saving** (`Goo1_MCP_File_Verify::php()`): loopback to the front page and `admin-ajax.php?action=goo1_mcp_file_check` with core's scrape parameters (`wp_scrape_key`/`wp_scrape_nonce` + transient `scrape_key_*`): WordPress appends the last fatal error (file, line, message) and skips recovery mode (no "technical issue" mail). Not tied to `DISALLOW_FILE_EDIT`. No scrape block + HTTP ≥ 500 counts as fatal; timeouts/challenges/caches = `inconclusive` (the change stays). After a rollback the check runs again and says whether the error persists. Deleting a PHP file is checked the same way.
+- **Rights:** list/read/search/backups = scope `read` (`readOnlyHint`); write/edit/fetch/delete/restore = scope `full` + grant `file_write` ("Write files", 60 min / 24 h / permanent, master switch "Extra rights") + `rw` root. Audit flag `file_write`.
+- **Secrets:** read/search output goes through `Goo1_MCP_Redactor::redact_text()`; search matches against the **redacted** text so it cannot probe a secret. `unredacted=true` only with the grant (never via `fleet_call_read`). `edit` refuses `[redacted]` in old/new_string unless the file literally contains it; `write` refuses more `[redacted]` than the file has. `Goo1_MCP_Audit_Log::strip_file_content()` logs only the length of `content`/`old_string`/`new_string` for `/files/*` (also direct REST).
+- **fetch:** `wp_safe_remote_get` (no private IPs, redirects re-validated), streamed into `wp_tempnam()`, `limit_response_size` = limit+1, optional `sha256`; the site's own host is refused (`wp_http_validate_url()` lets it through, which would allow copying a blocked file reachable over HTTP into a shared folder).
+- **Tripwire, not a boundary:** whoever may write PHP into a plugin folder can run code, also code that changes the bridge's own settings. Grant `file_write` sparingly and time-limited.
+
 ### Class Naming & Prefix
 All classes use `Goo1_MCP_` prefix. Controllers extend `Goo1_MCP_Base_Controller` which provides `get_permission_callback($scope)`, `success($data)`, and `error($code, $msg, $status)`.
 
@@ -83,6 +96,10 @@ includes/
   class-oauth.php               # OAuth 2.1 AS: discovery, DCR, authorize+PKCE, token+refresh (rotation), connections, client/token storage
   class-redactor.php            # Secret redaction for all tool output
   class-guard.php               # Snapshot/restore of goo1_mcp_* options around indirect writes
+  class-file-access.php         # File tools: shared folders, path resolution, block list
+  class-file-rules.php          # File tools: text detection, PHP/JSON/.htaccess checks
+  class-file-verify.php         # File tools: loopback after PHP / .htaccess changes
+  class-file-writer.php         # File tools: backup, atomic write, rollback
 admin/
   class-admin.php               # Menu pages, form handlers (keys, settings, purge, OAuth client/token revoke)
   views/{api-keys,audit-log,settings,oauth-clients}.php
@@ -99,6 +116,7 @@ rest/
   class-rest-proxy-controller.php # wp_rest_request / wp_rest_routes: internal rest_do_request to any non-goo1 route
   class-database-controller.php # SQL queries, table list, schema, sample
   class-site-health-controller.php # Health, error log, cron, hooks, transients
+  class-files-controller.php    # File tools (read side) + trait-files-write.php (changing side)
   class-mcp-controller.php      # MCP JSON-RPC transport at /mcp (bridges tools/* to REST via rest_do_request)
   class-woocommerce-controller.php # Products, orders, customers, inventory, sales
 mcp-server.json                 # MCP tool definitions mapping to REST endpoints (consumed by class-mcp-controller)
@@ -126,7 +144,7 @@ One custom table: `{prefix}goo1_mcp_audit_log` (created on activation via `dbDel
 
 `wp_options` keys:
 - `goo1_mcp_api_keys` — serialized array of hashed static keys
-- `goo1_mcp_settings` — settings incl. `oauth_enabled`, `oauth_dcr_enabled`, `oauth_token_ttl`, `oauth_default_scope`, `db_write_enabled`, `default_rate_limit`, `audit_log_retention_days`
+- `goo1_mcp_settings` — settings incl. `file_roots`, `file_max_read_kb` (200), `file_max_write_kb` (2048), `file_max_fetch_mb` (50), `trusted_proxies`, `oauth_enabled`, `oauth_dcr_enabled`, `oauth_token_ttl`, `oauth_default_scope`, `db_write_enabled`, `default_rate_limit`, `audit_log_retention_days`
 - `goo1_mcp_oauth_clients` — registered OAuth clients (DCR + manual); secret stored as SHA-256 hash
 - `goo1_mcp_oauth_refresh` — refresh tokens (hashed)
 - `goo1_mcp_oauth_token_index` — enumerable index of live access tokens for the admin UI

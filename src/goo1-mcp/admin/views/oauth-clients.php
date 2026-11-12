@@ -12,6 +12,7 @@ $grants_enabled = Goo1_MCP_Permissions::grants_enabled();
 $grant_labels   = array(
 	'unredacted' => __( 'Secrets in clear text', 'goo1-mcp' ),
 	'sql_files'  => __( 'SQL file access', 'goo1-mcp' ),
+	'file_write' => __( 'Write files', 'goo1-mcp' ),
 );
 ?>
 <div class="wrap">
