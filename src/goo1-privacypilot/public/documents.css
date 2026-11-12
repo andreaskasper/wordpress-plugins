@@ -15,3 +15,5 @@
 .pp-request-form .pp-hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; }
 .pp-request-status:empty { display: none; }
 .pp-request-status { padding: .6em .9em; border-left: 4px solid currentColor; }
+.pp-doc-credit { margin-top: 2em; font-size: .8em; opacity: .6; }
+.pp-doc-credit a { color: inherit; }
