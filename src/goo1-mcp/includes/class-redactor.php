@@ -403,6 +403,130 @@ class Goo1_MCP_Redactor {
 	}
 
 	/**
+	 * Mask secrets inside free text (log lines) without masking the whole
+	 * text: every occurrence of a known secret value of this site (options
+	 * and the wp-config database password / salts) and every password hash
+	 * or PEM private key block becomes [redacted].
+	 *
+	 * @param string $text
+	 * @param int    $count Number of replacements (out).
+	 * @return string
+	 */
+	public static function redact_text( $text, &$count = 0 ) {
+		$count = 0;
+		if ( ! is_string( $text ) || '' === $text ) {
+			return $text;
+		}
+		// Each secret also in the forms logs commonly use (JSON-escaped, URL-encoded).
+		$forms = array();
+		foreach ( array_merge( self::known_secrets(), self::config_secrets() ) as $s ) {
+			$json = wp_json_encode( $s );
+			foreach ( array( $s, is_string( $json ) ? substr( $json, 1, -1 ) : $s, rawurlencode( $s ), urlencode( $s ) ) as $f ) {
+				if ( strlen( $f ) >= self::MIN_SECRET_LEN ) {
+					$forms[ $f ] = true;
+				}
+			}
+		}
+		$forms = array_keys( $forms );
+		// Longest first, so a secret that contains another is masked whole.
+		usort( $forms, function ( $a, $b ) {
+			return strlen( $b ) - strlen( $a );
+		} );
+		foreach ( $forms as $s ) {
+			$s = (string) $s;
+			if ( false !== strpos( $text, $s ) ) {
+				$n     = 0;
+				$text  = str_replace( $s, self::MASK, $text, $n );
+				$count += $n;
+			}
+		}
+
+		$text = self::redact_private_keys( $text, $count );
+
+		// Short, bounded patterns (no backtracking risk on large input).
+		$patterns = array(
+			'/\$(?:P|H)\$[.\/0-9A-Za-z]{31}/',
+			'/\$2[abxy]\$\d\d\$[.\/A-Za-z0-9]{53}/',
+			'/\$argon2(?:id|i|d)\$v=\d+\$m=\d+,t=\d+,p=\d+\$[A-Za-z0-9+\/]+\$[A-Za-z0-9+\/]+/',
+		);
+		foreach ( $patterns as $re ) {
+			$n   = 0;
+			$out = preg_replace( $re, self::MASK, $text, -1, $n );
+			if ( null === $out ) {
+				// PCRE failed (limits): fail closed instead of returning nothing.
+				$count++;
+				return self::MASK;
+			}
+			$text   = $out;
+			$count += (int) $n;
+		}
+		return $text;
+	}
+
+	/**
+	 * Mask PEM / PGP private key blocks with string search (no regex over the
+	 * block body). A block without END is masked to the end of the text, an
+	 * END without BEGIN (the window started inside the block) from the start.
+	 */
+	private static function redact_private_keys( $text, &$count ) {
+		$begin_re = '/-----BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/';
+		$end_re   = '/-----END [A-Z0-9 ]{0,40}PRIVATE KEY(?: BLOCK)?-----/';
+		if ( false === strpos( $text, 'PRIVATE KEY' ) ) {
+			return $text;
+		}
+		$out    = '';
+		$offset = 0;
+		$len    = strlen( $text );
+		while ( $offset < $len ) {
+			$has_begin = preg_match( $begin_re, $text, $bm, PREG_OFFSET_CAPTURE, $offset );
+			$has_end   = preg_match( $end_re, $text, $em, PREG_OFFSET_CAPTURE, $offset );
+			if ( false === $has_begin || false === $has_end ) {
+				$count++;
+				return $out . self::MASK; // PCRE error: fail closed.
+			}
+			if ( ! $has_begin && ! $has_end ) {
+				break;
+			}
+			if ( $has_end && ( ! $has_begin || $em[0][1] < $bm[0][1] ) ) {
+				// END before any BEGIN: the block started before this text,
+				// so everything up to END may be key material.
+				$out  .= self::MASK;
+				$offset = $em[0][1] + strlen( $em[0][0] );
+				$count++;
+				continue;
+			}
+			$out .= substr( $text, $offset, $bm[0][1] - $offset ) . self::MASK;
+			$count++;
+			$after = $bm[0][1] + strlen( $bm[0][0] );
+			if ( preg_match( $end_re, $text, $em2, PREG_OFFSET_CAPTURE, $after ) ) {
+				$offset = $em2[0][1] + strlen( $em2[0][0] );
+			} else {
+				return $out; // No END: mask the rest.
+			}
+		}
+		return $out . substr( $text, $offset );
+	}
+
+	/**
+	 * Secret values from wp-config.php: database password, keys and salts.
+	 *
+	 * @return string[]
+	 */
+	private static function config_secrets() {
+		$out = array();
+		foreach ( array( 'DB_PASSWORD', 'AUTH_KEY', 'SECURE_AUTH_KEY', 'LOGGED_IN_KEY', 'NONCE_KEY', 'AUTH_SALT', 'SECURE_AUTH_SALT', 'LOGGED_IN_SALT', 'NONCE_SALT' ) as $c ) {
+			if ( ! defined( $c ) ) {
+				continue;
+			}
+			$v = constant( $c );
+			if ( is_string( $v ) && strlen( $v ) >= self::MIN_SECRET_LEN && false === stripos( $v, 'put your unique phrase here' ) ) {
+				$out[] = $v;
+			}
+		}
+		return $out;
+	}
+
+	/**
 	 * Forget the cached secret list (after an option was written).
 	 */
 	public static function reset_known() {

@@ -150,43 +150,84 @@ class Goo1_MCP_Site_Health_Controller extends Goo1_MCP_Base_Controller {
 			) );
 		}
 
-		// Read last N lines efficiently.
-		$file_lines = array();
-		$fp = fopen( $log_file, 'r' );
-		if ( $fp ) {
-			// Seek from end.
-			fseek( $fp, 0, SEEK_END );
-			$pos   = ftell( $fp );
-			$count = 0;
-			$buffer = '';
+		$lines = max( 1, $lines );
+		// Read extra lines before the window and redact them together, so a
+		// multi-line secret (PEM block) that starts before the window is still
+		// recognised; then return only the requested lines.
+		$file_lines = self::tail_lines( $log_file, $lines + self::CONTEXT_LINES );
 
-			while ( $pos > 0 && $count < $lines ) {
-				$pos--;
-				fseek( $fp, $pos );
-				$char = fgetc( $fp );
-				if ( $char === "\n" && $buffer !== '' ) {
-					$file_lines[] = $buffer;
-					$buffer = '';
-					$count++;
-				} else {
-					$buffer = $char . $buffer;
-				}
+		// Logs can contain secrets (failed logins, SMTP/API errors, dumps).
+		$redactions = 0;
+		$unredacted = Goo1_MCP_Permissions::instance()->allow_unredacted( $request );
+		if ( $unredacted ) {
+			Goo1_MCP_Audit_Log::add_flag( 'unredacted' );
+		} elseif ( $file_lines ) {
+			// As one text, so multi-line secrets (PEM blocks) are masked whole.
+			$file_lines = explode( "\n", Goo1_MCP_Redactor::redact_text( implode( "\n", $file_lines ), $redactions ) );
+		}
+		$file_lines = array_values( array_slice( $file_lines, -$lines ) );
+		// Cap very long lines (after redaction, so no secret is cut in half).
+		foreach ( $file_lines as $i => $line ) {
+			if ( strlen( $line ) > self::LINE_MAX_BYTES ) {
+				$cut              = function_exists( 'mb_strcut' ) ? mb_strcut( $line, 0, self::LINE_MAX_BYTES, 'UTF-8' ) : substr( $line, 0, self::LINE_MAX_BYTES );
+				$file_lines[ $i ] = $cut . ' …[' . ( strlen( $line ) - strlen( $cut ) ) . ' more bytes]';
 			}
-			if ( $buffer !== '' ) {
-				$file_lines[] = $buffer;
-			}
-			fclose( $fp );
-
-			$file_lines = array_reverse( $file_lines );
 		}
 
 		return $this->success( array(
-			'file'      => $log_file,
-			'size'      => filesize( $log_file ),
-			'lines'     => $file_lines,
-			'count'     => count( $file_lines ),
-			'requested' => $lines,
+			'file'       => $log_file,
+			'size'       => filesize( $log_file ),
+			'lines'      => $file_lines,
+			'count'      => count( $file_lines ),
+			'requested'  => $lines,
+			'redactions' => $redactions,
 		) );
+	}
+
+	/** Bytes read from the end of the log at most (very long lines are cut). */
+	const TAIL_MAX_BYTES = 4194304;
+
+	/** Longer lines are cut in the response. */
+	const LINE_MAX_BYTES = 8192;
+
+	/** Lines read (and redacted) before the requested window. */
+	const CONTEXT_LINES = 200;
+
+	/**
+	 * Last $lines lines of a file, read backwards in blocks.
+	 *
+	 * @return string[] Lines without line endings, oldest first.
+	 */
+	public static function tail_lines( $file, $lines ) {
+		$fp = @fopen( $file, 'rb' ); // phpcs:ignore
+		if ( ! $fp ) {
+			return array();
+		}
+		fseek( $fp, 0, SEEK_END );
+		$pos   = ftell( $fp );
+		$block = 65536;
+		$data  = '';
+		$read  = 0;
+		// One newline more than lines wanted, so the first line is complete.
+		while ( $pos > 0 && substr_count( $data, "\n" ) <= $lines && $read < self::TAIL_MAX_BYTES ) {
+			$len   = (int) min( $block, $pos );
+			$pos  -= $len;
+			fseek( $fp, $pos );
+			$data  = fread( $fp, $len ) . $data;
+			$read += $len;
+		}
+		fclose( $fp );
+
+		$all = preg_split( '/\r\n|\n|\r/', $data );
+		if ( $all && '' === end( $all ) ) {
+			array_pop( $all ); // Trailing newline at the end of the file.
+		}
+		if ( $pos > 0 ) {
+			// Not at the start of the file: the first segment is (or may be) a
+			// line fragment. Drop it so no half secret is returned.
+			array_shift( $all );
+		}
+		return array_values( array_slice( $all, -$lines ) );
 	}
 
 	public function list_cron( $request ) {

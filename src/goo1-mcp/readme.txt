@@ -4,7 +4,7 @@ Tags: api, rest, claude, ai, mcp, automation
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.261028
+Stable tag: 1.8.261112
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,14 @@ goo1 WP Claude Bridge provides a comprehensive REST API that allows Claude AI to
 4. Use the key with `Authorization: Bearer <your-key>` header
 
 == Changelog ==
+
+= 1.8.261112 =
+* wp_error_log: secrets inside the log lines are replaced by [redacted] (known secret values of the site and the database password and salts from wp-config.php, also JSON-escaped or URL-encoded; password hashes; PEM/PGP private key blocks, also when the window starts inside a block); the response reports `redactions` (counted over the read range, which includes 200 lines before the window so multi-line secrets are recognised). Clear text only with the "Secrets in clear text" grant plus unredacted=true (flagged in the audit log). The log is now read backwards in 64 KB blocks instead of byte by byte (at most 4 MB from the end).
+* Audit log: the client IP is no longer taken from forwarding headers sent by anyone. New setting "Trusted proxies" (IPs/CIDR, or "cloudflare"); empty = Cloudflare is recognised by its official ranges (then CF-Connecting-IP), every other request is logged with REMOTE_ADDR. From a trusted proxy the right-most untrusted X-Forwarded-For entry is used; IPv4-mapped IPv6 addresses are treated as IPv4. Docker images based on the official wordpress image already resolve X-Forwarded-For in Apache (mod_remoteip); other setups behind Traefik need the Docker network (and "cloudflare") in the setting to log the real visitor IP.
+* Audit log retention: entries are deleted against the site's time base (they are written with current_time('mysql')) instead of the database server's NOW(), so the retention no longer shifts by the time-zone offset.
+* MCP: JSON-RPC batch requests (a list of messages in one POST) work again. Since 1.6 the authentication wrote its key data into the request's JSON params, which turned the list into a single object without an id, so the whole batch was answered with 202 and no responses.
+* wp_error_log: lines longer than 8 KB are cut in the response (after redaction).
+* The release build now writes the plugin version into mcp-server.json (the file in the repository still said 1.7.261027).
 
 = 1.8.261028 =
 * MCP: new lean profile at /wp-json/goo1-mcp/v1/mcp/lean with four tools: wp_find_tools (keyword search, short descriptions, access read/write), wp_describe_tool (full description and input schema), wp_call_read (runs only tools with readOnlyHint) and wp_call_write (everything else). The tool list is about 5 % of the full one, so many connected sites no longer fill the context window. Same authentication (API keys and OAuth), scopes, redaction and audit log; the full /mcp endpoint is unchanged.

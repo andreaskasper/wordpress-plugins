@@ -288,6 +288,7 @@ class Goo1_MCP_Admin {
 				'oauth_refresh_ttl_days'   => max( 1, min( 365, (int) ( $_POST['oauth_refresh_ttl_days'] ?? 90 ) ) ),
 				'oauth_default_scope'      => $scope,
 				'seal_export_targets'      => sanitize_textarea_field( wp_unslash( $_POST['seal_export_targets'] ?? '' ) ),
+				'trusted_proxies'          => self::clean_trusted_proxies( wp_unslash( $_POST['trusted_proxies'] ?? '' ) ),
 			) );
 			update_option( 'goo1_mcp_settings', $settings );
 			add_settings_error( 'goo1_mcp', 'settings_saved', 'Settings saved.', 'success' );
@@ -317,6 +318,31 @@ class Goo1_MCP_Admin {
 			$deleted  = Goo1_MCP_Audit_Log::instance()->purge( $days );
 			add_settings_error( 'goo1_mcp', 'log_purged', sprintf( '%d audit log entries purged.', $deleted ), 'success' );
 		}
+	}
+
+	/**
+	 * Keep only valid entries (IP, CIDR or the word "cloudflare"), one per line.
+	 */
+	public static function clean_trusted_proxies( $raw ) {
+		$out     = array();
+		$invalid = array();
+		foreach ( preg_split( '/[\s,;]+/', sanitize_textarea_field( (string) $raw ) ) as $entry ) {
+			$entry = trim( $entry );
+			if ( '' === $entry ) {
+				continue;
+			}
+			if ( 'cloudflare' === strtolower( $entry ) ) {
+				$out[] = 'cloudflare';
+			} elseif ( Goo1_MCP_Audit_Log::valid_range( $entry ) ) {
+				$out[] = $entry;
+			} else {
+				$invalid[] = $entry;
+			}
+		}
+		if ( $invalid ) {
+			add_settings_error( 'goo1_mcp', 'proxies_invalid', sprintf( 'Ignored invalid trusted proxy entries: %s', implode( ', ', $invalid ) ) );
+		}
+		return implode( "\n", array_values( array_unique( $out ) ) );
 	}
 
 	public function render_keys_page() {

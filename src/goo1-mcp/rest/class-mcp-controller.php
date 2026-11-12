@@ -74,6 +74,12 @@ class Goo1_MCP_MCP_Controller extends Goo1_MCP_Base_Controller {
 		}
 
 		$body = $request->get_json_params();
+		// Goo1_MCP_Auth::authenticate() stores the key data as a request param,
+		// which lands in the JSON params; it would turn a batch (list) into an
+		// object without "id" (= a notification → 202 with no responses).
+		if ( is_array( $body ) ) {
+			unset( $body['_goo1_mcp_key'] );
+		}
 		if ( ! is_array( $body ) || empty( $body ) ) {
 			return $this->rpc_error_response( null, -32700, 'Parse error: expected a JSON-RPC request.' );
 		}

@@ -52,6 +52,17 @@ $settings = Goo1_MCP_OAuth::settings();
 			</tr>
 		</table>
 
+		<h2><?php esc_html_e( 'Audit log', 'goo1-mcp' ); ?></h2>
+		<table class="form-table">
+			<tr>
+				<th><label for="trusted_proxies"><?php esc_html_e( 'Trusted proxies', 'goo1-mcp' ); ?></label></th>
+				<td>
+					<textarea id="trusted_proxies" name="trusted_proxies" rows="3" class="large-text code" placeholder="cloudflare&#10;172.16.0.0/12"><?php echo esc_textarea( isset( $settings['trusted_proxies'] ) ? $settings['trusted_proxies'] : '' ); ?></textarea>
+					<p class="description"><?php esc_html_e( 'Proxies whose forwarding headers (CF-Connecting-IP, X-Forwarded-For, X-Real-IP) are believed for the IP in the audit log: IPs or CIDR ranges, one per line; the word "cloudflare" stands for the official Cloudflare ranges. Empty = Cloudflare is recognised automatically, every other request is logged with its direct peer address (REMOTE_ADDR). Behind Traefik/Docker add the Docker network, plus "cloudflare" if Cloudflare is in front of it.', 'goo1-mcp' ); ?></p>
+				</td>
+			</tr>
+		</table>
+
 		<h2><?php esc_html_e( 'Secrets', 'goo1-mcp' ); ?></h2>
 		<table class="form-table">
 			<tr>

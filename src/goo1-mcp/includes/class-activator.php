@@ -22,6 +22,7 @@ class Goo1_MCP_Activator {
 			'oauth_refresh_ttl_days'   => 90,
 			'oauth_default_scope'      => 'read',
 			'seal_export_targets'      => '',
+			'trusted_proxies'          => '',
 		);
 	}
 
